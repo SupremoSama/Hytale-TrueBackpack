@@ -1,16 +1,24 @@
-# Hytale Plugin Template
+# Hytale True Backpack
 
-A template for Hytale java plugins. Created by [Up](https://github.com/UpcraftLP), and slightly modified by Kaupenjoe. 
+A mod that allows backpacks to function more naturally and as originally intended, built using the Hytale Java plugin template.  
+Originally created by UpcraftLP and slightly modified by Kaupenjoe.  
+Special thanks to both authors.
 
-### Configuring the Template
-If you for example installed the game in a non-standard location, you will need to tell the project about that.
-The recommended way is to create a file at `%USERPROFILE%/.gradle/gradle.properties` to set these properties globally.
+I’m sharing these files because I’m not very familiar with Java or Java IDEs, but I wanted to make backpacks work in a more immersive and intuitive way.  
+The repository is open for improvements and contributions.
 
-```properties
-# Set a custom game install location
-hytale.install_dir=path/to/Hytale
+## Original Goals
 
-# Speed up the decompilation process significantly, by only including the core hytale packages.
-# Recommended if decompiling the game takes a very long time on your PC.
-hytale.decompile_partial=true
-```
+- Make backpacks wearable
+- Use the game’s native UI instead of interacting with backpacks like chests
+- Drop all backpack items on death, regardless of game configuration
+- Remove backpack upgrade recipes so only backpack equipment is used
+- Make backpacks behave similarly to shulker boxes (Minecraft)
+- Add an extra inventory slot so players can equip both armor and a backpack
+- Create a giant backpack model (For a extra backpack with 36 slots)
+
+## Current Features
+
+- Backpacks are wearable
+- Backpacks open using the original in-game UI
+- When a backpack is unequipped, all stored items are dropped (to keep balance)
