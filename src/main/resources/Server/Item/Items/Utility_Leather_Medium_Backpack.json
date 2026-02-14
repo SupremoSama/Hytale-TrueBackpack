@@ -1,0 +1,81 @@
+{
+  "TranslationProperties": {
+    "Name": "server.server.items.Utility_Leather_Medium_Backpack.name"
+  },
+  "Categories": [
+    "Items.Armors"
+  ],
+  "Icon": "Icons/ItemsGenerated/Utility_Leather_Medium_Backpack.png",
+  "Quality": "Uncommon",
+  "MaxStack": 1,
+  "ItemLevel": 30,
+  "Recipe": {
+    "TimeSeconds": 2,
+    "Input": [
+      {
+        "ItemId": "Ingredient_Fabric_Scrap_Cindercloth",
+        "Quantity": 40
+      },
+      {
+        "ItemId": "Ingredient_Bar_Cobalt",
+        "Quantity": 8
+      },
+      {
+        "ItemId": "Ingredient_Leather_Heavy",
+        "Quantity": 24
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Id": "Workbench",
+        "Type": "Crafting",
+        "Categories": [
+          "Workbench_Tinkering"
+        ],
+        "RequiredTierLevel": 2
+      }
+    ]
+  },
+  "Model": "Items/Back/BackpackBig.blockymodel",
+  "Texture": "Items/Back/BackpackBig_Texture.png",
+  "PlayerAnimationsId": "Block",
+  "IconProperties": {
+    "Scale": 0.455,
+    "Translation": [
+      1.19,
+      2.39
+    ],
+    "Rotation": [
+      0,
+      177.73,
+      0
+    ]
+  },
+  "Tags": {
+    "Family": [
+      "Backpack"
+    ],
+    "Type": [
+      "Utility"
+    ]
+  },
+  "Interactions": {
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "EquipItem"
+        }
+      ]
+    },
+    "Secondary": {
+      "Interactions": [
+        {
+          "Type": "EquipItem"
+        }
+      ]
+    }
+  },
+  "Armor": {
+    "ArmorSlot": "Chest"
+  }
+}
