@@ -1,0 +1,77 @@
+{
+  "Categories": [
+    "Items.Armors"
+  ],
+  "Icon": "Icons/ItemsGenerated/Utility_Leather_Backpack.png",
+  "Quality": "Common",
+  "MaxStack": 1,
+  "ItemLevel": 20,
+  "Recipe": {
+    "TimeSeconds": 2,
+    "Input": [
+      {
+        "ItemId": "Ingredient_Bar_Iron",
+        "Quantity": 8
+      },
+      {
+        "ItemId": "Ingredient_Leather_Medium",
+        "Quantity": 8
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Id": "Workbench",
+        "Type": "Crafting",
+        "Categories": [
+          "Workbench_Tinkering"
+        ],
+        "RequiredTierLevel": 1
+      }
+    ]
+  },
+  "Model": "Items/Back/Backpack_Medium.blockymodel",
+  "Texture": "Items/Back/Backpack_Medium_Texture.png",
+  "PlayerAnimationsId": "Block",
+  "Tags": {
+    "Family": [
+      "Backpack"
+    ],
+    "Type": [
+      "Utility"
+    ]
+  },
+  "Armor": {
+    "ArmorSlot": "Chest"
+  },
+  "IconProperties": {
+    "Scale": 0.6,
+    "Rotation": [
+      22.5,
+      45,
+      22.5
+    ],
+    "Translation": [
+      0,
+      -12
+    ]
+  },
+  "Interactions": {
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "EquipItem"
+        }
+      ]
+    },
+    "Secondary": {
+      "Interactions": [
+        {
+          "Type": "EquipItem"
+        }
+      ]
+    }
+  },
+  "TranslationProperties": {
+    "Name": "server.server.items.Utility_Leather_Backpack.name"
+  }
+}

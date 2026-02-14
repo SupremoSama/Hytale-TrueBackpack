@@ -1,0 +1,82 @@
+{
+  "Categories": [
+    "Items.Armors"
+  ],
+  "Icon": "Icons/ItemsGenerated/Utility_Leather_Medium_Backpack.png",
+  "Quality": "Rare",
+  "MaxStack": 1,
+  "ItemLevel": 50,
+  "Recipe": {
+    "TimeSeconds": 2,
+    "Input": [
+      {
+        "ItemId": "Ingredient_Voidheart",
+        "Quantity": 1
+      },
+      {
+        "ItemId": "Ingredient_Bar_Adamantite",
+        "Quantity": 8
+      },
+      {
+        "ItemId": "Ingredient_Leather_Storm",
+        "Quantity": 16
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Id": "Workbench",
+        "Type": "Crafting",
+        "Categories": [
+          "Workbench_Tinkering"
+        ],
+        "RequiredTierLevel": 3
+      }
+    ],
+    "RequiredMemoriesLevel": 5
+  },
+  "Model": "Items/Back/BackpackBig.blockymodel",
+  "Texture": "Items/Back/BackpackBig_Texture.png",
+  "PlayerAnimationsId": "Block",
+  "IconProperties": {
+    "Scale": 0.455,
+    "Translation": [
+      1.19,
+      2.39
+    ],
+    "Rotation": [
+      0,
+      177.73,
+      0
+    ]
+  },
+  "Tags": {
+    "Family": [
+      "Backpack"
+    ],
+    "Type": [
+      "Utility"
+    ]
+  },
+  "Interactions": {
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "EquipItem"
+        }
+      ]
+    },
+    "Secondary": {
+      "Interactions": [
+        {
+          "Type": "EquipItem"
+        }
+      ]
+    }
+  },
+  "Armor": {
+    "ArmorSlot": "Chest"
+  },
+  "TranslationProperties": {
+    "Name": "server.server.items.Utility_Leather_Big_Backpack.name"
+  }
+}
