@@ -24,6 +24,7 @@ public class TrueBackpack extends JavaPlugin {
     @Override
     protected void setup() {
         BackpackArmorListener.register(this);
+
         LOGGER.atInfo().log("TrueBackpack ready");
     }
 }

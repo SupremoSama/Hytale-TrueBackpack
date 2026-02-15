@@ -1,28 +1,25 @@
 {
-  "TranslationProperties": {
-    "Name": "server.server.items.Utility_Leather_Medium_Backpack.name"
-  },
   "Categories": [
     "Items.Armors"
   ],
-  "Icon": "Icons/ItemsGenerated/Utility_Leather_Medium_Backpack.png",
-  "Quality": "Uncommon",
+  "Icon": "Icons/ItemsGenerated/Utility_Leather_Extra_Big_Backpack.png",
+  "Quality": "Epic",
   "MaxStack": 1,
-  "ItemLevel": 30,
+  "ItemLevel": 60,
   "Recipe": {
     "TimeSeconds": 2,
     "Input": [
       {
-        "ItemId": "Ingredient_Fabric_Scrap_Cindercloth",
-        "Quantity": 40
+        "ItemId": "Ingredient_Voidheart",
+        "Quantity": 2
       },
       {
-        "ItemId": "Ingredient_Bar_Cobalt",
-        "Quantity": 8
+        "ItemId": "Ingredient_Bar_Adamantite",
+        "Quantity": 16
       },
       {
-        "ItemId": "Ingredient_Leather_Heavy",
-        "Quantity": 24
+        "ItemId": "Ingredient_Leather_Storm",
+        "Quantity": 22
       }
     ],
     "BenchRequirement": [
@@ -32,23 +29,24 @@
         "Categories": [
           "Workbench_Tinkering"
         ],
-        "RequiredTierLevel": 2
+        "RequiredTierLevel": 3
       }
-    ]
+    ],
+    "RequiredMemoriesLevel": 5
   },
-  "Model": "Items/Back/BackpackBig.blockymodel",
-  "Texture": "Items/Back/BackpackBig_Texture.png",
+  "Model": "Items/Back/Extra_Big_Backpack.blockymodel",
+  "Texture": "Items/Back/Extra_Big_Backpack_Texture.png",
   "PlayerAnimationsId": "Block",
   "IconProperties": {
-    "Scale": 0.455,
+    "Scale": 0.26,
     "Rotation": [
       0,
       201,
       0
     ],
     "Translation": [
-      -6,
-      4
+      -13,
+      -11
     ]
   },
   "Tags": {
@@ -70,5 +68,8 @@
   },
   "Armor": {
     "ArmorSlot": "Chest"
+  },
+  "TranslationProperties": {
+    "Name": "server.server.items.Utility_Leather_Big_Backpack.name"
   }
 }

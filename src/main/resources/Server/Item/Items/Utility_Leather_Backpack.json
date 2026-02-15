@@ -56,13 +56,6 @@
     ]
   },
   "Interactions": {
-    "Primary": {
-      "Interactions": [
-        {
-          "Type": "EquipItem"
-        }
-      ]
-    },
     "Secondary": {
       "Interactions": [
         {
