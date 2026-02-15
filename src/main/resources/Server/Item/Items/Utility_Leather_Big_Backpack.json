@@ -2,7 +2,7 @@
   "Categories": [
     "Items.Armors"
   ],
-  "Icon": "Icons/ItemsGenerated/Utility_Leather_Medium_Backpack.png",
+  "Icon": "Icons/ItemsGenerated/Utility_Leather_Big_Backpack.png",
   "Quality": "Rare",
   "MaxStack": 1,
   "ItemLevel": 50,
@@ -34,19 +34,19 @@
     ],
     "RequiredMemoriesLevel": 5
   },
-  "Model": "Items/Back/BackpackBig.blockymodel",
-  "Texture": "Items/Back/BackpackBig_Texture.png",
+  "Model": "Items/Back/Big_Backpack.blockymodel",
+  "Texture": "Items/Back/Big_Backpack_Texture.png",
   "PlayerAnimationsId": "Block",
   "IconProperties": {
-    "Scale": 0.455,
-    "Translation": [
-      1.19,
-      2.39
-    ],
+    "Scale": 0.26,
     "Rotation": [
       0,
-      177.73,
+      201,
       0
+    ],
+    "Translation": [
+      -13,
+      -11
     ]
   },
   "Tags": {
@@ -58,13 +58,6 @@
     ]
   },
   "Interactions": {
-    "Primary": {
-      "Interactions": [
-        {
-          "Type": "EquipItem"
-        }
-      ]
-    },
     "Secondary": {
       "Interactions": [
         {

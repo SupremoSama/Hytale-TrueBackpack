@@ -41,14 +41,14 @@
   "PlayerAnimationsId": "Block",
   "IconProperties": {
     "Scale": 0.455,
-    "Translation": [
-      1.19,
-      2.39
-    ],
     "Rotation": [
       0,
-      177.73,
+      201,
       0
+    ],
+    "Translation": [
+      -6,
+      4
     ]
   },
   "Tags": {
@@ -60,13 +60,6 @@
     ]
   },
   "Interactions": {
-    "Primary": {
-      "Interactions": [
-        {
-          "Type": "EquipItem"
-        }
-      ]
-    },
     "Secondary": {
       "Interactions": [
         {
