@@ -15,10 +15,11 @@ The repository is open for improvements and contributions.
 - Remove backpack upgrade recipes so only backpack equipment is used
 - Make backpacks behave similarly to shulker boxes (Minecraft)
 - Add an extra inventory slot so players can equip both armor and a backpack
-- Create a giant backpack model (For a extra backpack with 36 slots)
+
 
 ## Current Features
 
 - Backpacks are wearable
 - Backpacks open using the original in-game UI
-- When a backpack is unequipped, all stored items are dropped (to keep balance)
+- Create a giant backpack model (For a extra backpack with 36 slots)
+- Backpacks behave similarly to shulker boxes (Minecraft)
