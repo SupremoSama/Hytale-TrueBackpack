@@ -4,7 +4,7 @@
     "Description": "server.items.UpgradeBackpack_3.description"
   },
   "Icon": "Icons/ItemsGenerated/Recipe_Page.png",
-  "Quality": "Rare",
+  "Quality": "Uncommon",
   "MaxStack": 1,
   "ItemLevel": 50,
   "Categories": [
@@ -25,7 +25,7 @@
       40.67
     ]
   },
-  "Consumable": false,
+  "Consumable": true,
   "Interactions": {
     "Primary": {
       "Interactions": [

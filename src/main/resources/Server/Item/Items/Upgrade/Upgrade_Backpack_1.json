@@ -4,7 +4,7 @@
     "Description": "server.items.UpgradeBackpack_1.description"
   },
   "Icon": "Icons/ItemsGenerated/Utility_Leather_Medium_Backpack.png",
-  "Quality": "Common",
+  "Quality": "Uncommon",
   "MaxStack": 1,
   "ItemLevel": 20,
   "Categories": [
@@ -25,7 +25,7 @@
       40.67
     ]
   },
-  "Consumable": false,
+  "Consumable": true,
   "Interactions": {
     "Primary": {
       "Interactions": [
