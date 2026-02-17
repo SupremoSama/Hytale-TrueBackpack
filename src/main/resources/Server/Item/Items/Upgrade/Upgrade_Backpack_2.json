@@ -6,10 +6,24 @@
   "Icon": "Icons/ItemsGenerated/Recipe_Page.png",
   "Quality": "Uncommon",
   "MaxStack": 1,
-  "ItemLevel": 30,
+  "ItemLevel": 99,
   "Categories": [
     "Upgrade"
   ],
+  "Recipe": {
+    "TimeSeconds": 0,
+    "Input": [],
+    "BenchRequirement": [
+      {
+        "Id": "Workbench",
+        "Type": "Crafting",
+        "Categories": [
+          "Workbench_Hidden"
+        ],
+        "RequiredTierLevel": 1
+      }
+    ]
+  },
   "PlayerAnimationsId": "Item",
   "Model": "Items/Consumables/Recipes/Recipe.blockymodel",
   "Texture": "Items/Consumables/Recipes/Recipe_Texture.png",
@@ -24,31 +38,6 @@
       68.795,
       40.67
     ]
-  },
-  "Consumable": true,
-  "Interactions": {
-    "Primary": {
-      "Interactions": [
-        {
-          "Type": "CheckUniqueItemUsage",
-          "Next": {
-            "Type": "IncreaseBackpackCapacity",
-            "Capacity": 9
-          }
-        }
-      ]
-    },
-    "Secondary": {
-      "Interactions": [
-        {
-          "Type": "CheckUniqueItemUsage",
-          "Next": {
-            "Type": "IncreaseBackpackCapacity",
-            "Capacity": 9
-          }
-        }
-      ]
-    }
   },
   "Tags": {
     "Family": [

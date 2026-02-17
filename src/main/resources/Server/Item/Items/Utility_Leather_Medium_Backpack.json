@@ -1,6 +1,6 @@
 {
   "TranslationProperties": {
-    "Name": "server.server.items.Utility_Leather_Medium_Backpack.name"
+    "Name": "server.truebackpack.items.Utility_Leather_Medium_Backpack.name"
   },
   "Categories": [
     "Items.Armors"
@@ -70,5 +70,6 @@
   },
   "Armor": {
     "ArmorSlot": "Chest"
-  }
+  },
+  "DropOnDeath": false
 }

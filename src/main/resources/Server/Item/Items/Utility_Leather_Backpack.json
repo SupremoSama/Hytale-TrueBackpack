@@ -65,6 +65,7 @@
     }
   },
   "TranslationProperties": {
-    "Name": "server.server.items.Utility_Leather_Backpack.name"
-  }
+    "Name": "server.truebackpack.items.Utility_Leather_Backpack.name"
+  },
+  "DropOnDeath": false
 }

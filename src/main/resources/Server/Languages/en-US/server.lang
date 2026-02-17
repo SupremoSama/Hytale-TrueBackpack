@@ -1,3 +1,6 @@
-server.items.Utility_Leather_Backpack.name=Small Backpack
-server.items.Utility_Leather_Medium_Backpack.name=Medium Backpack
-server.items.Utility_Leather_Big_Backpack.name=Big Backpack
+truebackpack.items.Utility_Leather_Backpack.name=Small Backpack
+truebackpack.items.Utility_Leather_Medium_Backpack.name=Medium Backpack
+truebackpack.items.Utility_Leather_Big_Backpack.name=Big Backpack
+truebackpack.items.Utility_Leather_Extra_Big_Backpack.name=Extra Big Backpack
+truebackpack.tooltip.title=Backpack
+truebackpack.tooltip.empty=Empty
