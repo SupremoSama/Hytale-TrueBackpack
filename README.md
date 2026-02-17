@@ -7,6 +7,8 @@ Special thanks to both authors.
 I’m sharing these files because I’m not very familiar with Java or Java IDEs, but I wanted to make backpacks work in a more immersive and intuitive way.  
 The repository is open for improvements and contributions.
 
+Try the mod: https://www.curseforge.com/hytale/mods/true-backpack
+
 ## Original Goals
 
 - Make backpacks wearable
@@ -21,5 +23,5 @@ The repository is open for improvements and contributions.
 
 - Backpacks are wearable
 - Backpacks open using the original in-game UI
-- Create a giant backpack model (For a extra backpack with 36 slots)
+- Giant backpack (36 slots)
 - Backpacks behave similarly to shulker boxes (Minecraft)
