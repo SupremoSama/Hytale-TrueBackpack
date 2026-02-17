@@ -6,9 +6,7 @@ import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.packets.player.SetGameMode;
 import com.hypixel.hytale.server.core.entity.LivingEntity;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
-import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
@@ -34,20 +32,10 @@ public class BackpackUIUpdater {
             // Step 1: Send updated inventory packet (marks inventory as synced)
             player.sendInventory();
 
-            // Step 2: Re-send the current gamemode packet
+            // Step 2: Re-send the current game mode packet
             playerRefComponent.getPacketHandler().writeNoCache(
                     new SetGameMode(player.getGameMode())
             );
-
-            // Step 3: Update movement settings
-            MovementManager movementManager = store.getComponent(ref, MovementManager.getComponentType());
-            if (movementManager != null) {
-                movementManager.update(playerRefComponent.getPacketHandler());
-            }
-
-            // Step 4: Re-send world map tracker settings
-            World world = (store.getExternalData()).getWorld();
-            player.getWorldMapTracker().sendSettings(world);
         } catch (Exception e) {
             LOGGER.atWarning().log("Failed to update backpack UI for player %s: %s",
                     player.getDisplayName(),

@@ -70,6 +70,7 @@
     "ArmorSlot": "Chest"
   },
   "TranslationProperties": {
-    "Name": "server.server.items.Utility_Leather_Big_Backpack.name"
-  }
+    "Name": "server.truebackpack.items.Utility_Leather_Big_Backpack.name"
+  },
+  "DropOnDeath": false
 }
