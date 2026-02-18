@@ -40,10 +40,13 @@ public class BackpackArmorListener {
 
     public static void register(@Nonnull TrueBackpack plugin) {
         BackpackConfig.registerDefaults();
+
         plugin.getEventRegistry().registerGlobal(
                 LivingEntityInventoryChangeEvent.class,
                 BackpackArmorListener::handle
         );
+
+        LOGGER.atInfo().log("[TrueBackpack] BackpackArmorListener registered");
     }
 
     public static void registerBackpack(@Nonnull String baseItemId, short sizeBonus) {
@@ -254,14 +257,6 @@ public class BackpackArmorListener {
     private static String itemId(@Nullable ItemStack stack) {
         if (stack == null || stack.isEmpty()) return null;
         return stack.getItemId();
-    }
-
-    private static String itemDesc(@Nullable ItemStack stack) {
-        if (stack == null) return "null";
-        if (stack.isEmpty()) return "empty";
-        String instanceId = BackpackItemFactory.getInstanceId(stack);
-        String suffix = instanceId != null ? "[" + instanceId.substring(0, 8) + "]" : "[no-id]";
-        return stack.getItemId() + suffix + "x" + stack.getQuantity();
     }
 
     @Nonnull
