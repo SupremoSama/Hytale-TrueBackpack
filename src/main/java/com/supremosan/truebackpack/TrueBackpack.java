@@ -14,6 +14,7 @@ public class TrueBackpack extends JavaPlugin {
 
     @Override
     protected void setup() {
+        // 1. Armor listener handles equip/unequip/swap and per-instance content persistence.
         BackpackArmorListener.register(this);
 
         LOGGER.atInfo().log("TrueBackpack ready");
