@@ -4,3 +4,4 @@ truebackpack.items.Utility_Leather_Big_Backpack.name=Big Backpack
 truebackpack.items.Utility_Leather_Extra_Big_Backpack.name=Extra Big Backpack
 truebackpack.tooltip.title=Backpack
 truebackpack.tooltip.empty=Empty
+truebackpack.tooltip.equipped=Equipped

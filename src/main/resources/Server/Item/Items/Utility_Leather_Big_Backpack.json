@@ -34,8 +34,8 @@
     ],
     "RequiredMemoriesLevel": 5
   },
-  "Model": "Items/Back/Big_Backpack.blockymodel",
-  "Texture": "Items/Back/Big_Backpack_Texture.png",
+  "Model": "Items/Backpacks/Big_Backpack.blockymodel",
+  "Texture": "Items/Backpacks/Big_Backpack_Texture.png",
   "PlayerAnimationsId": "Block",
   "IconProperties": {
     "Scale": 0.26,

@@ -15,12 +15,17 @@ public class BackpackTooltipProvider {
     private static final String KEY_EMPTY = "server.truebackpack.tooltip.empty";
     private static final String KEY_SLOTS = "server.truebackpack.tooltip.slots";
     private static final String KEY_ITEMS = "server.truebackpack.tooltip.items";
+    private static final String KEY_EQUIPPED = "server.truebackpack.tooltip.equipped";
 
     private BackpackTooltipProvider() {}
 
     @Nullable
     public static String buildTooltip(@Nonnull ItemStack stack, @Nullable String language) {
         if (stack.isEmpty()) return null;
+
+        if (BackpackItemFactory.isEquipped(stack)) {
+            return buildEquippedTooltip(language);
+        }
 
         String itemId   = stack.getItemId();
         short sizeBonus = BackpackArmorListener.getBackpackSize(itemId);
@@ -50,6 +55,14 @@ public class BackpackTooltipProvider {
         String emptyWord = resolve(i18n, language, KEY_EMPTY);
 
         return title + " (" + sizeBonus + " " + slotsWord + ")\n" + emptyWord;
+    }
+
+    @Nonnull
+    private static String buildEquippedTooltip(@Nullable String language) {
+        I18nModule i18n  = I18nModule.get();
+        String title     = resolve(i18n, language, KEY_EQUIPPED);
+
+        return title + " (" + title + ")";
     }
 
     @Nonnull

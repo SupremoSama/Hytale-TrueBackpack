@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.inventory.container.filter.FilterActionTyp
 import com.hypixel.hytale.server.core.inventory.transaction.ItemStackSlotTransaction;
 import com.hypixel.hytale.server.core.inventory.transaction.ItemStackTransaction;
 import com.hypixel.hytale.server.core.inventory.transaction.MoveTransaction;
+import com.hypixel.hytale.server.core.inventory.transaction.MoveType;
 import com.hypixel.hytale.server.core.inventory.transaction.SlotTransaction;
 import com.hypixel.hytale.server.core.inventory.transaction.Transaction;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -36,16 +37,17 @@ public class BackpackArmorListener {
     private static final ThreadLocal<Boolean> PROCESSING = ThreadLocal.withInitial(() -> false);
 
     private static final Map<String, Short> BACKPACK_SIZES = new ConcurrentHashMap<>();
-    private static final short CHEST_SLOT = 1;
+    private static final short CHEST_SLOT   = 1;
+    private static final short STORAGE_SLOT = 0;
+
+    private record MoveDestination(ItemContainer container, short slot) {}
 
     public static void register(@Nonnull TrueBackpack plugin) {
         BackpackConfig.registerDefaults();
-
         plugin.getEventRegistry().registerGlobal(
                 LivingEntityInventoryChangeEvent.class,
                 BackpackArmorListener::handle
         );
-
         LOGGER.atInfo().log("[TrueBackpack] BackpackArmorListener registered");
     }
 
@@ -56,19 +58,14 @@ public class BackpackArmorListener {
     public static short getBackpackSize(@Nonnull String itemId) {
         Short exact = BACKPACK_SIZES.get(itemId);
         if (exact != null) return exact;
-
         for (Map.Entry<String, Short> e : BACKPACK_SIZES.entrySet()) {
             if (itemId.contains(e.getKey())) return e.getValue();
         }
-
         return 0;
     }
 
-
     private static void handle(LivingEntityInventoryChangeEvent event) {
-        if (PROCESSING.get()) {
-            return;
-        }
+        if (PROCESSING.get()) return;
 
         LivingEntity entity = event.getEntity();
         if (entity == null) return;
@@ -85,26 +82,33 @@ public class BackpackArmorListener {
         ItemContainer changed = event.getItemContainer();
         if (changed == null) return;
 
-        Inventory inv = entity.getInventory();
-        ItemContainer armor = inv.getArmor();
+        Inventory inv        = entity.getInventory();
+        ItemContainer armor   = inv.getArmor();
+        ItemContainer storage = inv.getStorage();
 
-        // Only care about armor container changes
-        if (changed != armor) return;
+        boolean isArmorChange   = (changed == armor);
+        boolean isStorageChange = (changed == storage);
+        if (!isArmorChange && !isStorageChange) return;
 
         Transaction tx = event.getTransaction();
-        if (!tx.wasSlotModified(CHEST_SLOT)) return;
+        short relevantSlot = isArmorChange ? CHEST_SLOT : STORAGE_SLOT;
+        if (!tx.wasSlotModified(relevantSlot)) return;
 
-        // Live chest state AFTER the transaction
-        ItemStack chestNow = armor.getItemStack(CHEST_SLOT);
-        boolean isEquipping = chestNow != null && !chestNow.isEmpty();
+        ItemStack chestNow   = armor.getItemStack(CHEST_SLOT);
+        ItemStack storageNow = storage.getItemStack(STORAGE_SLOT);
 
-        // Extract before/after ItemStacks from the transaction
-        ItemStack oldItem = null;
-        ItemStack newItem = null;
+        String chestNowId   = itemId(chestNow);
+        String storageNowId = itemId(storageNow);
+
+        boolean chestHasBackpack = chestNowId != null && getBackpackSize(chestNowId) > 0;
+
+        ItemStack       oldItem  = null;
+        ItemStack       newItem  = null;
+        MoveDestination moveDest = null;
 
         switch (tx) {
             case SlotTransaction slotTx -> {
-                if (slotTx.getSlot() == CHEST_SLOT) {
+                if (slotTx.getSlot() == relevantSlot) {
                     oldItem = slotTx.getSlotBefore();
                     newItem = slotTx.getSlotAfter();
                 }
@@ -112,35 +116,42 @@ public class BackpackArmorListener {
 
             case MoveTransaction<?> moveTx -> {
                 SlotTransaction removeTx = moveTx.getRemoveTransaction();
-                Object addTx = moveTx.getAddTransaction();
+                Object          addTx    = moveTx.getAddTransaction();
+                MoveType        moveType = moveTx.getMoveType();
 
-                if (!isEquipping) {
-                    // Unequip: chest was the source of the move
-                    if (removeTx.getSlot() == CHEST_SLOT) {
+                if (moveType == MoveType.MOVE_FROM_SELF) {
+                    if (removeTx.getSlot() == relevantSlot) {
                         oldItem = removeTx.getSlotBefore();
                         newItem = removeTx.getSlotAfter();
+
+                        if (isStorageChange) {
+                            ItemContainer dest = moveTx.getOtherContainer();
+                            short destSlot = extractAddSlot(addTx);
+                            if (destSlot >= 0) {
+                                moveDest = new MoveDestination(dest, destSlot);
+                            }
+                        }
                     }
                 } else {
-                    // Equip or swap: chest was the destination
-                    if (addTx instanceof ItemStackTransaction itemStackTx) {
-                        for (ItemStackSlotTransaction s : itemStackTx.getSlotTransactions()) {
-                            if (s.getSlot() == CHEST_SLOT) {
+                    if (addTx instanceof SlotTransaction addSlotTx
+                            && addSlotTx.getSlot() == relevantSlot) {
+                        oldItem = addSlotTx.getSlotBefore();
+                        newItem = addSlotTx.getSlotAfter();
+                    } else if (addTx instanceof ItemStackTransaction addItemStackTx) {
+                        for (ItemStackSlotTransaction s : addItemStackTx.getSlotTransactions()) {
+                            if (s.getSlot() == relevantSlot) {
                                 oldItem = s.getSlotBefore();
                                 newItem = s.getSlotAfter();
                                 break;
                             }
                         }
-                    } else if (addTx instanceof SlotTransaction slotTx
-                            && slotTx.getSlot() == CHEST_SLOT) {
-                        oldItem = slotTx.getSlotBefore();
-                        newItem = slotTx.getSlotAfter();
                     }
                 }
             }
 
             case ItemStackTransaction itemStackTx -> {
                 for (ItemStackSlotTransaction s : itemStackTx.getSlotTransactions()) {
-                    if (s.getSlot() == CHEST_SLOT) {
+                    if (s.getSlot() == relevantSlot) {
                         oldItem = s.getSlotBefore();
                         newItem = s.getSlotAfter();
                         break;
@@ -152,38 +163,54 @@ public class BackpackArmorListener {
                     tx.getClass().getName());
         }
 
-        // Determine slot bonuses from item IDs (unchanged – size is still on the base ID)
         String oldItemId = itemId(oldItem);
         String newItemId = itemId(newItem);
 
-        // Fallback: if the transaction gave us nothing, read the live chest state
-        if (oldItemId == null && newItemId == null && isEquipping) {
-            newItem   = chestNow;
-            newItemId = itemId(chestNow);
+        if (oldItemId == null && newItemId == null) {
+            if (isArmorChange && chestHasBackpack) {
+                newItem   = chestNow;
+                newItemId = chestNowId;
+            } else if (isStorageChange && storageNowId != null) {
+                newItem   = storageNow;
+                newItemId = storageNowId;
+            }
         }
 
         short oldBonus = oldItemId != null ? getBackpackSize(oldItemId) : 0;
         short newBonus = newItemId != null ? getBackpackSize(newItemId) : 0;
 
-        // Skip if neither side is a backpack
-        if (oldBonus == 0 && newBonus == 0) {
-            return;
-        }
+        if (oldBonus == 0 && newBonus == 0) return;
+        if (oldBonus == newBonus && Objects.equals(oldItemId, newItemId)) return;
 
-        // Skip spurious events where nothing actually changed
-        if (oldBonus == newBonus && Objects.equals(oldItemId, newItemId)) {
-            return;
+        if (isStorageChange) {
+            if (oldBonus > 0 && newBonus == 0) {
+                if (chestHasBackpack && Objects.equals(chestNowId, oldItemId)) return;
+                if (chestHasBackpack) return;
+            }
+            if (newBonus > 0 && chestHasBackpack) return;
         }
 
         PROCESSING.set(true);
         try {
             performBackpackResize(entity, ref, store, inv, playerUuid,
-                    oldItem, newItem, oldBonus, newBonus);
+                    oldItem, newItem, oldBonus, newBonus, isArmorChange, moveDest);
         } finally {
             PROCESSING.set(false);
         }
     }
 
+    private static short extractAddSlot(@Nullable Object addTx) {
+        if (addTx instanceof SlotTransaction slotTx) {
+            return slotTx.getSlot();
+        } else if (addTx instanceof ItemStackTransaction itemStackTx) {
+            for (ItemStackSlotTransaction s : itemStackTx.getSlotTransactions()) {
+                if (s.getSlotAfter() != null && !s.getSlotAfter().isEmpty()) {
+                    return s.getSlot();
+                }
+            }
+        }
+        return -1;
+    }
 
     private static void performBackpackResize(@Nonnull LivingEntity entity,
                                               @Nonnull Ref<EntityStore> ref,
@@ -193,16 +220,24 @@ public class BackpackArmorListener {
                                               @Nullable ItemStack oldItem,
                                               @Nullable ItemStack newItem,
                                               short oldBonus,
-                                              short newBonus) {
-        // Step 1: Stamp a fresh instance ID if this backpack has never been equipped.
-        if (newBonus > 0 && newItem != null && !BackpackItemFactory.hasInstanceId(newItem)) {
-            newItem = BackpackItemFactory.createBackpackInstance(newItem);
-            inv.getArmor().setItemStackForSlot(CHEST_SLOT, newItem);
+                                              short newBonus,
+                                              boolean fromArmor,
+                                              @Nullable MoveDestination moveDest) {
+        if (newBonus > 0 && newItem != null) {
+            if (!BackpackItemFactory.hasInstanceId(newItem)) {
+                newItem = BackpackItemFactory.createBackpackInstance(newItem);
+            }
+            newItem = BackpackItemFactory.setEquipped(newItem, fromArmor);
+
+            if (fromArmor) {
+                inv.getArmor().setItemStackForSlot(CHEST_SLOT, newItem);
+            } else {
+                inv.getStorage().setItemStackForSlot(STORAGE_SLOT, newItem);
+            }
         }
 
-        // Step 2: Snapshot live contents of the OLD backpack and write them into
         if (oldBonus > 0 && oldItem != null) {
-            ItemContainer currentBp = inv.getBackpack();
+            ItemContainer currentBp      = inv.getBackpack();
             List<ItemStack> liveContents = getAllBackpackContents(currentBp);
             boolean hasItems = liveContents.stream().anyMatch(i -> i != null && !i.isEmpty());
 
@@ -210,21 +245,28 @@ public class BackpackArmorListener {
                     ? BackpackItemFactory.saveContents(oldItem, liveContents)
                     : BackpackItemFactory.clearContents(oldItem);
 
-            Inventory inv2 = entity.getInventory();
-            ItemContainer mainInv = inv2.getCombinedBackpackStorageHotbar();
-            for (short slot = 0; slot < mainInv.getCapacity(); slot++) {
-                ItemStack candidate = mainInv.getItemStack(slot);
-                if (candidate != null && candidate.equals(oldItem)) {
-                    mainInv.setItemStackForSlot(slot, savedOld);
-                    break;
+            savedOld = BackpackItemFactory.setEquipped(savedOld, false);
+
+            if (moveDest != null) {
+                moveDest.container().setItemStackForSlot(moveDest.slot(), savedOld);
+            } else {
+                boolean written = false;
+                for (ItemContainer container : new ItemContainer[]{
+                        inv.getStorage(), inv.getBackpack(), inv.getHotbar(), inv.getArmor()}) {
+                    if (writeToContainerByInstance(container, oldItem, savedOld)) {
+                        written = true;
+                        break;
+                    }
+                }
+                if (!written) {
+                    LOGGER.atWarning().log(
+                            "[TrueBackpack] Could not find old backpack to save contents into");
                 }
             }
         }
 
-        // Step 3: Resize.
         inv.resizeBackpack(newBonus, new ObjectArrayList<>());
 
-        // Step 4: Slot filters — no backpacks inside backpacks.
         if (newBonus > 0) {
             ItemContainer bp = inv.getBackpack();
             for (short slot = 0; slot < bp.getCapacity(); slot++) {
@@ -234,23 +276,77 @@ public class BackpackArmorListener {
             }
         }
 
-        // Step 5: Restore contents from the new backpack item's own metadata.
         if (newBonus > 0 && newItem != null) {
+            ItemStack live = resolveLatestItem(inv, newItem);
+            if (live != null) newItem = live;
+
             if (BackpackItemFactory.hasContents(newItem)) {
                 List<ItemStack> stored = BackpackItemFactory.loadContents(newItem);
                 restoreContentsToBackpack(inv.getBackpack(), stored);
 
-                // Clear contents from metadata now that they're live in the container.
                 ItemStack cleaned = BackpackItemFactory.clearContents(newItem);
-                inv.getArmor().setItemStackForSlot(CHEST_SLOT, cleaned);
+                cleaned = BackpackItemFactory.setEquipped(cleaned, fromArmor);
+
+                if (fromArmor) {
+                    inv.getArmor().setItemStackForSlot(CHEST_SLOT, cleaned);
+                } else {
+                    inv.getStorage().setItemStackForSlot(STORAGE_SLOT, cleaned);
+                }
             }
-            BackpackDataStorage.setActiveItem(playerUuid, newItem);
+
+            if (fromArmor) {
+                BackpackDataStorage.setActiveItem(playerUuid, newItem);
+            } else {
+                BackpackDataStorage.clearActiveItem(playerUuid);
+            }
         } else {
             BackpackDataStorage.clearActiveItem(playerUuid);
         }
 
-        // Step 6: Refresh UI.
         BackpackUIUpdater.updateBackpackUI(entity, ref, store);
+    }
+
+    private static boolean writeToContainerByInstance(@Nonnull ItemContainer container,
+                                                      @Nonnull ItemStack target,
+                                                      @Nonnull ItemStack replacement) {
+        String targetId = BackpackItemFactory.getInstanceId(target);
+        for (short slot = 0; slot < container.getCapacity(); slot++) {
+            ItemStack candidate = container.getItemStack(slot);
+            if (candidate == null || candidate.isEmpty()) continue;
+            boolean match = targetId != null
+                    ? targetId.equals(BackpackItemFactory.getInstanceId(candidate))
+                    : candidate.equals(target);
+            if (match) {
+                container.setItemStackForSlot(slot, replacement);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    private static ItemStack resolveLatestItem(@Nonnull Inventory inv,
+                                               @Nonnull ItemStack target) {
+        String targetId = BackpackItemFactory.getInstanceId(target);
+        if (targetId == null) return null;
+
+        ItemStack chestItem = inv.getArmor().getItemStack(CHEST_SLOT);
+        if (chestItem != null && !chestItem.isEmpty()
+                && targetId.equals(BackpackItemFactory.getInstanceId(chestItem))) {
+            return chestItem;
+        }
+
+        for (ItemContainer container : new ItemContainer[]{
+                inv.getStorage(), inv.getBackpack(), inv.getHotbar()}) {
+            for (short slot = 0; slot < container.getCapacity(); slot++) {
+                ItemStack candidate = container.getItemStack(slot);
+                if (candidate == null || candidate.isEmpty()) continue;
+                if (targetId.equals(BackpackItemFactory.getInstanceId(candidate))) {
+                    return candidate;
+                }
+            }
+        }
+        return null;
     }
 
     @Nullable
