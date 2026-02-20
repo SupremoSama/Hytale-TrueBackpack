@@ -117,6 +117,8 @@ public class BackpackTooltipListener {
             ItemStack fakeStack = buildFakeStack(item);
             if (fakeStack == null) continue;
 
+            if (BackpackItemFactory.isEquipped(fakeStack)) continue;
+
             String tooltipText = BackpackTooltipProvider.buildTooltip(fakeStack, language);
             if (tooltipText == null) continue;
 
@@ -158,17 +160,15 @@ public class BackpackTooltipListener {
         String tooltipText;
         if (activeItem != null && BackpackItemFactory.hasContents(activeItem)) {
             List<ItemStack> contents = BackpackItemFactory.loadContents(activeItem);
-            // Pass language so item names render in the player's locale
+
             tooltipText = BackpackTooltipProvider.buildTooltipFromLiveContents(
                     contents, sizeBonus, language);
         } else {
-            // Equipped but no snapshot yet — fall back to metadata or empty
             ItemStack fakeStack = buildFakeStack(chestItem);
             tooltipText = fakeStack != null
                     ? BackpackTooltipProvider.buildTooltip(fakeStack, language)
                     : null;
             if (tooltipText == null) {
-                // &7/&8 — Hytale color codes, not §
                 tooltipText = "&7Backpack (" + sizeBonus + " slots)\n&8Empty";
             }
         }
@@ -187,10 +187,6 @@ public class BackpackTooltipListener {
         cloned.itemId = virtualId;
         armorSection.items.put(1, cloned);
     }
-
-    // ──────────────────────────────────────────────────────────────────────
-    //  Virtual item construction
-    // ──────────────────────────────────────────────────────────────────────
 
     @Nullable
     private static ItemBase buildVirtualItemBase(@Nonnull String baseItemId,
@@ -213,11 +209,7 @@ public class BackpackTooltipListener {
                 clone.translationProperties = clone.translationProperties.clone();
             }
 
-            // Assign our unique description key; keep the original item's name key
-            // so the backpack's own name (e.g. "Leather Backpack") is unchanged
             clone.translationProperties.description = descKey;
-
-            // Hide from creative / item library tabs
             clone.variant = true;
 
             return clone;
@@ -260,7 +252,6 @@ public class BackpackTooltipListener {
             }
         }
 
-        // ── Send only changed translations (diff-based) ────────────────────
         if (!translations.isEmpty()) {
             Map<String, String> lastSent = LAST_SENT_TRANSLATIONS.get(playerUuid);
             Map<String, String> delta    = new LinkedHashMap<>();

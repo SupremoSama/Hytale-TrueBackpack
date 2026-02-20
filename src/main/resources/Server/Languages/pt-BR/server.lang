@@ -4,3 +4,4 @@ truebackpack.items.Utility_Leather_Big_Backpack.name=Mochila Grande
 truebackpack.items.Utility_Leather_Extra_Big_Backpack.name=Mochila Gigantesca
 truebackpack.tooltip.title=Mochila
 truebackpack.tooltip.empty=Vazio
+truebackpack.tooltip.equipped=Equipado

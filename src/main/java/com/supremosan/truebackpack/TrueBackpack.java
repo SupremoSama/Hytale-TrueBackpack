@@ -21,9 +21,15 @@ public class TrueBackpack extends JavaPlugin {
         // 2. Tooltip listener handles custom tooltips for backpacks.
         BackpackTooltipListener.register();
 
-        // 3. Clean up per-player caches on disconnect.
-        this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event ->
-                BackpackTooltipListener.onPlayerLeave(event.getPlayerRef().getUuid()));
+        // 3. Cosmetic listener handles visual 3D model attachment on storage slot 0.
+        BackpackCosmeticListener.register(this);
+
+        // 4. Clean up per-player caches on disconnect.
+        this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {
+            java.util.UUID uuid = event.getPlayerRef().getUuid();
+            BackpackTooltipListener.onPlayerLeave(uuid);
+            BackpackCosmeticListener.onPlayerLeave(uuid.toString());
+        });
 
         LOGGER.atInfo().log("[TrueBackpack] Ready");
     }

@@ -19,6 +19,9 @@ public class BackpackItemFactory {
     public static final KeyedCodec<String> INSTANCE_ID_CODEC =
             new KeyedCodec<>("Backpack_instance_id", Codec.STRING);
 
+    public static final KeyedCodec<Boolean> EQUIPPED_CODEC =
+            new KeyedCodec<>("Backpack_equipped", Codec.BOOLEAN);
+
     private static final String CONTENTS_KEY = "Backpack_contents";
 
     private BackpackItemFactory() {}
@@ -76,5 +79,14 @@ public class BackpackItemFactory {
     @Nonnull
     public static ItemStack clearContents(@Nonnull ItemStack backpack) {
         return backpack.withMetadata(CONTENTS_KEY, (BsonValue) null);
+    }
+
+    public static ItemStack setEquipped(@Nonnull ItemStack backpack, boolean equipped) {
+        return backpack.withMetadata(EQUIPPED_CODEC, equipped);
+    }
+
+    public static boolean isEquipped(@Nonnull ItemStack backpack) {
+        Boolean val = backpack.getFromMetadataOrNull(EQUIPPED_CODEC);
+        return val != null && val;
     }
 }
