@@ -41,6 +41,17 @@ public class BackpackItemFactory {
     }
 
     @Nonnull
+    public static ItemStack setEquipped(@Nonnull ItemStack backpack, boolean equipped) {
+        return backpack.withMetadata(EQUIPPED_CODEC, equipped);
+    }
+
+    public static boolean isEquipped(@Nonnull ItemStack backpack) {
+        Boolean val = backpack.getFromMetadataOrNull(EQUIPPED_CODEC);
+        return val != null && val;
+    }
+
+
+    @Nonnull
     public static ItemStack saveContents(@Nonnull ItemStack backpack,
                                          @Nonnull List<ItemStack> contents) {
         BsonArray array = new BsonArray();
@@ -72,21 +83,15 @@ public class BackpackItemFactory {
     }
 
     public static boolean hasContents(@Nonnull ItemStack backpack) {
-        List<ItemStack> stored = loadContents(backpack);
-        return stored.stream().anyMatch(i -> i != null && !i.isEmpty());
+        return loadContents(backpack).stream().anyMatch(i -> i != null && !i.isEmpty());
     }
 
     @Nonnull
     public static ItemStack clearContents(@Nonnull ItemStack backpack) {
-        return backpack.withMetadata(CONTENTS_KEY, (BsonValue) null);
-    }
-
-    public static ItemStack setEquipped(@Nonnull ItemStack backpack, boolean equipped) {
-        return backpack.withMetadata(EQUIPPED_CODEC, equipped);
-    }
-
-    public static boolean isEquipped(@Nonnull ItemStack backpack) {
-        Boolean val = backpack.getFromMetadataOrNull(EQUIPPED_CODEC);
-        return val != null && val;
+        BsonDocument meta = backpack.getMetadata();
+        if (meta == null || !meta.containsKey(CONTENTS_KEY)) {
+            return backpack;
+        }
+        return backpack.withMetadata(CONTENTS_KEY, BsonNull.VALUE);
     }
 }

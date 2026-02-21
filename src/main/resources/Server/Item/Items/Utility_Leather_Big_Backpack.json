@@ -57,18 +57,6 @@
       "Utility"
     ]
   },
-  "Interactions": {
-    "Secondary": {
-      "Interactions": [
-        {
-          "Type": "EquipItem"
-        }
-      ]
-    }
-  },
-  "Armor": {
-    "ArmorSlot": "Chest"
-  },
   "TranslationProperties": {
     "Name": "server.truebackpack.items.Utility_Leather_Big_Backpack.name"
   },

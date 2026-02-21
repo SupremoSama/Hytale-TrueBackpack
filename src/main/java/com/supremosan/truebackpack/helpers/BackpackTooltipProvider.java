@@ -1,23 +1,21 @@
 package com.supremosan.truebackpack.helpers;
 
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.modules.i18n.I18nModule;
 import com.supremosan.truebackpack.BackpackArmorListener;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 
 public class BackpackTooltipProvider {
 
-    private static final String KEY_TITLE   = "server.truebackpack.tooltip.title";
-    private static final String KEY_EMPTY   = "server.truebackpack.tooltip.empty";
-    private static final String KEY_SLOTS   = "server.truebackpack.tooltip.slots";
-    private static final String KEY_ITEMS   = "server.truebackpack.tooltip.items";
+    private static final String KEY_TITLE    = "server.truebackpack.tooltip.title";
+    private static final String KEY_EMPTY    = "server.truebackpack.tooltip.empty";
+    private static final String KEY_SLOTS    = "server.truebackpack.tooltip.slots";
+    private static final String KEY_ITEMS    = "server.truebackpack.tooltip.items";
+    private static final String KEY_EQUIPPED = "server.truebackpack.tooltip.equipped";
 
     private BackpackTooltipProvider() {}
 
@@ -29,7 +27,10 @@ public class BackpackTooltipProvider {
         short sizeBonus = BackpackArmorListener.getBackpackSize(itemId);
         if (sizeBonus == 0) return null;
 
-        if (BackpackItemFactory.isEquipped(stack)) return null;
+        if (BackpackItemFactory.isEquipped(stack)) {
+            I18nModule i18n = I18nModule.get();
+            return resolve(i18n, language, KEY_EQUIPPED);
+        }
 
         if (!BackpackItemFactory.hasContents(stack)) {
             return buildEmptyTooltip(sizeBonus, language);
@@ -47,17 +48,7 @@ public class BackpackTooltipProvider {
     }
 
     @Nonnull
-    private static List<ItemStack> getLiveBackpackContents(@Nonnull Inventory inventory) {
-        ItemContainer bp = inventory.getBackpack();
-        List<ItemStack> contents = new ArrayList<>();
-        for (short i = 0; i < bp.getCapacity(); i++) {
-            contents.add(bp.getItemStack(i));
-        }
-        return contents;
-    }
-
-    @Nonnull
-    private static String buildEmptyTooltip(short sizeBonus, @Nullable String language) {
+    public static String buildEmptyTooltip(short sizeBonus, @Nullable String language) {
         I18nModule i18n  = I18nModule.get();
         String title     = resolve(i18n, language, KEY_TITLE);
         String slotsWord = resolve(i18n, language, KEY_SLOTS);

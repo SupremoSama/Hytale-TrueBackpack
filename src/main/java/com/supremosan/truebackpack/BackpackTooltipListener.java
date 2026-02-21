@@ -28,19 +28,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BackpackTooltipListener {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
-    private static final String VIRTUAL_SEP = "__bp_";
+    private static final String VIRTUAL_SEP     = "__bp_";
     private static final String DESC_KEY_PREFIX = "server.items.dynamic.backpack.";
 
     private static final ThreadLocal<Boolean> PROCESSING =
             ThreadLocal.withInitial(() -> false);
 
-    private static final ConcurrentHashMap<UUID, Set<String>> SENT_VIRTUAL_IDS =
+    private static final ConcurrentHashMap<UUID, Set<String>>         SENT_VIRTUAL_IDS      =
             new ConcurrentHashMap<>();
-
     private static final ConcurrentHashMap<UUID, Map<String, String>> LAST_SENT_TRANSLATIONS =
             new ConcurrentHashMap<>();
 
     private static PacketFilter outboundFilter;
+
     private BackpackTooltipListener() {}
 
     public static void register() {
@@ -66,7 +66,7 @@ public class BackpackTooltipListener {
     }
 
     private static void onOutbound(@Nonnull PlayerRef playerRef,
-                                      @Nonnull com.hypixel.hytale.protocol.Packet packet) {
+                                   @Nonnull com.hypixel.hytale.protocol.Packet packet) {
         if (PROCESSING.get()) return;
         if (!(packet instanceof UpdatePlayerInventory invPacket)) return;
 
@@ -89,11 +89,11 @@ public class BackpackTooltipListener {
         Map<String, ItemBase> newVirtualItems = new LinkedHashMap<>();
         Map<String, String>   translations    = new LinkedHashMap<>();
 
-        processSection(packet.hotbar,       language, newVirtualItems, translations);
-        processSection(packet.utility,      language, newVirtualItems, translations);
-        processSection(packet.tools,        language, newVirtualItems, translations);
-        processSection(packet.storage,      language, newVirtualItems, translations);
-        processSection(packet.backpack,     language, newVirtualItems, translations);
+        processSection(packet.hotbar,   language, newVirtualItems, translations);
+        processSection(packet.utility,  language, newVirtualItems, translations);
+        processSection(packet.tools,    language, newVirtualItems, translations);
+        processSection(packet.storage,  language, newVirtualItems, translations);
+        processSection(packet.backpack, language, newVirtualItems, translations);
 
         processArmorSection(playerUuid, packet.armor, language, newVirtualItems, translations);
 
@@ -116,8 +116,6 @@ public class BackpackTooltipListener {
 
             ItemStack fakeStack = buildFakeStack(item);
             if (fakeStack == null) continue;
-
-            if (BackpackItemFactory.isEquipped(fakeStack)) continue;
 
             String tooltipText = BackpackTooltipProvider.buildTooltip(fakeStack, language);
             if (tooltipText == null) continue;
@@ -155,22 +153,27 @@ public class BackpackTooltipListener {
         if (sizeBonus == 0) return;
 
         String playerUuidStr = playerUuid.toString();
-        ItemStack activeItem = BackpackDataStorage.getActiveItem(playerUuidStr);
+
+        if (BackpackDataStorage.consumeArmorTooltipDirty(playerUuidStr)) {
+            Set<String> sentIds = SENT_VIRTUAL_IDS.get(playerUuid);
+            if (sentIds != null) {
+                sentIds.removeIf(id -> id.startsWith(chestItem.itemId + VIRTUAL_SEP));
+            }
+            Map<String, String> lastSent = LAST_SENT_TRANSLATIONS.get(playerUuid);
+            if (lastSent != null) {
+                lastSent.entrySet().removeIf(e ->
+                        e.getKey().startsWith(DESC_KEY_PREFIX + chestItem.itemId + VIRTUAL_SEP));
+            }
+        }
+
+        List<ItemStack> liveContents = BackpackDataStorage.getLiveContents(playerUuidStr);
 
         String tooltipText;
-        if (activeItem != null && BackpackItemFactory.hasContents(activeItem)) {
-            List<ItemStack> contents = BackpackItemFactory.loadContents(activeItem);
-
+        if (liveContents != null) {
             tooltipText = BackpackTooltipProvider.buildTooltipFromLiveContents(
-                    contents, sizeBonus, language);
+                    liveContents, sizeBonus, language);
         } else {
-            ItemStack fakeStack = buildFakeStack(chestItem);
-            tooltipText = fakeStack != null
-                    ? BackpackTooltipProvider.buildTooltip(fakeStack, language)
-                    : null;
-            if (tooltipText == null) {
-                tooltipText = "&7Backpack (" + sizeBonus + " slots)\n&8Empty";
-            }
+            tooltipText = BackpackTooltipProvider.buildEmptyTooltip(sizeBonus, language);
         }
 
         String contentHash = hash(tooltipText);
@@ -239,7 +242,7 @@ public class BackpackTooltipListener {
 
         if (!toSend.isEmpty()) {
             try {
-                UpdateItems itemsPacket = new UpdateItems();
+                UpdateItems itemsPacket    = new UpdateItems();
                 itemsPacket.type         = UpdateType.AddOrUpdate;
                 itemsPacket.items        = toSend;
                 itemsPacket.removedItems = new String[0];
@@ -305,9 +308,9 @@ public class BackpackTooltipListener {
     @Nonnull
     private static String hash(@Nonnull String input) {
         try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
+            MessageDigest md     = MessageDigest.getInstance("MD5");
+            byte[]        digest = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb     = new StringBuilder();
             for (int i = 0; i < 4; i++) {
                 sb.append(String.format("%02x", digest[i]));
             }
