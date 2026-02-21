@@ -418,6 +418,8 @@ public class BackpackCosmeticListener {
                 hidden.remove(Cosmetic.Ear);
                 hidden.remove(Cosmetic.HeadAccessory);
                 hidden.remove(Cosmetic.Haircut);
+                hidden.remove(Cosmetic.FacialHair);
+                hidden.remove(Cosmetic.FaceAccessory);
                 hidden.remove(Cosmetic.EarAccessory);
             }
             if (settings.hideCuirass()) hidden.remove(Cosmetic.Overtop);
