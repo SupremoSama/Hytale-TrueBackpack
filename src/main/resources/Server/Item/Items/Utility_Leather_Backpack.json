@@ -40,9 +40,6 @@
       "Utility"
     ]
   },
-  "Armor": {
-    "ArmorSlot": "Chest"
-  },
   "IconProperties": {
     "Scale": 0.6,
     "Rotation": [
@@ -54,15 +51,6 @@
       0,
       -12
     ]
-  },
-  "Interactions": {
-    "Secondary": {
-      "Interactions": [
-        {
-          "Type": "EquipItem"
-        }
-      ]
-    }
   },
   "TranslationProperties": {
     "Name": "server.truebackpack.items.Utility_Leather_Backpack.name"
