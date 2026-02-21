@@ -1,12 +1,11 @@
 package com.supremosan.truebackpack;
 
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
-import com.hypixel.hytale.component.Component;
-import com.hypixel.hytale.component.ComponentType;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.RefChangeSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.type.model.config.Model;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
@@ -206,6 +205,59 @@ public class BackpackCosmeticListener {
         }
 
         scheduleUpdate(player, store, ref, playerUuid, itemId);
+    }
+
+    public static class OnPlayerSettingsChange extends RefChangeSystem<EntityStore, PlayerSettings> {
+
+        @Nonnull
+        @Override
+        public ComponentType<EntityStore, PlayerSettings> componentType() {
+            return PlayerSettings.getComponentType();
+        }
+
+        @Nonnull
+        @Override
+        public Query<EntityStore> getQuery() {
+            return Player.getComponentType();
+        }
+
+        @Override
+        public void onComponentAdded(@Nonnull Ref<EntityStore> ref, @Nonnull PlayerSettings component,
+                                     @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> commandBuffer) {
+            handleSettingsChange(ref, store, commandBuffer);
+        }
+
+        @Override
+        public void onComponentSet(@Nonnull Ref<EntityStore> ref, @Nullable PlayerSettings oldComponent,
+                                   @Nonnull PlayerSettings newComponent, @Nonnull Store<EntityStore> store,
+                                   @Nonnull CommandBuffer<EntityStore> commandBuffer) {
+            handleSettingsChange(ref, store, commandBuffer);
+        }
+
+        @Override
+        public void onComponentRemoved(@Nonnull Ref<EntityStore> ref, @Nonnull PlayerSettings component,
+                                       @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> commandBuffer) {
+        }
+
+        private static void handleSettingsChange(@Nonnull Ref<EntityStore> ref,
+                                                 @Nonnull Store<EntityStore> store,
+                                                 @Nonnull CommandBuffer<EntityStore> commandBuffer) {
+            if (PROCESSING.get()) return;
+
+            Player player = (Player) commandBuffer.getComponent(ref, Player.getComponentType());
+            if (player == null) return;
+
+            String playerUuid = resolveUuid(store, ref);
+            if (playerUuid == null) return;
+
+            String currentBackpackItemId = readActiveBackpackItemId(player);
+            if (currentBackpackItemId == null) {
+                BackpackData persisted = store.getComponent(ref, BackpackData.TYPE);
+                if (persisted != null) currentBackpackItemId = persisted.getActiveBackpackItemId();
+            }
+
+            scheduleArmorReapply(player, store, ref, playerUuid, currentBackpackItemId);
+        }
     }
 
     private static void scheduleUpdate(@Nonnull Player player,

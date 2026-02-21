@@ -1,9 +1,12 @@
 package com.supremosan.truebackpack;
 
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.protocol.packets.player.ClientReady;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.Universe;
 
 public class TrueBackpack extends JavaPlugin {
 
@@ -30,6 +33,13 @@ public class TrueBackpack extends JavaPlugin {
             BackpackTooltipListener.onPlayerLeave(uuid);
             BackpackCosmeticListener.onPlayerLeave(uuid.toString());
         });
+
+        // 5. Setup listener event for player change the visibility.
+        this.getEventRegistry().registerGlobal(PlayerReadyEvent.class,
+                _ -> {
+                    this.getEntityStoreRegistry()
+                            .registerSystem(new BackpackCosmeticListener.OnPlayerSettingsChange());
+                });
 
         LOGGER.atInfo().log("[TrueBackpack] Ready");
     }
