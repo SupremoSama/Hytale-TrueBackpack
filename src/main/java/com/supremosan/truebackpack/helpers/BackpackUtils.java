@@ -4,6 +4,8 @@ import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.cosmetics.PlayerSkinPart;
 import com.hypixel.hytale.server.core.cosmetics.PlayerSkinPartTexture;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Map;
 
 public final class BackpackUtils {
@@ -12,7 +14,9 @@ public final class BackpackUtils {
 
     private BackpackUtils() {}
 
-    public static ModelAttachment fromPlayerSkinPart(PlayerSkinPart part, String gradientId) {
+    @Nonnull
+    public static ModelAttachment fromPlayerSkinPart(@Nonnull PlayerSkinPart part,
+                                                     @Nonnull String        gradientId) {
         return new ModelAttachment(
                 part.getModel(),
                 part.getGreyscaleTexture(),
@@ -22,7 +26,10 @@ public final class BackpackUtils {
         );
     }
 
-    public static ModelAttachment resolveAttachment(PlayerSkinPart part, String[] parts, String defaultGradientId) {
+    @Nonnull
+    public static ModelAttachment resolveAttachment(@Nonnull PlayerSkinPart part,
+                                                    @Nonnull String[]       parts,
+                                                    @Nonnull String         defaultGradientId) {
         String a = parts.length > 1 ? parts[1] : null;
         String b = parts.length > 2 ? parts[2] : null;
 
@@ -43,12 +50,15 @@ public final class BackpackUtils {
         return fromPlayerSkinPart(part, a != null ? a : defaultGradientId);
     }
 
-    private static ModelAttachment tryVariant(PlayerSkinPart part, String variantKey, String textureKey, String defaultGradientId) {
+    @Nullable
+    private static ModelAttachment tryVariant(@Nonnull  PlayerSkinPart part,
+                                              @Nullable String         variantKey,
+                                              @Nullable String         textureKey,
+                                              @Nonnull  String         defaultGradientId) {
         PlayerSkinPart.Variant variant = get(part.getVariants(), variantKey);
         if (variant == null) return null;
 
         PlayerSkinPartTexture tex = get(variant.getTextures(), textureKey);
-
         if (tex != null) {
             return new ModelAttachment(
                     variant.getModel(),
@@ -68,7 +78,11 @@ public final class BackpackUtils {
         );
     }
 
-    private static ModelAttachment tryTexture(PlayerSkinPart part, String textureKey, String gradientKey, String defaultGradientId) {
+    @Nullable
+    private static ModelAttachment tryTexture(@Nonnull  PlayerSkinPart part,
+                                              @Nullable String         textureKey,
+                                              @Nullable String         gradientKey,
+                                              @Nonnull  String         defaultGradientId) {
         PlayerSkinPartTexture tex = get(part.getTextures(), textureKey);
         if (tex == null) return null;
 
@@ -81,7 +95,8 @@ public final class BackpackUtils {
         );
     }
 
-    private static <K, V> V get(Map<K, V> map, K key) {
+    @Nullable
+    private static <K, V> V get(@Nullable Map<K, V> map, @Nullable K key) {
         return (map == null || key == null) ? null : map.get(key);
     }
 }
