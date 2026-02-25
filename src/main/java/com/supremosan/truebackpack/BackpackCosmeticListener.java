@@ -417,12 +417,14 @@ public class BackpackCosmeticListener {
             if (settings.hideHelmet()) {
                 hidden.remove(Cosmetic.Ear);
                 hidden.remove(Cosmetic.HeadAccessory);
-                hidden.remove(Cosmetic.Haircut);
                 hidden.remove(Cosmetic.FacialHair);
                 hidden.remove(Cosmetic.FaceAccessory);
                 hidden.remove(Cosmetic.EarAccessory);
             }
-            if (settings.hideCuirass()) hidden.remove(Cosmetic.Overtop);
+            if (settings.hideCuirass()){
+                hidden.remove(Cosmetic.Overtop);
+                hidden.remove(Cosmetic.Cape);
+            }
             if (settings.hideGauntlets()) {
                 hidden.remove(Cosmetic.Undertop);
                 hidden.remove(Cosmetic.Gloves);
@@ -448,6 +450,7 @@ public class BackpackCosmeticListener {
         PlayerSkinPart body = registry.getBodyCharacteristics().get(bodyParts[0]);
         if (body != null) attachments.add(BackpackUtils.resolveAttachment(body, bodyParts, gradientId));
 
+        addSkinPart(attachments, skin.haircut, registry.getHaircuts(), gradientId);
         addSkinPart(attachments, skin.eyebrows, registry.getEyebrows(), gradientId);
         addSkinPart(attachments, skin.eyes, registry.getEyes(), gradientId);
         addSkinPart(attachments, skin.face, registry.getFaces(), gradientId);
@@ -459,8 +462,6 @@ public class BackpackCosmeticListener {
             addSkinPart(attachments, skin.facialHair, registry.getFacialHairs(), gradientId);
         if (!hiddenCosmetics.contains(Cosmetic.Ear))
             addSkinPart(attachments, skin.ears, registry.getEars(), gradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.Haircut))
-            addSkinPart(attachments, skin.haircut, registry.getHaircuts(), gradientId);
         if (!hiddenCosmetics.contains(Cosmetic.Cape))
             addSkinPart(attachments, skin.cape, registry.getCapes(), gradientId);
         if (!hiddenCosmetics.contains(Cosmetic.FaceAccessory))
