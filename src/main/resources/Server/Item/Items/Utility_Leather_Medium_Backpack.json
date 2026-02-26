@@ -59,5 +59,10 @@
       "Utility"
     ]
   },
-  "DropOnDeath": false
+  "DropOnDeath": false,
+  "Interactions": {
+    "Secondary": {
+      "Parent": "BackpackInteractions"
+    }
+  }
 }

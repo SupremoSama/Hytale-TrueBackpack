@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.helpers;
+package com.supremosan.truebackpack.cosmetic;
 
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.cosmetics.PlayerSkinPart;
@@ -8,11 +8,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Map;
 
-public final class BackpackUtils {
+public final class CosmeticUtils {
 
     private static final double DEFAULT_SCALE = 1.0D;
 
-    private BackpackUtils() {}
+    private CosmeticUtils() {}
 
     @Nonnull
     public static ModelAttachment fromPlayerSkinPart(@Nonnull PlayerSkinPart part,
