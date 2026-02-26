@@ -2,9 +2,10 @@ package com.supremosan.truebackpack;
 
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
-import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.supremosan.truebackpack.cosmetic.CosmeticListener;
 
 public class TrueBackpack extends JavaPlugin {
 
@@ -24,20 +25,21 @@ public class TrueBackpack extends JavaPlugin {
         BackpackTooltipListener.register();
 
         // 3. Cosmetic listener handles visual 3D model attachment on storage slot 0.
-        BackpackCosmeticListener.register(this);
+        CosmeticListener.register(this);
 
-        // 4. Setup listener event for player change the visibility.
-        this.getEventRegistry().registerGlobal(PlayerReadyEvent.class,
-                _ -> {
-                    this.getEntityStoreRegistry()
-                            .registerSystem(new BackpackCosmeticListener.OnPlayerSettingsChange());
-                });
+        // 4. Quiver listener handles visual 3D model attachment to quiver when has arrows.
+        QuiverListener.register(this);
 
-        // 5 Clean up per-player caches on disconnect.
+        // 4. Tool listener handles visual 3D model attachment to tools when has on hotbar.
+        ToolListener.register(this);
+
+        // 5. Clean up per-player caches on disconnect.
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {
-            java.util.UUID uuid = event.getPlayerRef().getUuid();
-            BackpackTooltipListener.onPlayerLeave(uuid);
-            BackpackCosmeticListener.onPlayerLeave(uuid.toString());
+            PlayerRef playerRef = event.getPlayerRef();
+            String uuidStr = playerRef.getUuid().toString();
+
+            BackpackTooltipListener.onPlayerLeave(playerRef.getUuid());
+            CosmeticListener.onPlayerLeave(uuidStr);
         });
 
         LOGGER.atInfo().log("[TrueBackpack] Ready");
