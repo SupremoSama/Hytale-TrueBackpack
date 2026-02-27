@@ -133,23 +133,8 @@ public class CosmeticListener {
             }
         };
 
-        PROCESSING.set(true);
-        if (world == null) {
-            try {
-                task.run();
-            } finally {
-                PROCESSING.set(false);
-            }
-        } else {
-            world.execute(() -> {
-                try {
-                    if (!ref.isValid()) return;
-                    rebuildModel(store, ref, player, playerUuid);
-                } finally {
-                    PROCESSING.set(false);
-                }
-            });
-        }
+        if (world == null) task.run();
+        else world.execute(task);
     }
 
     public static void onPlayerLeave(@Nonnull String playerUuid) {
