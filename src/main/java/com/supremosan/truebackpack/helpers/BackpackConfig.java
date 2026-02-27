@@ -18,16 +18,16 @@ public final class BackpackConfig {
         ToolListener.registerPrefix("Weapon_Longsword", ToolSlot.BACK);
         ToolListener.registerPrefix("Weapon_Axe",       ToolSlot.BACK);
         ToolListener.registerPrefix("Weapon_Battleaxe", ToolSlot.BACK);
-        ToolListener.registerPrefix("Weapon_Shortbow", ToolSlot.BACK);
-        ToolListener.registerPrefix("Weapon_Longbow",  ToolSlot.BACK);
+        ToolListener.registerPrefix("Weapon_Shortbow",  ToolSlot.BACK);
+        ToolListener.registerPrefix("Weapon_Longbow",   ToolSlot.BACK);
     }
 
     private static void registerBackpacks() {
         BackpackArmorListener.registerBackpack(
                 "Utility_Leather_Backpack",
                 (short) 9,
-                "Items/Back/Backpack_Medium.blockymodel",
-                "Items/Back/Backpack_Medium_Texture.png");
+                "Items/Backpacks/Small_Backpack.blockymodel",
+                "Items/Back/BackpackBig_Texture.png");
 
         BackpackArmorListener.registerBackpack(
                 "Utility_Leather_Medium_Backpack",
