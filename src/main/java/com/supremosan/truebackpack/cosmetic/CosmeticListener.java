@@ -132,8 +132,24 @@ public class CosmeticListener {
                 PROCESSING.set(false);
             }
         };
-        if (world == null) task.run();
-        else world.execute(task);
+
+        PROCESSING.set(true);
+        if (world == null) {
+            try {
+                task.run();
+            } finally {
+                PROCESSING.set(false);
+            }
+        } else {
+            world.execute(() -> {
+                try {
+                    if (!ref.isValid()) return;
+                    rebuildModel(store, ref, player, playerUuid);
+                } finally {
+                    PROCESSING.set(false);
+                }
+            });
+        }
     }
 
     public static void onPlayerLeave(@Nonnull String playerUuid) {
@@ -237,6 +253,8 @@ public class CosmeticListener {
         restoreSkinAttachments(attachments, skin, hiddenCosmetics);
 
         Map<String, ModelAttachment> extras = PLAYER_ATTACHMENTS.get(playerUuid);
+        LOGGER.atInfo().log("[TrueBackpack] rebuildModel player=%s extras=%s",
+                playerUuid, extras != null ? extras.keySet() : "null");
         if (extras != null) attachments.addAll(extras.values());
 
         Model newModel = new Model(

@@ -29,8 +29,8 @@
       }
     ]
   },
-  "Model": "Items/Back/Backpack_Medium.blockymodel",
-  "Texture": "Items/Back/Backpack_Medium_Texture.png",
+  "Model": "Items/Backpacks/Small_Backpack.blockymodel",
+  "Texture": "Items/Back/BackpackBig_Texture.png",
   "PlayerAnimationsId": "Block",
   "Tags": {
     "Family": [

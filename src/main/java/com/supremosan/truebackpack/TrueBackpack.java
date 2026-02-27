@@ -31,7 +31,7 @@ public class TrueBackpack extends JavaPlugin {
         QuiverListener.register(this);
 
         // 4. Tool listener handles visual 3D model attachment to tools when has on hotbar.
-        ToolListener.register(this);
+        //ToolListener.register(this);
 
         // 5. Clean up per-player caches on disconnect.
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {
