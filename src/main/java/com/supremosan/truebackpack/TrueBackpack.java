@@ -8,6 +8,10 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.supremosan.truebackpack.commands.ToggleCosmeticCommand;
 import com.supremosan.truebackpack.cosmetic.CosmeticListener;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
+import com.supremosan.truebackpack.model.BlockyModelWrapper;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 public class TrueBackpack extends JavaPlugin {
 
@@ -37,7 +41,16 @@ public class TrueBackpack extends JavaPlugin {
         QuiverListener.register(this);
 
         // 6. Tool listener handles visual 3D model attachment to tools when has on hotbar.
-        //ToolListener.register(this);
+        try {
+            Path assetDir = this.getDataDirectory().resolve("generated");
+            String assetPrefix = "generated";
+
+            LOGGER.atInfo().log("[TrueBackpack] BlockyModelWrapper assetDir=%s", assetDir);
+            BlockyModelWrapper.init(assetDir, assetPrefix);
+            ToolListener.register(this);
+        } catch (IOException e) {
+            LOGGER.atWarning().log("[TrueBackpack] Failed to initialise BlockyModelWrapper, ToolListener disabled: %s", e.getMessage());
+        }
 
         // 7. Clean up per-player caches on disconnect.
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {

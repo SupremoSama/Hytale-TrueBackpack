@@ -17,7 +17,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.cosmetic.CosmeticListener;
-import com.supremosan.truebackpack.model.BlockyModelWrapper;
+import com.supremosan.truebackpack.helpers.GeneratedModel;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,22 +33,24 @@ public class ToolListener extends RefSystem<EntityStore> {
 
     private static final Map<String, String> CATEGORY_FOLDER = Map.of(
             "Weapon", "Weapons",
-            "Tool",   "Tools"
+            "Tool", "Tools"
     );
 
     public enum ToolSlot {
-        BACK("B-Attachment"),
-        HIP_LEFT("L-Attachment"),
-        HIP_RIGHT("R-Attachment");
+        BACK("BACK"),
+        HIP_LEFT("HIP_LEFT"),
+        HIP_RIGHT("HIP_RIGHT");
 
-        private final String boneName;
+        private final String slotName;
 
-        ToolSlot(@Nonnull String boneName) {
-            this.boneName = boneName;
+        ToolSlot(@Nonnull String slotName) {
+            this.slotName = slotName;
         }
 
         @Nonnull
-        public String getBoneName() { return boneName; }
+        public String getSlotName() {
+            return slotName;
+        }
     }
 
     private static final Map<String, ToolSlot> PREFIX_REGISTRY = new LinkedHashMap<>();
@@ -69,8 +71,6 @@ public class ToolListener extends RefSystem<EntityStore> {
         plugin.getEventRegistry().registerGlobal(
                 LivingEntityInventoryChangeEvent.class,
                 event -> INSTANCE.handle(event));
-
-        LOGGER.atInfo().log("[TrueBackpack] ToolListener registered");
     }
 
     public static void registerPrefix(@Nonnull String idPrefix, @Nonnull ToolSlot slot) {
@@ -83,15 +83,18 @@ public class ToolListener extends RefSystem<EntityStore> {
     }
 
     @Override
-    public void onEntityAdded(@Nonnull Ref<EntityStore> ref, @Nonnull AddReason reason,
+    public void onEntityAdded(@Nonnull Ref<EntityStore> ref,
+                              @Nonnull AddReason reason,
                               @Nonnull Store<EntityStore> store,
                               @Nonnull CommandBuffer<EntityStore> buffer) {
     }
 
     @Override
-    public void onEntityRemove(@Nonnull Ref<EntityStore> ref, @Nonnull RemoveReason reason,
+    public void onEntityRemove(@Nonnull Ref<EntityStore> ref,
+                               @Nonnull RemoveReason reason,
                                @Nonnull Store<EntityStore> store,
                                @Nonnull CommandBuffer<EntityStore> buffer) {
+
         UUIDComponent uuidComp = store.getComponent(ref, UUIDComponent.getComponentType());
         if (uuidComp == null) return;
 
@@ -102,13 +105,14 @@ public class ToolListener extends RefSystem<EntityStore> {
             String key = slotKey(slot);
             CURRENT_ITEM.remove(playerUuid + ":" + key);
             CosmeticListener.removeAttachment(playerUuid, key);
-            BlockyModelWrapper.delete(playerUuid, key);
+            GeneratedModel.delete(playerUuid, key);
         }
     }
 
     private void handle(@Nonnull LivingEntityInventoryChangeEvent event) {
+
         LivingEntity entity = event.getEntity();
-        if (entity == null) return;
+        if (!(entity instanceof Player player)) return;
 
         Ref<EntityStore> ref = entity.getReference();
         if (ref == null || !ref.isValid()) return;
@@ -119,20 +123,14 @@ public class ToolListener extends RefSystem<EntityStore> {
 
         String playerUuid = uuidComponent.getUuid().toString();
 
-        LOGGER.atInfo().log("[TrueBackpack] InventoryChangeEvent player=%s container=%s isProcessing=%s prefixRegistry=%s",
-                playerUuid,
-                event.getItemContainer() != null ? event.getItemContainer().getClass().getSimpleName() : "null",
-                PROCESSING.get(playerUuid),
-                PREFIX_REGISTRY.keySet());
-
         if (Boolean.TRUE.equals(PROCESSING.get(playerUuid))) return;
-
-        if (!(entity instanceof Player player)) return;
+        if (CosmeticListener.isProcessing()) return;
 
         ItemContainer hotbar = player.getInventory().getHotbar();
         if (hotbar == null) return;
 
         PROCESSING.put(playerUuid, Boolean.TRUE);
+
         try {
             evaluateHotbar(player, store, ref, playerUuid, hotbar);
         } finally {
@@ -145,6 +143,7 @@ public class ToolListener extends RefSystem<EntityStore> {
                                        @Nonnull Ref<EntityStore> ref,
                                        @Nonnull String playerUuid,
                                        @Nonnull ItemContainer hotbar) {
+
         Map<ToolSlot, String> resolved = new LinkedHashMap<>();
 
         for (short slot = 0; slot < hotbar.getCapacity(); slot++) {
@@ -153,48 +152,37 @@ public class ToolListener extends RefSystem<EntityStore> {
 
             String itemId = stack.getItemId();
             ToolSlot toolSlot = matchPrefix(itemId);
-            LOGGER.atInfo().log("[TrueBackpack] hotbar slot=%d itemId=%s matchedSlot=%s", slot, itemId, toolSlot);
             if (toolSlot == null) continue;
-
             if (resolved.containsKey(toolSlot)) continue;
+
             resolved.put(toolSlot, itemId);
         }
-
-        LOGGER.atInfo().log("[TrueBackpack] evaluateHotbar player=%s resolved=%s", playerUuid, resolved);
 
         boolean changed = false;
 
         for (ToolSlot slot : ToolSlot.values()) {
+
             String key = slotKey(slot);
             String currentKey = playerUuid + ":" + key;
             String itemId = resolved.get(slot);
-            String previousItemId = CURRENT_ITEM.get(currentKey);
+            String previous = CURRENT_ITEM.get(currentKey);
 
             if (itemId != null) {
-                if (itemId.equals(previousItemId)) {
-                    LOGGER.atInfo().log("[TrueBackpack] slot=%s unchanged item=%s, skipping", slot.name(), itemId);
-                    continue;
-                }
+                if (itemId.equals(previous)) continue;
 
-                LOGGER.atInfo().log("[TrueBackpack] slot=%s item changed [%s] -> [%s]", slot.name(), previousItemId, itemId);
-                ModelAttachment attachment = buildAttachment(slot, itemId, playerUuid, key);
+                ModelAttachment attachment = buildAttachment(playerUuid, slot, key, itemId);
                 if (attachment != null) {
                     CURRENT_ITEM.put(currentKey, itemId);
                     CosmeticListener.putAttachment(playerUuid, key, attachment);
                     changed = true;
-                } else {
-                    LOGGER.atWarning().log("[TrueBackpack] slot=%s attachment build failed for item=%s", slot.name(), itemId);
                 }
-            } else if (previousItemId != null) {
-                LOGGER.atInfo().log("[TrueBackpack] slot=%s item removed, was=%s", slot.name(), previousItemId);
+            } else if (previous != null) {
                 CURRENT_ITEM.remove(currentKey);
                 CosmeticListener.removeAttachment(playerUuid, key);
-                BlockyModelWrapper.delete(playerUuid, key);
+                GeneratedModel.delete(playerUuid, key);
                 changed = true;
             }
         }
-
-        LOGGER.atInfo().log("[TrueBackpack] evaluateHotbar player=%s changed=%s", playerUuid, changed);
 
         if (changed) {
             CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
@@ -210,23 +198,34 @@ public class ToolListener extends RefSystem<EntityStore> {
     }
 
     @Nullable
-    private static ModelAttachment buildAttachment(@Nonnull ToolSlot slot,
-                                                   @Nonnull String itemId,
-                                                   @Nonnull String playerUuid,
-                                                   @Nonnull String slotKey) {
-        BlockyModelWrapper.delete(playerUuid, slotKey);
+    private static ModelAttachment buildAttachment(@Nonnull String playerUuid,
+                                                   @Nonnull ToolSlot slot,
+                                                   @Nonnull String slotKey,
+                                                   @Nonnull String itemId) {
 
-        String sourceModelPath = resolveModelPath(itemId);
-        String wrappedPath = BlockyModelWrapper.wrap(playerUuid, slotKey, sourceModelPath);
+        GeneratedModel.delete(playerUuid, slotKey);
 
-        if (wrappedPath == null) {
-            LOGGER.atWarning().log("[TrueBackpack] Failed to wrap model for item=%s slot=%s", itemId, slot.name());
+        String sourceModel = resolveModelPath(itemId);
+        String texturePath = resolveTexturePath(itemId);
+
+        GeneratedModel generated = GeneratedModel.create(
+                playerUuid,
+                slotKey,
+                sourceModel
+        );
+
+        if (generated == null) {
+            LOGGER.atWarning().log("Failed generating model for %s", itemId);
             return null;
         }
 
-        String texturePath = resolveTexturePath(itemId);
-        LOGGER.atInfo().log("[TrueBackpack] Built wrapped attachment slot=%s wrappedModel=%s", slot.name(), wrappedPath);
-        return new ModelAttachment(wrappedPath, texturePath, "Chest", "", 0.5);
+        return new ModelAttachment(
+                generated.getModelPath(),
+                texturePath,
+                "Chest",
+                "",
+                1.0
+        );
     }
 
     @Nonnull
