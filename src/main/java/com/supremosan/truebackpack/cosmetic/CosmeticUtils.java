@@ -16,7 +16,7 @@ public final class CosmeticUtils {
 
     @Nonnull
     public static ModelAttachment fromPlayerSkinPart(@Nonnull PlayerSkinPart part,
-                                                     @Nonnull String        gradientId) {
+                                                     @Nonnull String gradientId) {
         return new ModelAttachment(
                 part.getModel(),
                 part.getGreyscaleTexture(),
@@ -28,69 +28,73 @@ public final class CosmeticUtils {
 
     @Nonnull
     public static ModelAttachment resolveAttachment(@Nonnull PlayerSkinPart part,
-                                                    @Nonnull String[]       parts,
-                                                    @Nonnull String         defaultGradientId) {
+                                                    @Nonnull String[] parts,
+                                                    @Nonnull String bodyGradientId) {
         String a = parts.length > 1 ? parts[1] : null;
         String b = parts.length > 2 ? parts[2] : null;
 
+        String partGradient = a != null ? a : bodyGradientId;
+
         ModelAttachment att;
 
-        att = tryVariant(part, a, b, defaultGradientId);
+        att = tryVariant(part, a, b, partGradient);
         if (att != null) return att;
 
-        att = tryVariant(part, b, a, defaultGradientId);
+        att = tryVariant(part, b, a, partGradient);
         if (att != null) return att;
 
-        att = tryTexture(part, a, b, defaultGradientId);
+        att = tryTexture(part, a, b, partGradient);
         if (att != null) return att;
 
-        att = tryTexture(part, b, a, defaultGradientId);
+        att = tryTexture(part, b, a, partGradient);
         if (att != null) return att;
 
-        return fromPlayerSkinPart(part, a != null ? a : defaultGradientId);
+        return fromPlayerSkinPart(part, partGradient);
     }
 
     @Nullable
-    private static ModelAttachment tryVariant(@Nonnull  PlayerSkinPart part,
-                                              @Nullable String         variantKey,
-                                              @Nullable String         textureKey,
-                                              @Nonnull  String         defaultGradientId) {
+    private static ModelAttachment tryVariant(@Nonnull PlayerSkinPart part,
+                                              @Nullable String variantKey,
+                                              @Nullable String gradientOrTextureKey,
+                                              @Nonnull String fallbackGradient) {
         PlayerSkinPart.Variant variant = get(part.getVariants(), variantKey);
         if (variant == null) return null;
 
-        PlayerSkinPartTexture tex = get(variant.getTextures(), textureKey);
+        PlayerSkinPartTexture tex = get(variant.getTextures(), gradientOrTextureKey);
         if (tex != null) {
             return new ModelAttachment(
                     variant.getModel(),
                     tex.getTexture(),
                     part.getGradientSet(),
-                    defaultGradientId,
+                    fallbackGradient,
                     DEFAULT_SCALE
             );
         }
 
+        String gradient = gradientOrTextureKey != null ? gradientOrTextureKey : fallbackGradient;
         return new ModelAttachment(
                 variant.getModel(),
                 variant.getGreyscaleTexture(),
                 part.getGradientSet(),
-                textureKey != null ? textureKey : defaultGradientId,
+                gradient,
                 DEFAULT_SCALE
         );
     }
 
     @Nullable
-    private static ModelAttachment tryTexture(@Nonnull  PlayerSkinPart part,
-                                              @Nullable String         textureKey,
-                                              @Nullable String         gradientKey,
-                                              @Nonnull  String         defaultGradientId) {
+    private static ModelAttachment tryTexture(@Nonnull PlayerSkinPart part,
+                                              @Nullable String textureKey,
+                                              @Nullable String gradientKey,
+                                              @Nonnull String fallbackGradient) {
         PlayerSkinPartTexture tex = get(part.getTextures(), textureKey);
         if (tex == null) return null;
 
+        String gradient = gradientKey != null ? gradientKey : fallbackGradient;
         return new ModelAttachment(
                 part.getModel(),
                 tex.getTexture(),
                 part.getGradientSet(),
-                gradientKey != null ? gradientKey : defaultGradientId,
+                gradient,
                 DEFAULT_SCALE
         );
     }

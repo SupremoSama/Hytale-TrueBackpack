@@ -20,10 +20,7 @@ import com.hypixel.hytale.server.core.modules.entity.component.TransformComponen
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.cosmetic.CosmeticListener;
-import com.supremosan.truebackpack.helpers.BackpackConfig;
-import com.supremosan.truebackpack.helpers.BackpackDataStorage;
-import com.supremosan.truebackpack.helpers.BackpackItemFactory;
-import com.supremosan.truebackpack.helpers.BackpackUIUpdater;
+import com.supremosan.truebackpack.helpers.*;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import javax.annotation.Nonnull;
@@ -325,7 +322,8 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
                               @Nullable ItemStack equippedItem) {
         if (!(entity instanceof Player player)) return;
 
-        ModelAttachment visual = equippedItem != null
+        boolean backpackVisible = CosmeticPreferenceUtils.isBackpackVisible(store, ref);
+        ModelAttachment visual = (equippedItem != null && backpackVisible)
                 ? resolveVisual(equippedItem.getItemId()) : null;
 
         if (visual != null) {
@@ -359,6 +357,28 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         List<ItemStack> toDrop = List.of(savedItem);
         Holder<EntityStore>[] drops = ItemComponent.generateItemDrops(store, toDrop, pos, rot);
         BUFFER.addEntities(drops, AddReason.SPAWN);
+    }
+
+    public static void syncBackpackAttachment(@Nonnull String playerUuid,
+                                              @Nonnull Player player,
+                                              @Nonnull Store<EntityStore> store,
+                                              @Nonnull Ref<EntityStore> ref) {
+        if (!hasEquippedBackpack(playerUuid)) return;
+        String equippedId = LAST_KNOWN_EQUIPPED.get(playerUuid);
+        if (equippedId == null) return;
+        ModelAttachment visual = resolveVisual(findEquippedItemId(player));
+        if (visual != null) {
+            CosmeticListener.putAttachment(playerUuid, "truebackpack:backpack", visual);
+        }
+    }
+
+    private static String findEquippedItemId(@Nonnull Player player) {
+        Inventory inv = player.getInventory();
+        ItemStack chest = inv.getArmor().getItemStack(CHEST_SLOT);
+        if (!ItemStack.isEmpty(chest) && bonus(chest) > 0) return chest.getItemId();
+        ItemStack storage = inv.getStorage().getItemStack(STORAGE_SLOT);
+        if (!ItemStack.isEmpty(storage) && bonus(storage) > 0) return storage.getItemId();
+        return null;
     }
 
     @Nullable
