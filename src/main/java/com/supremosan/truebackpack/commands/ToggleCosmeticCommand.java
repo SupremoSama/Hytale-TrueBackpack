@@ -59,7 +59,7 @@ public class ToggleCosmeticCommand extends AbstractPlayerCommand {
             case "backpack" -> {
                 boolean nowVisible = CosmeticPreferenceUtils.toggleBackpack(store, ref);
                 if (nowVisible) {
-                    BackpackArmorListener.syncBackpackAttachment(playerUuid, player, store, ref);
+                    BackpackArmorListener.syncBackpackAttachment(playerUuid, player);
                 } else {
                     CosmeticListener.removeAttachment(playerUuid, "truebackpack:backpack");
                 }
