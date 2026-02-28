@@ -5,7 +5,9 @@ import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.supremosan.truebackpack.commands.ToggleCosmeticCommand;
 import com.supremosan.truebackpack.cosmetic.CosmeticListener;
+import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 
 public class TrueBackpack extends JavaPlugin {
 
@@ -18,22 +20,26 @@ public class TrueBackpack extends JavaPlugin {
     @Override
     protected void setup() {
         // BUGS - If I drop the backpack when is equipped, it lost all items inside
-        // 1. Armor listener handles equip/unequip/swap and per-instance content persistence.
+        // 1. Manage the player preferences.
+        CosmeticPreference.register(this);
+        this.getCommandRegistry().registerCommand(new ToggleCosmeticCommand());
+
+        // 2. Armor listener handles equip/unequip/swap and per-instance content persistence.
         BackpackArmorListener.register(this);
 
-        // 2. Tooltip listener handles custom tooltips for backpacks.
+        // 3. Tooltip listener handles custom tooltips for backpacks.
         BackpackTooltipListener.register();
 
-        // 3. Cosmetic listener handles visual 3D model attachment on storage slot 0.
+        // 4. Cosmetic listener handles visual 3D model attachment on storage slot 0.
         CosmeticListener.register(this);
 
-        // 4. Quiver listener handles visual 3D model attachment to quiver when has arrows.
+        // 5. Quiver listener handles visual 3D model attachment to quiver when has arrows.
         QuiverListener.register(this);
 
-        // 4. Tool listener handles visual 3D model attachment to tools when has on hotbar.
+        // 6. Tool listener handles visual 3D model attachment to tools when has on hotbar.
         //ToolListener.register(this);
 
-        // 5. Clean up per-player caches on disconnect.
+        // 7. Clean up per-player caches on disconnect.
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {
             PlayerRef playerRef = event.getPlayerRef();
             String uuidStr = playerRef.getUuid().toString();

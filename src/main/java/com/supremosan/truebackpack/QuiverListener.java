@@ -18,6 +18,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.cosmetic.CosmeticListener;
+import com.supremosan.truebackpack.helpers.CosmeticPreferenceUtils;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -81,12 +82,25 @@ public class QuiverListener extends RefSystem<EntityStore> {
         CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
     }
 
+    public static void syncQuiverAttachment(@Nonnull String playerUuid,
+                                            @Nonnull Player player,
+                                            @Nonnull Store<EntityStore> store,
+                                            @Nonnull Ref<EntityStore> ref) {
+        boolean hasArrow = hasArrowInInventory(player.getInventory());
+        if (!hasArrow) return;
+        ModelAttachment quiver = BackpackArmorListener.hasEquippedBackpack(playerUuid)
+                ? QUIVER_BACKPACK_ATTACHMENT
+                : QUIVER_ATTACHMENT;
+        CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, quiver);
+    }
+
     private void onBackpackEquipChange(@Nonnull String playerUuid, @Nonnull Player player,
                                        @Nonnull Store<EntityStore> store,
                                        @Nonnull Ref<EntityStore> ref) {
         if (Boolean.TRUE.equals(PROCESSING.get(playerUuid))) return;
         if (!CosmeticListener.hasAttachment(playerUuid, ATTACHMENT_SLOT_KEY)) return;
 
+        if (!CosmeticPreferenceUtils.isQuiverVisible(store, ref)) return;
         ModelAttachment quiver = BackpackArmorListener.hasEquippedBackpack(playerUuid)
                 ? QUIVER_BACKPACK_ATTACHMENT
                 : QUIVER_ATTACHMENT;
@@ -116,8 +130,9 @@ public class QuiverListener extends RefSystem<EntityStore> {
         PROCESSING.put(playerUuid, Boolean.TRUE);
         try {
             boolean hasArrow = hasArrowInInventory(player.getInventory());
+            boolean quiverVisible = CosmeticPreferenceUtils.isQuiverVisible(store, ref);
 
-            if (hasArrow) {
+            if (hasArrow && quiverVisible) {
                 ModelAttachment quiver = BackpackArmorListener.hasEquippedBackpack(playerUuid)
                         ? QUIVER_BACKPACK_ATTACHMENT
                         : QUIVER_ATTACHMENT;
