@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.cosmetic;
+package com.supremosan.truebackpack.listener;
 
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.codec.Codec;
@@ -26,6 +26,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.protocol.Cosmetic;
 import com.hypixel.hytale.protocol.PlayerSkin;
 import com.supremosan.truebackpack.TrueBackpack;
+import com.supremosan.truebackpack.cosmetic.CosmeticUtils;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 import javax.annotation.Nonnull;

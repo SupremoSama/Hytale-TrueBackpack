@@ -14,10 +14,10 @@ import com.hypixel.hytale.server.core.modules.i18n.I18nModule;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.supremosan.truebackpack.BackpackArmorListener;
-import com.supremosan.truebackpack.QuiverListener;
-import com.supremosan.truebackpack.cosmetic.CosmeticListener;
-import com.supremosan.truebackpack.helpers.CosmeticPreferenceUtils;
+import com.supremosan.truebackpack.listener.BackpackArmorListener;
+import com.supremosan.truebackpack.listener.QuiverListener;
+import com.supremosan.truebackpack.listener.CosmeticListener;
+import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

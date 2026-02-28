@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack;
+package com.supremosan.truebackpack.listener;
 
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.query.Query;
@@ -19,8 +19,12 @@ import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.supremosan.truebackpack.cosmetic.CosmeticListener;
-import com.supremosan.truebackpack.helpers.*;
+import com.supremosan.truebackpack.TrueBackpack;
+import com.supremosan.truebackpack.config.BackpackConfig;
+import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
+import com.supremosan.truebackpack.data.BackpackDataStorage;
+import com.supremosan.truebackpack.factory.BackpackItemFactory;
+import com.supremosan.truebackpack.ui.BackpackUIUpdater;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import javax.annotation.Nonnull;

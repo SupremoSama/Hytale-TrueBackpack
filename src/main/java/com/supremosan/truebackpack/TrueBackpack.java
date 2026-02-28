@@ -6,8 +6,11 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.supremosan.truebackpack.commands.ToggleCosmeticCommand;
-import com.supremosan.truebackpack.cosmetic.CosmeticListener;
+import com.supremosan.truebackpack.listener.CosmeticListener;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
+import com.supremosan.truebackpack.listener.BackpackArmorListener;
+import com.supremosan.truebackpack.listener.BackpackTooltipListener;
+import com.supremosan.truebackpack.listener.QuiverListener;
 
 public class TrueBackpack extends JavaPlugin {
 
@@ -36,10 +39,7 @@ public class TrueBackpack extends JavaPlugin {
         // 5. Quiver listener handles visual 3D model attachment to quiver when has arrows.
         QuiverListener.register(this);
 
-        // 6. Tool listener handles visual 3D model attachment to tools when has on hotbar.
-        //ToolListener.register(this);
-
-        // 7. Clean up per-player caches on disconnect.
+        // 6. Clean up per-player caches on disconnect.
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {
             PlayerRef playerRef = event.getPlayerRef();
             String uuidStr = playerRef.getUuid().toString();

@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.helpers;
+package com.supremosan.truebackpack.factory;
 
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
