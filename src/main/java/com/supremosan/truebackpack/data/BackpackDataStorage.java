@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.helpers;
+package com.supremosan.truebackpack.data;
 
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 

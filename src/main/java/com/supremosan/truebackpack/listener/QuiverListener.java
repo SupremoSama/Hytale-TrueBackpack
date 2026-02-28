@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack;
+package com.supremosan.truebackpack.listener;
 
 import com.hypixel.hytale.component.AddReason;
 import com.hypixel.hytale.component.CommandBuffer;
@@ -17,8 +17,8 @@ import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.supremosan.truebackpack.cosmetic.CosmeticListener;
-import com.supremosan.truebackpack.helpers.CosmeticPreferenceUtils;
+import com.supremosan.truebackpack.TrueBackpack;
+import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 
 import javax.annotation.Nonnull;
 import java.util.Map;

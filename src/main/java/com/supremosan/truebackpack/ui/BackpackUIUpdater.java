@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.helpers;
+package com.supremosan.truebackpack.ui;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -18,7 +18,6 @@ public class BackpackUIUpdater {
     public static void updateBackpackUI(@Nonnull LivingEntity entity,
                                         @Nonnull Ref<EntityStore> ref,
                                         @Nonnull Store<EntityStore> store) {
-        // Only players have UI that needs updating
         if (!(entity instanceof Player player)) {
             return;
         }
@@ -29,10 +28,8 @@ public class BackpackUIUpdater {
                 return;
             }
 
-            // Step 1: Send updated inventory packet (marks inventory as synced)
             player.sendInventory();
 
-            // Step 2: Re-send the current game mode packet
             playerRefComponent.getPacketHandler().writeNoCache(
                     new SetGameMode(player.getGameMode())
             );

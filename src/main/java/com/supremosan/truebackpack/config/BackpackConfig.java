@@ -1,25 +1,11 @@
-package com.supremosan.truebackpack.helpers;
+package com.supremosan.truebackpack.config;
 
-import com.supremosan.truebackpack.BackpackArmorListener;
-import com.supremosan.truebackpack.ToolListener;
-import com.supremosan.truebackpack.ToolListener.ToolSlot;
+import com.supremosan.truebackpack.listener.BackpackArmorListener;
 
 public final class BackpackConfig {
 
     public static void registerDefaults() {
-        registerTools();
         registerBackpacks();
-    }
-
-    private static void registerTools() {
-        ToolListener.registerPrefix("Tool_Pickaxe",     ToolSlot.HIP_LEFT);
-        ToolListener.registerPrefix("Tool_Hatchet",     ToolSlot.HIP_RIGHT);
-        ToolListener.registerPrefix("Weapon_Sword",     ToolSlot.BACK);
-        ToolListener.registerPrefix("Weapon_Longsword", ToolSlot.BACK);
-        ToolListener.registerPrefix("Weapon_Axe",       ToolSlot.BACK);
-        ToolListener.registerPrefix("Weapon_Battleaxe", ToolSlot.BACK);
-        ToolListener.registerPrefix("Weapon_Shortbow",  ToolSlot.BACK);
-        ToolListener.registerPrefix("Weapon_Longbow",   ToolSlot.BACK);
     }
 
     private static void registerBackpacks() {

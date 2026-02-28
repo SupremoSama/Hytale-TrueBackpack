@@ -1,9 +1,10 @@
-package com.supremosan.truebackpack.helpers;
+package com.supremosan.truebackpack.ui;
 
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.i18n.I18nModule;
-import com.supremosan.truebackpack.BackpackArmorListener;
+import com.supremosan.truebackpack.factory.BackpackItemFactory;
+import com.supremosan.truebackpack.listener.BackpackArmorListener;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

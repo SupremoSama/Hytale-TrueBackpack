@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack;
+package com.supremosan.truebackpack.listener;
 
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.ItemBase;
@@ -14,9 +14,8 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.io.adapter.PacketFilter;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
-import com.supremosan.truebackpack.helpers.BackpackDataStorage;
-import com.supremosan.truebackpack.helpers.BackpackItemFactory;
-import com.supremosan.truebackpack.helpers.BackpackTooltipProvider;
+import com.supremosan.truebackpack.data.BackpackDataStorage;
+import com.supremosan.truebackpack.ui.BackpackTooltipProvider;
 import org.bson.BsonDocument;
 
 import javax.annotation.Nonnull;

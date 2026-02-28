@@ -1,9 +1,8 @@
-package com.supremosan.truebackpack.helpers;
+package com.supremosan.truebackpack.cosmetic;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 
 import javax.annotation.Nonnull;
 
