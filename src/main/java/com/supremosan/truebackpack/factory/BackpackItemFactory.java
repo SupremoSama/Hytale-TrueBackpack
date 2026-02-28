@@ -31,15 +31,6 @@ public class BackpackItemFactory {
         return original.withMetadata(INSTANCE_ID_CODEC, UUID.randomUUID().toString());
     }
 
-    @Nullable
-    public static String getInstanceId(@Nonnull ItemStack stack) {
-        return stack.getFromMetadataOrNull(INSTANCE_ID_CODEC);
-    }
-
-    public static boolean hasInstanceId(@Nonnull ItemStack stack) {
-        return getInstanceId(stack) != null;
-    }
-
     @Nonnull
     public static ItemStack setEquipped(@Nonnull ItemStack backpack, boolean equipped) {
         return backpack.withMetadata(EQUIPPED_CODEC, equipped);
@@ -50,6 +41,14 @@ public class BackpackItemFactory {
         return val != null && val;
     }
 
+    @Nullable
+    public static String getInstanceId(@Nonnull ItemStack stack) {
+        return stack.getFromMetadataOrNull(INSTANCE_ID_CODEC);
+    }
+
+    public static boolean hasInstanceId(@Nonnull ItemStack stack) {
+        return getInstanceId(stack) != null;
+    }
 
     @Nonnull
     public static ItemStack saveContents(@Nonnull ItemStack backpack,
@@ -84,14 +83,5 @@ public class BackpackItemFactory {
 
     public static boolean hasContents(@Nonnull ItemStack backpack) {
         return loadContents(backpack).stream().anyMatch(i -> i != null && !i.isEmpty());
-    }
-
-    @Nonnull
-    public static ItemStack clearContents(@Nonnull ItemStack backpack) {
-        BsonDocument meta = backpack.getMetadata();
-        if (meta == null || !meta.containsKey(CONTENTS_KEY)) {
-            return backpack;
-        }
-        return backpack.withMetadata(CONTENTS_KEY, BsonNull.VALUE);
     }
 }
