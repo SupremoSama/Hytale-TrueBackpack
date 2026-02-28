@@ -4,8 +4,6 @@ import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.RefSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.entity.LivingEntity;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
@@ -15,9 +13,6 @@ import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.filter.FilterActionType;
-import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
-import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
-import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.TrueBackpack;
 import com.supremosan.truebackpack.config.BackpackConfig;
@@ -58,7 +53,6 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
     private static final Query<EntityStore> QUERY = Query.any();
 
     private static BackpackArmorListener INSTANCE;
-    private static CommandBuffer<EntityStore> BUFFER;
 
     public BackpackArmorListener() {
         INSTANCE = this;
@@ -111,7 +105,6 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
     public void onEntityAdded(@Nonnull Ref<EntityStore> ref, @Nonnull AddReason reason,
                               @Nonnull Store<EntityStore> store,
                               @Nonnull CommandBuffer<EntityStore> buffer) {
-        BUFFER = buffer;
     }
 
     @Override
@@ -272,7 +265,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
                     : null;
 
             applyBackpackResize(entity, ref, store, inv, playerUuid,
-                    newItem, newBonus, equipContainer, equipSlot, savedContents);
+                    newItem, newBonus, equipContainer, savedContents);
             updateVisual(entity, store, ref, playerUuid, newItem);
             return BackpackItemFactory.getInstanceId(newItem);
         }
@@ -282,7 +275,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         }
 
         applyBackpackResize(entity, ref, store, inv, playerUuid,
-                null, (short) 0, null, (short) 0, null);
+                null, (short) 0, null, null);
         updateVisual(entity, store, ref, playerUuid, null);
         return null;
     }
@@ -316,7 +309,6 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
                                      @Nullable ItemStack equippedItem,
                                      short newBonus,
                                      @Nullable ItemContainer equipContainer,
-                                     short equipSlot,
                                      @Nullable List<ItemStack> preloadedContents) {
         inv.resizeBackpack(newBonus, new ObjectArrayList<>());
 
@@ -391,9 +383,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
     }
 
     public static void syncBackpackAttachment(@Nonnull String playerUuid,
-                                              @Nonnull Player player,
-                                              @Nonnull Store<EntityStore> store,
-                                              @Nonnull Ref<EntityStore> ref) {
+                                              @Nonnull Player player) {
         if (!hasEquippedBackpack(playerUuid)) return;
         String equippedId = LAST_KNOWN_EQUIPPED.get(playerUuid);
         if (equippedId == null) return;
@@ -401,26 +391,6 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         if (visual != null) {
             CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);
         }
-    }
-
-    private static void dropBackpack(@Nonnull Ref<EntityStore> ref,
-                                     @Nonnull Store<EntityStore> store,
-                                     @Nonnull ItemStack item) {
-        if (BUFFER == null) {
-            LOGGER.atWarning().log("[TrueBackpack] Cannot drop backpack — CommandBuffer not available.");
-            return;
-        }
-
-        TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
-        HeadRotation rotation = store.getComponent(ref, HeadRotation.getComponentType());
-        if (transform == null || rotation == null) return;
-
-        Vector3d pos = transform.getPosition().clone().add(0, 1, 0);
-        Vector3f rot = rotation.getRotation().clone();
-
-        List<ItemStack> toDrop = List.of(item);
-        Holder<EntityStore>[] drops = ItemComponent.generateItemDrops(store, toDrop, pos, rot);
-        BUFFER.addEntities(drops, AddReason.SPAWN);
     }
 
     @Nullable
