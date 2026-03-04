@@ -145,17 +145,9 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
 
         Inventory inv = entity.getInventory();
         ItemContainer changed = event.getItemContainer();
-        ItemContainer armor = inv.getArmor();
-        ItemContainer storage = inv.getStorage();
+
         ItemContainer backpack = inv.getBackpack();
-        ItemContainer hotbar = inv.getHotbar();
-
-        boolean isHotbarChange = changed == hotbar;
-        boolean isEquipContainer = changed == armor || changed == storage;
         boolean isBackpackContainer = changed == backpack;
-
-        if (isHotbarChange || (!isEquipContainer && !isBackpackContainer)) return;
-
         if (isBackpackContainer) {
             handleBackpackContainerChange(inv, playerUuid);
             return;
