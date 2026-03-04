@@ -8,7 +8,10 @@ import com.hypixel.hytale.protocol.InventorySection;
 import com.hypixel.hytale.protocol.UpdateType;
 import com.hypixel.hytale.protocol.packets.assets.UpdateItems;
 import com.hypixel.hytale.protocol.packets.assets.UpdateTranslations;
+import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChain;
+import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChains;
 import com.hypixel.hytale.protocol.packets.inventory.UpdatePlayerInventory;
+import com.hypixel.hytale.protocol.packets.player.MouseInteraction;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
@@ -33,18 +36,19 @@ public class BackpackTooltipListener {
     private static final ThreadLocal<Boolean> PROCESSING =
             ThreadLocal.withInitial(() -> false);
 
-    private static final ConcurrentHashMap<UUID, Set<String>>         SENT_VIRTUAL_IDS      =
+    private static final ConcurrentHashMap<UUID, Set<String>>         SENT_VIRTUAL_IDS       =
             new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<UUID, Map<String, String>> LAST_SENT_TRANSLATIONS =
             new ConcurrentHashMap<>();
 
     private static PacketFilter outboundFilter;
+    private static PacketFilter inboundFilter;
 
     private BackpackTooltipListener() {}
 
     public static void register() {
         outboundFilter = PacketAdapters.registerOutbound(BackpackTooltipListener::onOutbound);
-        LOGGER.atInfo().log("[TrueBackpack] BackpackTooltipListener registered");
+        inboundFilter  = PacketAdapters.registerInbound(BackpackTooltipListener::onInbound);
     }
 
     public static void deregister() {
@@ -52,16 +56,61 @@ public class BackpackTooltipListener {
             try {
                 PacketAdapters.deregisterOutbound(outboundFilter);
             } catch (Exception e) {
-                LOGGER.atWarning().log("[TrueBackpack] Failed to deregister tooltip filter: "
-                        + e.getMessage());
+                LOGGER.atWarning().log("[TrueBackpack] Failed to deregister outbound filter: " + e.getMessage());
             }
             outboundFilter = null;
+        }
+        if (inboundFilter != null) {
+            try {
+                PacketAdapters.deregisterInbound(inboundFilter);
+            } catch (Exception e) {
+                LOGGER.atWarning().log("[TrueBackpack] Failed to deregister inbound filter: " + e.getMessage());
+            }
+            inboundFilter = null;
         }
     }
 
     public static void onPlayerLeave(@Nonnull UUID playerUuid) {
         SENT_VIRTUAL_IDS.remove(playerUuid);
         LAST_SENT_TRANSLATIONS.remove(playerUuid);
+    }
+
+    private static boolean onInbound(@Nonnull PlayerRef playerRef,
+                                     @Nonnull com.hypixel.hytale.protocol.Packet packet) {
+        try {
+            if (packet instanceof MouseInteraction mouse) {
+                if (mouse.itemInHandId != null && isVirtualId(mouse.itemInHandId)) {
+                    mouse.itemInHandId = getBaseItemId(mouse.itemInHandId);
+                }
+            } else if (packet instanceof SyncInteractionChains sync) {
+                if (sync.updates != null) {
+                    for (SyncInteractionChain chain : sync.updates) {
+                        if (chain != null) translateChain(chain);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.atWarning().log("[TrueBackpack] Error in inbound filter for "
+                    + playerRef.getUuid() + ": " + e.getMessage());
+        }
+        return false;
+    }
+
+    private static void translateChain(@Nonnull SyncInteractionChain chain) {
+        if (chain.itemInHandId != null && isVirtualId(chain.itemInHandId)) {
+            chain.itemInHandId = getBaseItemId(chain.itemInHandId);
+        }
+        if (chain.utilityItemId != null && isVirtualId(chain.utilityItemId)) {
+            chain.utilityItemId = getBaseItemId(chain.utilityItemId);
+        }
+        if (chain.toolsItemId != null && isVirtualId(chain.toolsItemId)) {
+            chain.toolsItemId = getBaseItemId(chain.toolsItemId);
+        }
+        if (chain.newForks != null) {
+            for (SyncInteractionChain fork : chain.newForks) {
+                if (fork != null) translateChain(fork);
+            }
+        }
     }
 
     private static void onOutbound(@Nonnull PlayerRef playerRef,
@@ -109,7 +158,7 @@ public class BackpackTooltipListener {
 
         for (Map.Entry<Integer, ItemWithAllMetadata> entry : section.items.entrySet()) {
             ItemWithAllMetadata item = entry.getValue();
-            if (item == null || item.itemId.isBlank()) continue;
+            if (item == null || item.itemId == null || item.itemId.isBlank()) continue;
             if (isVirtualId(item.itemId)) continue;
             if (BackpackArmorListener.getBackpackSize(item.itemId) == 0) continue;
 
@@ -131,7 +180,7 @@ public class BackpackTooltipListener {
 
             ItemWithAllMetadata cloned = item.clone();
             cloned.itemId = virtualId;
-            section.items.put(entry.getKey(), cloned);
+            entry.setValue(cloned);
         }
     }
 
@@ -145,7 +194,7 @@ public class BackpackTooltipListener {
         if (armorSection == null || armorSection.items == null) return;
 
         ItemWithAllMetadata chestItem = armorSection.items.get(1);
-        if (chestItem == null || chestItem.itemId.isBlank()) return;
+        if (chestItem == null || chestItem.itemId == null || chestItem.itemId.isBlank()) return;
         if (isVirtualId(chestItem.itemId)) return;
 
         short sizeBonus = BackpackArmorListener.getBackpackSize(chestItem.itemId);
@@ -167,13 +216,9 @@ public class BackpackTooltipListener {
 
         List<ItemStack> liveContents = BackpackDataStorage.getLiveContents(playerUuidStr);
 
-        String tooltipText;
-        if (liveContents != null) {
-            tooltipText = BackpackTooltipProvider.buildTooltipFromLiveContents(
-                    liveContents, sizeBonus, language);
-        } else {
-            tooltipText = BackpackTooltipProvider.buildEmptyTooltip(sizeBonus, language);
-        }
+        String tooltipText = liveContents != null
+                ? BackpackTooltipProvider.buildTooltipFromLiveContents(liveContents, sizeBonus, language)
+                : BackpackTooltipProvider.buildEmptyTooltip(sizeBonus, language);
 
         String contentHash = hash(tooltipText);
         String virtualId   = chestItem.itemId + VIRTUAL_SEP + contentHash;
@@ -197,8 +242,7 @@ public class BackpackTooltipListener {
         try {
             Item originalItem = Item.getAssetMap().getAsset(baseItemId);
             if (originalItem == null) {
-                LOGGER.atWarning().log("[TrueBackpack] Base item not found for virtual tooltip: "
-                        + baseItemId);
+                LOGGER.atWarning().log("[TrueBackpack] Base item not found for virtual tooltip: " + baseItemId);
                 return null;
             }
 
@@ -241,7 +285,7 @@ public class BackpackTooltipListener {
 
         if (!toSend.isEmpty()) {
             try {
-                UpdateItems itemsPacket    = new UpdateItems();
+                UpdateItems itemsPacket   = new UpdateItems();
                 itemsPacket.type         = UpdateType.AddOrUpdate;
                 itemsPacket.items        = toSend;
                 itemsPacket.removedItems = new String[0];
@@ -249,8 +293,7 @@ public class BackpackTooltipListener {
                 itemsPacket.updateIcons  = false;
                 playerRef.getPacketHandler().writeNoCache(itemsPacket);
             } catch (Exception e) {
-                LOGGER.atWarning().log("[TrueBackpack] Failed to send UpdateItems: "
-                        + e.getMessage());
+                LOGGER.atWarning().log("[TrueBackpack] Failed to send UpdateItems: " + e.getMessage());
             }
         }
 
@@ -277,8 +320,7 @@ public class BackpackTooltipListener {
                         lastSent.putAll(delta);
                     }
                 } catch (Exception e) {
-                    LOGGER.atWarning().log("[TrueBackpack] Failed to send UpdateTranslations: "
-                            + e.getMessage());
+                    LOGGER.atWarning().log("[TrueBackpack] Failed to send UpdateTranslations: " + e.getMessage());
                 }
             }
         }
@@ -287,11 +329,10 @@ public class BackpackTooltipListener {
     @Nullable
     private static ItemStack buildFakeStack(@Nonnull ItemWithAllMetadata item) {
         try {
-            if (item.itemId.isBlank()) return null;
+            if (item.itemId == null || item.itemId.isBlank()) return null;
             BsonDocument metadataDoc = item.metadata != null
                     ? BsonDocument.parse(item.metadata)
                     : new BsonDocument();
-
             return new ItemStack(item.itemId, item.quantity, metadataDoc);
         } catch (Exception e) {
             LOGGER.atFine().log("[TrueBackpack] Could not build fake stack for "
@@ -302,6 +343,12 @@ public class BackpackTooltipListener {
 
     private static boolean isVirtualId(@Nonnull String itemId) {
         return itemId.contains(VIRTUAL_SEP);
+    }
+
+    @Nonnull
+    private static String getBaseItemId(@Nonnull String virtualId) {
+        int idx = virtualId.indexOf(VIRTUAL_SEP);
+        return idx > 0 ? virtualId.substring(0, idx) : virtualId;
     }
 
     @Nonnull

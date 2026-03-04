@@ -11,8 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BackpackDataStorage {
 
-    private static final Map<String, List<ItemStack>> LIVE_CONTENTS        = new ConcurrentHashMap<>();
-    private static final Set<String>                  ARMOR_TOOLTIP_DIRTY  = ConcurrentHashMap.newKeySet();
+    private static final Map<String, List<ItemStack>> LIVE_CONTENTS       = new ConcurrentHashMap<>();
+    private static final Set<String>                  ARMOR_TOOLTIP_DIRTY = ConcurrentHashMap.newKeySet();
 
     private BackpackDataStorage() {}
 
@@ -20,8 +20,7 @@ public class BackpackDataStorage {
         LIVE_CONTENTS.remove(playerUuid);
     }
 
-    public static void setLiveContents(@Nonnull String playerUuid,
-                                       @Nonnull List<ItemStack> contents) {
+    public static void setLiveContents(@Nonnull String playerUuid, @Nonnull List<ItemStack> contents) {
         LIVE_CONTENTS.put(playerUuid, contents);
     }
 

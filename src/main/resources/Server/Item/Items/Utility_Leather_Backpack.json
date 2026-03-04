@@ -31,7 +31,7 @@
   },
   "Model": "Items/Backpacks/Small_Backpack.blockymodel",
   "Texture": "Items/Back/BackpackBig_Texture.png",
-  "PlayerAnimationsId": "Block",
+  "PlayerAnimationsId": "Item",
   "Tags": {
     "Family": [
       "Backpack"
@@ -55,5 +55,17 @@
   "TranslationProperties": {
     "Name": "server.truebackpack.items.Utility_Leather_Backpack.name"
   },
-  "DropOnDeath": false
+  "DropOnDeath": false,
+  "Interactions": {
+    "Use": {
+      "Interactions": [
+        {
+          "Type": "TrueBackpack_PlaceBackpack"
+        }
+      ]
+    },
+    "Primary": "Block_Primary",
+    "Secondary": "Block_Secondary"
+  },
+  "Scale": 0.5
 }

@@ -34,9 +34,8 @@
     ],
     "RequiredMemoriesLevel": 5
   },
-  "Model": "Items/Backpacks/Extra_Big_Backpack.blockymodel",
   "Texture": "Items/Backpacks/Extra_Big_Backpack_Texture.png",
-  "PlayerAnimationsId": "Block",
+  "PlayerAnimationsId": "Item",
   "IconProperties": {
     "Scale": 0.26,
     "Rotation": [
@@ -60,5 +59,17 @@
   "TranslationProperties": {
     "Name": "server.truebackpack.items.Utility_Leather_Extra_Big_Backpack.name"
   },
-  "DropOnDeath": false
+  "DropOnDeath": false,
+  "Interactions": {
+    "Use": {
+      "Interactions": [
+        {
+          "Type": "TrueBackpack_PlaceBackpack"
+        }
+      ]
+    },
+    "Primary": "Block_Primary"
+  },
+  "Model": "Items/Blocks/Extra_Big_Backpack_Block.blockymodel",
+  "Scale": 0.5
 }

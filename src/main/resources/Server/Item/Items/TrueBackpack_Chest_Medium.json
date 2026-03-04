@@ -1,0 +1,96 @@
+{
+  "TranslationProperties": {
+    "Name": "server.truebackpack.items.Utility_Leather_Medium_Backpack.name"
+  },
+  "PlayerAnimationsId": "Item",
+  "Categories": [
+    "Furniture.Containers"
+  ],
+  "Set": "Furniture_Adventure",
+  "Icon": "Icons/ItemsGenerated/Utility_Leather_Medium_Backpack.png",
+  "BlockType": {
+    "BlockParticleSetId": "Snow",
+    "BlockSoundSetId": "Cloth",
+    "CustomModel": "Items/Blocks/Medium_Backpack_Block.blockymodel",
+    "CustomModelTexture": [
+      {
+        "Texture": "Items/Back/BackpackBig_Texture.png",
+        "Weight": 1
+      }
+    ],
+    "DrawType": "Model",
+    "Flags": {
+      "IsUsable": true
+    },
+    "HitboxType": "Full",
+    "Material": "Solid",
+    "Opacity": "Transparent",
+    "ParticleColor": "#7a3d27",
+    "State": {
+      "Id": "truebackpack:backpack_container",
+      "Capacity": 18,
+      "Definitions": {
+        "CloseWindow": {
+          "InteractionSoundEventId": "SFX_Chest_Wooden_Close",
+          "CustomModelAnimation": "Blocks/Animations/Chest/Chest_Close.blockyanim"
+        },
+        "OpenWindow": {
+          "InteractionSoundEventId": "SFX_Chest_Wooden_Open",
+          "CustomModelAnimation": "Blocks/Animations/Chest/Chest_Open.blockyanim"
+        }
+      }
+    },
+    "Supporting": {
+      "Up": [
+        {
+          "FaceType": "Full"
+        }
+      ]
+    },
+    "Support": {
+      "Down": [
+        {
+          "FaceType": "Full"
+        }
+      ]
+    },
+    "VariantRotation": "NESW",
+    "Interactions": {
+      "Primary": {
+        "Interactions": [
+          {
+            "Type": "DestroyBlock"
+          }
+        ]
+      },
+      "Use": "Open_Container"
+    },
+    "CustomModelScale": 0.5
+  },
+  "Tags": {
+    "Type": [
+      "Furniture"
+    ],
+    "Family": [
+      "Backpack"
+    ]
+  },
+  "IconProperties": {
+    "Scale": 0.6,
+    "Rotation": [
+      22.5,
+      45,
+      22.5
+    ],
+    "Translation": [
+      0,
+      -12
+    ]
+  },
+  "ItemSoundSetId": "ISS_Armor_Cloth",
+  "MaxStack": 1,
+  "Interactions": {
+    "Primary": "Block_Primary",
+    "Secondary": "Block_Secondary"
+  }
+}
