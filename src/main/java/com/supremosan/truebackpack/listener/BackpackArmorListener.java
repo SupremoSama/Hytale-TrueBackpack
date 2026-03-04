@@ -148,11 +148,13 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         ItemContainer armor = inv.getArmor();
         ItemContainer storage = inv.getStorage();
         ItemContainer backpack = inv.getBackpack();
+        ItemContainer hotbar = inv.getHotbar();
 
+        boolean isHotbarChange = changed == hotbar;
         boolean isEquipContainer = changed == armor || changed == storage;
         boolean isBackpackContainer = changed == backpack;
 
-        if (!isEquipContainer && !isBackpackContainer) return;
+        if (isHotbarChange || (!isEquipContainer && !isBackpackContainer)) return;
 
         if (isBackpackContainer) {
             handleBackpackContainerChange(inv, playerUuid);
@@ -161,8 +163,6 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
 
         handleEquipContainerChange(entity, ref, store, inv, playerUuid);
     }
-
-
 
     private void handleBackpackContainerChange(@Nonnull Inventory inv,
                                                @Nonnull String playerUuid) {
@@ -310,32 +310,37 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
                                      short newBonus,
                                      @Nullable ItemContainer equipContainer,
                                      @Nullable List<ItemStack> preloadedContents) {
-        inv.resizeBackpack(newBonus, new ObjectArrayList<>());
+        PROCESSING_CONTAINER.put(playerUuid, Boolean.TRUE);
+        try {
+            inv.resizeBackpack(newBonus, new ObjectArrayList<>());
 
-        if (newBonus > 0 && equipContainer != null) {
-            ItemContainer bp = inv.getBackpack();
+            if (newBonus > 0 && equipContainer != null) {
+                ItemContainer bp = inv.getBackpack();
 
-            for (short slot = 0; slot < bp.getCapacity(); slot++) {
-                bp.setSlotFilter(FilterActionType.ADD, slot,
-                        (_, _, _, item) -> item == null
-                                || item.isEmpty()
-                                || getBackpackSize(item.getItemId()) == 0);
-                bp.setItemStackForSlot(slot, ItemStack.EMPTY);
+                for (short slot = 0; slot < bp.getCapacity(); slot++) {
+                    bp.setSlotFilter(FilterActionType.ADD, slot,
+                            (_, _, _, item) -> item == null
+                                    || item.isEmpty()
+                                    || getBackpackSize(item.getItemId()) == 0);
+                    bp.setItemStackForSlot(slot, ItemStack.EMPTY);
+                }
+
+                List<ItemStack> contentsToRestore = preloadedContents != null
+                        ? preloadedContents
+                        : (equippedItem != null && BackpackItemFactory.hasContents(equippedItem)
+                        ? BackpackItemFactory.loadContents(equippedItem)
+                        : null);
+
+                if (contentsToRestore != null) {
+                    restoreContentsToBackpack(bp, contentsToRestore);
+                }
+
+                BackpackDataStorage.setLiveContents(playerUuid, getAllBackpackContents(bp));
+            } else {
+                BackpackDataStorage.clearActiveItem(playerUuid);
             }
-
-            List<ItemStack> contentsToRestore = preloadedContents != null
-                    ? preloadedContents
-                    : (equippedItem != null && BackpackItemFactory.hasContents(equippedItem)
-                    ? BackpackItemFactory.loadContents(equippedItem)
-                    : null);
-
-            if (contentsToRestore != null) {
-                restoreContentsToBackpack(bp, contentsToRestore);
-            }
-
-            BackpackDataStorage.setLiveContents(playerUuid, getAllBackpackContents(bp));
-        } else {
-            BackpackDataStorage.clearActiveItem(playerUuid);
+        } finally {
+            PROCESSING_CONTAINER.remove(playerUuid);
         }
 
         BackpackUIUpdater.updateBackpackUI(entity, ref, store);

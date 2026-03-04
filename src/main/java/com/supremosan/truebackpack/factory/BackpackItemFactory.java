@@ -2,7 +2,11 @@ package com.supremosan.truebackpack.factory;
 
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
+import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.universe.world.meta.state.ItemContainerState;
+import com.supremosan.truebackpack.registries.BackpackBlockRegistry;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonNull;
@@ -16,6 +20,7 @@ import java.util.UUID;
 
 public class BackpackItemFactory {
 
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     public static final KeyedCodec<String> INSTANCE_ID_CODEC =
             new KeyedCodec<>("Backpack_instance_id", Codec.STRING);
 
@@ -83,5 +88,29 @@ public class BackpackItemFactory {
 
     public static boolean hasContents(@Nonnull ItemStack backpack) {
         return loadContents(backpack).stream().anyMatch(i -> i != null && !i.isEmpty());
+    }
+
+    public static boolean isBackpackContainer(@Nonnull ItemContainerState containerState) {
+        BlockType blockType = containerState.getBlockType();
+        if (blockType == null) return false;
+        String blockId = blockType.getId();
+        return blockId != null && blockId.contains("backpack");
+    }
+
+    @Nullable
+    public static ItemStack createFromContainer(@Nonnull String blockId,
+                                                @Nonnull List<ItemStack> contents) {
+        if (blockId.equalsIgnoreCase("Empty"))
+            return null;
+
+        BackpackBlockRegistry.BackpackBlockEntry blockEntry =
+                BackpackBlockRegistry.getByBlock(blockId);
+
+        if (blockEntry == null) return null;
+
+        ItemStack itemBackpack = new ItemStack(blockEntry.itemId());
+        itemBackpack = createBackpackInstance(itemBackpack);
+
+        return saveContents(itemBackpack, contents);
     }
 }
