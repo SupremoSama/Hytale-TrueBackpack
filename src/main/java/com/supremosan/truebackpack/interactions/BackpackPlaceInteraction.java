@@ -3,16 +3,22 @@ package com.supremosan.truebackpack.interactions;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.math.util.ChunkUtil;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionState;
 import com.hypixel.hytale.protocol.InteractionType;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.Rotation;
 import com.hypixel.hytale.server.core.entity.InteractionContext;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHandler;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInteraction;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
 import com.hypixel.hytale.server.core.universe.world.meta.state.ItemContainerState;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -25,6 +31,7 @@ import java.util.List;
 @SuppressWarnings("removal")
 public class BackpackPlaceInteraction extends SimpleInteraction {
 
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     public static final BuilderCodec<BackpackPlaceInteraction> CODEC =
             BuilderCodec.builder(BackpackPlaceInteraction.class,
                     BackpackPlaceInteraction::new,
@@ -83,10 +90,28 @@ public class BackpackPlaceInteraction extends SimpleInteraction {
             return;
         }
 
-        Vector3i placePos = new Vector3i(targetBlock.x, targetBlock.y + 1, targetBlock.z);
-        world.setBlock(placePos.getX(), placePos.getY(), placePos.getZ(), entry.blockId());
+        int placeX = targetBlock.x;
+        int placeY = targetBlock.y + 1;
+        int placeZ = targetBlock.z;
 
-        BlockState placedState = world.getState(placePos.getX(), placePos.getY(), placePos.getZ(), false);
+        Rotation yaw = Rotation.None;
+        TransformComponent transform = store.getComponent(owningEntity, TransformComponent.getComponentType());
+        if (transform != null) {
+            float radians = transform.getRotation().getY();
+            float degrees = (float) Math.toDegrees(radians);
+            float normalized = ((degrees % 360f) + 360f) % 360f;
+            yaw = Rotation.closestOfDegrees(normalized);
+        }
+
+        WorldChunk chunk = world.getChunk(ChunkUtil.indexChunkFromBlock(placeX, placeZ));
+        if (chunk == null) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        chunk.placeBlock(placeX, placeY, placeZ, entry.blockId(), yaw, Rotation.None, Rotation.None);
+
+        BlockState placedState = world.getState(placeX, placeY, placeZ, false);
         if (!(placedState instanceof ItemContainerState containerState)) {
             context.getState().state = InteractionState.Failed;
             return;
