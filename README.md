@@ -18,10 +18,11 @@ Try the mod: https://www.curseforge.com/hytale/mods/true-backpack
 - Make backpacks behave similarly to shulker boxes (Minecraft)
 - Add an extra inventory slot so players can equip both armor and a backpack
 
-
 ## Current Features
 
-- Backpacks are wearable
-- Backpacks open using the original in-game UI
-- Giant backpack (36 slots)
-- Backpacks behave similarly to shulker boxes (Minecraft)
+- Backpacks are wearable.
+- Backpacks open using the original in-game UI.
+- Added the Giant Backpack (36 slots).
+- Backpacks function similarly to Minecraft Shulker Boxes.
+- Backpacks can be placed on the ground and used as containers.
+- Original game recipes have been removed and are no longer craftable.
