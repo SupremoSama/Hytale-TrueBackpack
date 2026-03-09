@@ -200,10 +200,17 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         boolean currentIsNew = currentEquipped != null && currentId == null;
         if (!currentIsNew && Objects.equals(currentId, lastKnownId)) return;
 
-        ItemStack previousItem = lastKnownId != null ? findByInstanceId(inv, lastKnownId) : null;
-        boolean wasDropped = lastKnownId != null && previousItem == null && currentEquipped == null;
-        short oldBonus = previousItem != null ? bonus(previousItem) : (wasDropped ? (short) 1 : (short) 0);
         short newBonus = bonus(currentEquipped);
+        boolean hadBackpack = lastKnownId != null;
+        boolean hasBackpack = newBonus > 0;
+
+        if (!hadBackpack && !hasBackpack) {
+            LAST_KNOWN_EQUIPPED.remove(playerUuid);
+            return;
+        }
+
+        ItemStack previousItem = lastKnownId != null ? findByInstanceId(inv, lastKnownId) : null;
+        short oldBonus = previousItem != null ? bonus(previousItem) : (hadBackpack ? (short) 1 : (short) 0);
 
         if (oldBonus == 0 && newBonus == 0) {
             LAST_KNOWN_EQUIPPED.remove(playerUuid);
@@ -258,6 +265,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
 
             applyBackpackResize(entity, ref, store, inv, playerUuid,
                     newItem, newBonus, equipContainer, savedContents);
+
             updateVisual(entity, store, ref, playerUuid, newItem);
             return BackpackItemFactory.getInstanceId(newItem);
         }
