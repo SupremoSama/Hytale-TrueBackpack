@@ -194,7 +194,7 @@ public class BackpackTooltipListener {
         if (armorSection == null || armorSection.items == null) return;
 
         ItemWithAllMetadata chestItem = armorSection.items.get(1);
-        if (chestItem == null || chestItem.itemId == null || chestItem.itemId.isBlank()) return;
+        if (chestItem == null || chestItem.itemId.isBlank()) return;
         if (isVirtualId(chestItem.itemId)) return;
 
         short sizeBonus = BackpackArmorListener.getBackpackSize(chestItem.itemId);
