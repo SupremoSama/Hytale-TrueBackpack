@@ -124,20 +124,27 @@ public class QuiverListener extends RefSystem<EntityStore> {
 
         if (Boolean.TRUE.equals(PROCESSING.get(playerUuid))) return;
         if (CosmeticListener.isProcessing()) return;
-
         if (!(entity instanceof Player player)) return;
+
+        ItemContainer changed = event.getItemContainer();
+        if (!isArrowRelevantContainer(player.getInventory(), changed)) return;
 
         PROCESSING.put(playerUuid, Boolean.TRUE);
         try {
             boolean hasArrow = hasArrowInInventory(player.getInventory());
             boolean quiverVisible = CosmeticPreferenceUtils.isQuiverVisible(store, ref);
+            boolean hadAttachment = CosmeticListener.hasAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
 
             if (hasArrow && quiverVisible) {
                 ModelAttachment quiver = BackpackArmorListener.hasEquippedBackpack(playerUuid)
                         ? QUIVER_BACKPACK_ATTACHMENT
                         : QUIVER_ATTACHMENT;
+                boolean alreadyCorrect = hadAttachment
+                        && CosmeticListener.getAttachment(playerUuid, ATTACHMENT_SLOT_KEY) == quiver;
+                if (alreadyCorrect) return;
                 CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, quiver);
             } else {
+                if (!hadAttachment) return;
                 CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
             }
 
@@ -145,6 +152,13 @@ public class QuiverListener extends RefSystem<EntityStore> {
         } finally {
             PROCESSING.remove(playerUuid);
         }
+    }
+
+    private static boolean isArrowRelevantContainer(@Nonnull Inventory inv,
+                                                    @Nonnull ItemContainer changed) {
+        return changed.equals(inv.getHotbar())
+                || changed.equals(inv.getStorage())
+                || changed.equals(inv.getBackpack());
     }
 
     private static boolean hasArrowInInventory(@Nonnull Inventory inv) {

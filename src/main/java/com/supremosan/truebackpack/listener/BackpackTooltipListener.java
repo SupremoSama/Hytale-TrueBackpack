@@ -158,7 +158,7 @@ public class BackpackTooltipListener {
 
         for (Map.Entry<Integer, ItemWithAllMetadata> entry : section.items.entrySet()) {
             ItemWithAllMetadata item = entry.getValue();
-            if (item == null || item.itemId == null || item.itemId.isBlank()) continue;
+            if (item == null || item.itemId.isBlank()) continue;
             if (isVirtualId(item.itemId)) continue;
             if (BackpackArmorListener.getBackpackSize(item.itemId) == 0) continue;
 

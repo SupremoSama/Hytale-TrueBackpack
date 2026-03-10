@@ -21,7 +21,6 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerSettings;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerSkinComponent;
-import com.hypixel.hytale.server.core.modules.entity.player.PlayerSystems;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.protocol.Cosmetic;
@@ -131,7 +130,6 @@ public class CosmeticListener {
             PROCESSING.set(true);
             try {
                 rebuildModel(store, ref, player, playerUuid);
-                PlayerSystems.PlayerSpawnedSystem.sendPlayerSelf(ref, store);
             } finally {
                 PROCESSING.set(false);
             }
@@ -303,14 +301,13 @@ public class CosmeticListener {
                     if (stack.getItem().getArmor() == null) continue;
                     com.hypixel.hytale.protocol.ItemArmor protocolArmor =
                             stack.getItem().getArmor().toPacket();
-                    if (protocolArmor == null || protocolArmor.cosmeticsToHide == null) continue;
+                    if (protocolArmor.cosmeticsToHide == null) continue;
 
                     boolean armorIsHidden = settings != null && switch (protocolArmor.armorSlot) {
                         case Head  -> settings.hideHelmet();
                         case Chest -> settings.hideCuirass();
                         case Hands -> settings.hideGauntlets();
                         case Legs  -> settings.hidePants();
-                        default    -> false;
                     };
 
                     if (!armorIsHidden) {
@@ -321,6 +318,14 @@ public class CosmeticListener {
         }
 
         return hidden;
+    }
+
+    @Nullable
+    public static ModelAttachment getAttachment(@Nonnull String playerUuid,
+                                                @Nonnull String slotKey) {
+        Map<String, ModelAttachment> slots = PLAYER_ATTACHMENTS.get(playerUuid);
+        if (slots == null) return null;
+        return slots.get(slotKey);
     }
 
     private static void restoreSkinAttachments(@Nonnull List<ModelAttachment> attachments,
