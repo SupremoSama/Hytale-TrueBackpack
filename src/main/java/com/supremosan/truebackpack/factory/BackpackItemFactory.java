@@ -29,7 +29,8 @@ public class BackpackItemFactory {
 
     private static final String CONTENTS_KEY = "Backpack_contents";
 
-    private BackpackItemFactory() {}
+    private BackpackItemFactory() {
+    }
 
     @Nonnull
     public static ItemStack createBackpackInstance(@Nonnull ItemStack original) {

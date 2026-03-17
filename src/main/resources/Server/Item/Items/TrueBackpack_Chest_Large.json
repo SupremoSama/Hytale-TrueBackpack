@@ -65,7 +65,8 @@
       },
       "Use": "Open_Container"
     },
-    "CustomModelScale": 0.5
+    "CustomModelScale": 0.5,
+    "SupportDropType": "Destroy"
   },
   "Tags": {
     "Type": [
@@ -92,5 +93,6 @@
   "Interactions": {
     "Primary": "Block_Primary",
     "Secondary": "Block_Secondary"
-  }
+  },
+  "Quality": "Template"
 }

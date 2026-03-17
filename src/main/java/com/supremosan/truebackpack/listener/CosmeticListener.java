@@ -242,7 +242,7 @@ public class CosmeticListener {
                     registry.getBodyCharacteristics().get(bodyParts[0]);
             if (bodyPart != null) {
                 bodyGradientSet = bodyPart.getGradientSet();
-                bodyTexture     = bodyPart.getGreyscaleTexture();
+                bodyTexture = bodyPart.getGreyscaleTexture();
             }
         }
 
@@ -261,7 +261,7 @@ public class CosmeticListener {
                 attachments.toArray(new ModelAttachment[0]),
                 current.getBoundingBox(),
                 baseModelPath,
-                bodyTexture     != null ? bodyTexture     : current.getTexture(),
+                bodyTexture != null ? bodyTexture : current.getTexture(),
                 bodyGradientSet != null ? bodyGradientSet : current.getGradientSet(),
                 !bodyGradientId.isEmpty() ? bodyGradientId : current.getGradientId(),
                 current.getEyeHeight(),
@@ -304,10 +304,10 @@ public class CosmeticListener {
                     if (protocolArmor.cosmeticsToHide == null) continue;
 
                     boolean armorIsHidden = settings != null && switch (protocolArmor.armorSlot) {
-                        case Head  -> settings.hideHelmet();
+                        case Head -> settings.hideHelmet();
                         case Chest -> settings.hideCuirass();
                         case Hands -> settings.hideGauntlets();
-                        case Legs  -> settings.hidePants();
+                        case Legs -> settings.hidePants();
                     };
 
                     if (!armorIsHidden) {
@@ -338,37 +338,37 @@ public class CosmeticListener {
 
         addSkinPart(attachments, skin.bodyCharacteristic, registry.getBodyCharacteristics(), bodyGradientId, null);
         addHaircutPart(attachments, skin, registry, bodyGradientId);
-        addSkinPart(attachments, skin.eyebrows,           registry.getEyebrows(),            bodyGradientId, null);
-        addSkinPart(attachments, skin.eyes,               registry.getEyes(),                bodyGradientId, null);
-        addSkinPart(attachments, skin.underwear,          registry.getUnderwear(),           bodyGradientId, null);
-        addSkinPart(attachments, skin.skinFeature,        registry.getSkinFeatures(),        bodyGradientId, null);
+        addSkinPart(attachments, skin.eyebrows, registry.getEyebrows(), bodyGradientId, null);
+        addSkinPart(attachments, skin.eyes, registry.getEyes(), bodyGradientId, null);
+        addSkinPart(attachments, skin.underwear, registry.getUnderwear(), bodyGradientId, null);
+        addSkinPart(attachments, skin.skinFeature, registry.getSkinFeatures(), bodyGradientId, null);
 
-        addSkinPart(attachments, skin.face,  registry.getFaces(),  bodyGradientId, bodyGradientId);
-        addSkinPart(attachments, skin.ears,  registry.getEars(),   bodyGradientId, bodyGradientId);
+        addSkinPart(attachments, skin.face, registry.getFaces(), bodyGradientId, bodyGradientId);
+        addSkinPart(attachments, skin.ears, registry.getEars(), bodyGradientId, bodyGradientId);
         addSkinPart(attachments, skin.mouth, registry.getMouths(), bodyGradientId, bodyGradientId);
 
         if (!hiddenCosmetics.contains(Cosmetic.FacialHair))
-            addSkinPart(attachments, skin.facialHair,   registry.getFacialHairs(),     bodyGradientId, null);
+            addSkinPart(attachments, skin.facialHair, registry.getFacialHairs(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.Cape))
-            addSkinPart(attachments, skin.cape,         registry.getCapes(),           bodyGradientId, null);
+            addSkinPart(attachments, skin.cape, registry.getCapes(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.FaceAccessory))
             addSkinPart(attachments, skin.faceAccessory, registry.getFaceAccessories(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.Gloves))
-            addSkinPart(attachments, skin.gloves,       registry.getGloves(),          bodyGradientId, null);
+            addSkinPart(attachments, skin.gloves, registry.getGloves(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.HeadAccessory))
             addSkinPart(attachments, skin.headAccessory, registry.getHeadAccessories(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.Overpants))
-            addSkinPart(attachments, skin.overpants,    registry.getOverpants(),       bodyGradientId, null);
+            addSkinPart(attachments, skin.overpants, registry.getOverpants(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.Overtop))
-            addSkinPart(attachments, skin.overtop,      registry.getOvertops(),        bodyGradientId, null);
+            addSkinPart(attachments, skin.overtop, registry.getOvertops(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.Pants))
-            addSkinPart(attachments, skin.pants,        registry.getPants(),           bodyGradientId, null);
+            addSkinPart(attachments, skin.pants, registry.getPants(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.Shoes))
-            addSkinPart(attachments, skin.shoes,        registry.getShoes(),           bodyGradientId, null);
+            addSkinPart(attachments, skin.shoes, registry.getShoes(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.Undertop))
-            addSkinPart(attachments, skin.undertop,     registry.getUndertops(),       bodyGradientId, null);
+            addSkinPart(attachments, skin.undertop, registry.getUndertops(), bodyGradientId, null);
         if (!hiddenCosmetics.contains(Cosmetic.EarAccessory))
-            addSkinPart(attachments, skin.earAccessory, registry.getEarAccessories(),  bodyGradientId, null);
+            addSkinPart(attachments, skin.earAccessory, registry.getEarAccessories(), bodyGradientId, null);
     }
 
     private static void addHaircutPart(@Nonnull List<ModelAttachment> attachments,
@@ -406,7 +406,7 @@ public class CosmeticListener {
         return headAcc != null
                 && headAcc.getHeadAccessoryType() == com.hypixel.hytale.server.core.cosmetics.PlayerSkinPart.HeadAccessoryType.HalfCovering;
     }
-    
+
     private static void addSkinPart(@Nonnull List<ModelAttachment> attachments,
                                     @Nullable String skinValue,
                                     @Nonnull Map<String, PlayerSkinPart> registry,

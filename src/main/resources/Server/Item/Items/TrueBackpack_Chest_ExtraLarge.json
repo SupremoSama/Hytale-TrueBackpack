@@ -65,7 +65,8 @@
           "FaceType": "Full"
         }
       ]
-    }
+    },
+    "SupportDropType": "Destroy"
   },
   "Tags": {
     "Type": [
@@ -92,5 +93,6 @@
   "Interactions": {
     "Primary": "Block_Primary",
     "Secondary": "Block_Secondary"
-  }
+  },
+  "Quality": "Template"
 }

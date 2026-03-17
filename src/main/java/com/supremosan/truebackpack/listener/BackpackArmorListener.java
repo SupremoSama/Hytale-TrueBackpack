@@ -15,7 +15,7 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.filter.FilterActionType;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.TrueBackpack;
-import com.supremosan.truebackpack.config.BackpackConfig;
+import com.supremosan.truebackpack.registry.BackpackRegistry;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 import com.supremosan.truebackpack.data.BackpackDataStorage;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
@@ -62,7 +62,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         INSTANCE = new BackpackArmorListener();
         plugin.getEntityStoreRegistry().registerSystem(INSTANCE);
 
-        BackpackConfig.registerDefaults();
+        BackpackRegistry.registerDefaults();
 
         plugin.getEventRegistry().registerGlobal(
                 LivingEntityInventoryChangeEvent.class,
@@ -422,7 +422,8 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         ItemStack armor = inv.getArmor().getItemStack(CHEST_SLOT);
         if (!ItemStack.isEmpty(armor) && id.equals(BackpackItemFactory.getInstanceId(armor))) return inv.getArmor();
         ItemStack storage = inv.getStorage().getItemStack(STORAGE_SLOT);
-        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage))) return inv.getStorage();
+        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage)))
+            return inv.getStorage();
         return null;
     }
 

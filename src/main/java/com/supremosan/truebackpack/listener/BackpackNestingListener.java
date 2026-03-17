@@ -14,7 +14,8 @@ import com.supremosan.truebackpack.TrueBackpack;
 import com.supremosan.truebackpack.registries.BackpackBlockRegistry;
 
 public class BackpackNestingListener {
-    private BackpackNestingListener() {}
+    private BackpackNestingListener() {
+    }
 
     public static void register(TrueBackpack plugin) {
         plugin.getEventRegistry().registerGlobal(
@@ -66,11 +67,11 @@ public class BackpackNestingListener {
 
         Inventory inv = player.getInventory();
 
-        boolean isHotbar   = container == inv.getHotbar();
-        boolean isStorage  = container == inv.getStorage();
-        boolean isArmor    = container == inv.getArmor();
-        boolean isUtility  = container == inv.getUtility();
-        boolean isTools    = container == inv.getTools();
+        boolean isHotbar = container == inv.getHotbar();
+        boolean isStorage = container == inv.getStorage();
+        boolean isArmor = container == inv.getArmor();
+        boolean isUtility = container == inv.getUtility();
+        boolean isTools = container == inv.getTools();
 
         return !isHotbar && !isStorage && !isArmor && !isUtility && !isTools;
     }
