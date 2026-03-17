@@ -22,7 +22,7 @@
     "Flags": {
       "IsUsable": true
     },
-    "HitboxType": "Full",
+    "HitboxType": "Plant_Large",
     "Material": "Solid",
     "Opacity": "Transparent",
     "ParticleColor": "#7a3d27",
