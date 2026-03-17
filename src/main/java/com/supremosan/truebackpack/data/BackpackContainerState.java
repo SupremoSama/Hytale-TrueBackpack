@@ -21,7 +21,7 @@ import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
 import com.hypixel.hytale.server.core.universe.world.meta.state.ItemContainerState;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
-import com.supremosan.truebackpack.registries.BackpackBlockRegistry;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -68,11 +68,11 @@ public class BackpackContainerState extends ItemContainerState {
     public boolean initialize(@Nonnull BlockType blockType) {
         String incomingId = blockType.getId();
 
-        if (incomingId != null && BackpackBlockRegistry.getByBlock(incomingId) != null) {
+        if (incomingId != null && BackpackRegistry.getByBlock(incomingId) != null) {
             this.cachedBlockId = incomingId;
         }
 
-        BackpackBlockRegistry.BackpackBlockEntry entry = BackpackBlockRegistry.getByBlock(this.cachedBlockId);
+        BackpackRegistry.BackpackEntry entry = BackpackRegistry.getByBlock(this.cachedBlockId);
         short capacity = entry != null ? entry.capacity() : 20;
 
         if (this.itemContainer == null || this.itemContainer.getCapacity() != capacity) {
@@ -88,7 +88,7 @@ public class BackpackContainerState extends ItemContainerState {
                     (_, _, _, item) ->
                             item == null
                                     || item.isEmpty()
-                                    || BackpackBlockRegistry.getByItem(item.getItem().getId()) == null);
+                                    || BackpackRegistry.getByItem(item.getItem().getId()) == null);
         }
 
         this.markNeedsSave();

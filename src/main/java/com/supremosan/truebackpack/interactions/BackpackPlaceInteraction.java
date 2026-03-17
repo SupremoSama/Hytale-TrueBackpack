@@ -5,13 +5,9 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.math.util.ChunkUtil;
-import com.hypixel.hytale.math.vector.Vector3f;
-import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionState;
 import com.hypixel.hytale.protocol.InteractionType;
-import com.hypixel.hytale.protocol.Opacity;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFace;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFaceSupport;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -19,7 +15,6 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.Rotation;
 import com.hypixel.hytale.server.core.entity.InteractionContext;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.modules.collision.BlockData;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHandler;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInteraction;
@@ -29,7 +24,7 @@ import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
 import com.hypixel.hytale.server.core.universe.world.meta.state.ItemContainerState;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
-import com.supremosan.truebackpack.registries.BackpackBlockRegistry;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -104,7 +99,7 @@ public class BackpackPlaceInteraction extends SimpleInteraction {
         }
 
         String itemId = heldItem.getItem().getId();
-        BackpackBlockRegistry.BackpackBlockEntry entry = BackpackBlockRegistry.getByItem(itemId);
+        BackpackRegistry.BackpackEntry entry = BackpackRegistry.getByItem(itemId);
         if (entry == null) {
             context.getState().state = InteractionState.Failed;
             return;

@@ -11,7 +11,7 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.transaction.Transaction;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.TrueBackpack;
-import com.supremosan.truebackpack.registries.BackpackBlockRegistry;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
 
 public class BackpackNestingListener {
     private BackpackNestingListener() {
@@ -45,7 +45,7 @@ public class BackpackNestingListener {
             if (item == null || item.isEmpty()) continue;
 
             String itemId = item.getItem().getId();
-            boolean isBackpack = BackpackBlockRegistry.getByItem(itemId) != null;
+            boolean isBackpack = BackpackRegistry.getByItem(itemId) != null;
 
             if (!isBackpack) continue;
 

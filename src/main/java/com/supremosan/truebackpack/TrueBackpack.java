@@ -13,7 +13,7 @@ import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.interactions.BackpackPlaceInteraction;
 import com.supremosan.truebackpack.listener.*;
-import com.supremosan.truebackpack.registries.BackpackBlockRegistry;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
 
 public class TrueBackpack extends JavaPlugin {
 
@@ -32,7 +32,7 @@ public class TrueBackpack extends JavaPlugin {
                 BackpackPlaceInteraction.CODEC);
 
         // 1. Register all backpack blocks.
-        BackpackBlockRegistry.registerDefaults();
+        BackpackRegistry.registerDefaults();
 
         // 2. Handle player cosmetic settings.
         CosmeticListener.register(this);
