@@ -25,10 +25,10 @@ import javax.annotation.Nullable;
 public class ToggleCosmeticCommand extends AbstractPlayerCommand {
 
     private static final String KEY_BACKPACK_VISIBLE = "server.truebackpack.toggle.backpack.visible";
-    private static final String KEY_BACKPACK_HIDDEN  = "server.truebackpack.toggle.backpack.hidden";
-    private static final String KEY_QUIVER_VISIBLE   = "server.truebackpack.toggle.quiver.visible";
-    private static final String KEY_QUIVER_HIDDEN    = "server.truebackpack.toggle.quiver.hidden";
-    private static final String KEY_UNKNOWN_TARGET   = "server.truebackpack.toggle.unknown";
+    private static final String KEY_BACKPACK_HIDDEN = "server.truebackpack.toggle.backpack.hidden";
+    private static final String KEY_QUIVER_VISIBLE = "server.truebackpack.toggle.quiver.visible";
+    private static final String KEY_QUIVER_HIDDEN = "server.truebackpack.toggle.quiver.hidden";
+    private static final String KEY_UNKNOWN_TARGET = "server.truebackpack.toggle.unknown";
 
     private final RequiredArg<String> targetArg;
 
@@ -91,7 +91,8 @@ public class ToggleCosmeticCommand extends AbstractPlayerCommand {
                 if (value != null && !value.isBlank() && !value.equals(key)) {
                     return value;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         return fallback(key);
     }

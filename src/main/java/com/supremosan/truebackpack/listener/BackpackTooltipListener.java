@@ -30,13 +30,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BackpackTooltipListener {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
-    private static final String VIRTUAL_SEP     = "__bp_";
+    private static final String VIRTUAL_SEP = "__bp_";
     private static final String DESC_KEY_PREFIX = "server.items.dynamic.backpack.";
 
     private static final ThreadLocal<Boolean> PROCESSING =
             ThreadLocal.withInitial(() -> false);
 
-    private static final ConcurrentHashMap<UUID, Set<String>>         SENT_VIRTUAL_IDS       =
+    private static final ConcurrentHashMap<UUID, Set<String>> SENT_VIRTUAL_IDS =
             new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<UUID, Map<String, String>> LAST_SENT_TRANSLATIONS =
             new ConcurrentHashMap<>();
@@ -44,11 +44,12 @@ public class BackpackTooltipListener {
     private static PacketFilter outboundFilter;
     private static PacketFilter inboundFilter;
 
-    private BackpackTooltipListener() {}
+    private BackpackTooltipListener() {
+    }
 
     public static void register() {
         outboundFilter = PacketAdapters.registerOutbound(BackpackTooltipListener::onOutbound);
-        inboundFilter  = PacketAdapters.registerInbound(BackpackTooltipListener::onInbound);
+        inboundFilter = PacketAdapters.registerInbound(BackpackTooltipListener::onInbound);
     }
 
     public static void deregister() {
@@ -131,16 +132,16 @@ public class BackpackTooltipListener {
 
     private static void processInventory(@Nonnull PlayerRef playerRef,
                                          @Nonnull UpdatePlayerInventory packet) {
-        UUID   playerUuid = playerRef.getUuid();
-        String language   = playerRef.getLanguage();
+        UUID playerUuid = playerRef.getUuid();
+        String language = playerRef.getLanguage();
 
         Map<String, ItemBase> newVirtualItems = new LinkedHashMap<>();
-        Map<String, String>   translations    = new LinkedHashMap<>();
+        Map<String, String> translations = new LinkedHashMap<>();
 
-        processSection(packet.hotbar,   language, newVirtualItems, translations);
-        processSection(packet.utility,  language, newVirtualItems, translations);
-        processSection(packet.tools,    language, newVirtualItems, translations);
-        processSection(packet.storage,  language, newVirtualItems, translations);
+        processSection(packet.hotbar, language, newVirtualItems, translations);
+        processSection(packet.utility, language, newVirtualItems, translations);
+        processSection(packet.tools, language, newVirtualItems, translations);
+        processSection(packet.storage, language, newVirtualItems, translations);
         processSection(packet.backpack, language, newVirtualItems, translations);
 
         processArmorSection(playerUuid, packet.armor, language, newVirtualItems, translations);
@@ -169,8 +170,8 @@ public class BackpackTooltipListener {
             if (tooltipText == null) continue;
 
             String contentHash = hash(tooltipText);
-            String virtualId   = item.itemId + VIRTUAL_SEP + contentHash;
-            String descKey     = DESC_KEY_PREFIX + virtualId + ".description";
+            String virtualId = item.itemId + VIRTUAL_SEP + contentHash;
+            String descKey = DESC_KEY_PREFIX + virtualId + ".description";
 
             ItemBase virtualBase = buildVirtualItemBase(item.itemId, virtualId, descKey);
             if (virtualBase == null) continue;
@@ -221,8 +222,8 @@ public class BackpackTooltipListener {
                 : BackpackTooltipProvider.buildEmptyTooltip(sizeBonus, language);
 
         String contentHash = hash(tooltipText);
-        String virtualId   = chestItem.itemId + VIRTUAL_SEP + contentHash;
-        String descKey     = DESC_KEY_PREFIX + virtualId + ".description";
+        String virtualId = chestItem.itemId + VIRTUAL_SEP + contentHash;
+        String descKey = DESC_KEY_PREFIX + virtualId + ".description";
 
         ItemBase virtualBase = buildVirtualItemBase(chestItem.itemId, virtualId, descKey);
         if (virtualBase == null) return;
@@ -285,12 +286,12 @@ public class BackpackTooltipListener {
 
         if (!toSend.isEmpty()) {
             try {
-                UpdateItems itemsPacket   = new UpdateItems();
-                itemsPacket.type         = UpdateType.AddOrUpdate;
-                itemsPacket.items        = toSend;
+                UpdateItems itemsPacket = new UpdateItems();
+                itemsPacket.type = UpdateType.AddOrUpdate;
+                itemsPacket.items = toSend;
                 itemsPacket.removedItems = new String[0];
                 itemsPacket.updateModels = false;
-                itemsPacket.updateIcons  = false;
+                itemsPacket.updateIcons = false;
                 playerRef.getPacketHandler().writeNoCache(itemsPacket);
             } catch (Exception e) {
                 LOGGER.atWarning().log("[TrueBackpack] Failed to send UpdateItems: " + e.getMessage());
@@ -299,7 +300,7 @@ public class BackpackTooltipListener {
 
         if (!translations.isEmpty()) {
             Map<String, String> lastSent = LAST_SENT_TRANSLATIONS.get(playerUuid);
-            Map<String, String> delta    = new LinkedHashMap<>();
+            Map<String, String> delta = new LinkedHashMap<>();
 
             for (Map.Entry<String, String> e : translations.entrySet()) {
                 String prev = lastSent != null ? lastSent.get(e.getKey()) : null;
@@ -354,9 +355,9 @@ public class BackpackTooltipListener {
     @Nonnull
     private static String hash(@Nonnull String input) {
         try {
-            MessageDigest md     = MessageDigest.getInstance("MD5");
-            byte[]        digest = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder sb     = new StringBuilder();
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 4; i++) {
                 sb.append(String.format("%02x", digest[i]));
             }

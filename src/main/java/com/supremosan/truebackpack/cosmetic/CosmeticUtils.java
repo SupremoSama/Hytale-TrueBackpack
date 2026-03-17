@@ -12,7 +12,8 @@ public final class CosmeticUtils {
 
     private static final double DEFAULT_SCALE = 1.0D;
 
-    private CosmeticUtils() {}
+    private CosmeticUtils() {
+    }
 
     @Nonnull
     public static ModelAttachment fromPlayerSkinPart(@Nonnull PlayerSkinPart part,
@@ -31,7 +32,7 @@ public final class CosmeticUtils {
                                                     @Nonnull String[] parts,
                                                     @Nonnull String bodyGradientId) {
         String wardrobeVariantId = parts.length > 1 ? parts[1] : null;
-        String wardrobeOptionId  = parts.length > 2 ? parts[2] : null;
+        String wardrobeOptionId = parts.length > 2 ? parts[2] : null;
 
         PlayerSkinPart.Variant variant = get(part.getVariants(), wardrobeOptionId);
         if (variant != null) {

@@ -97,6 +97,8 @@ public class BackpackContainerState extends ItemContainerState {
 
     @Override
     public void onDestroy() {
+        if (cachedBlockId == null) return;
+
         super.getWindows().clear();
 
         WorldChunk chunk = this.getChunk();
@@ -110,29 +112,24 @@ public class BackpackContainerState extends ItemContainerState {
         }
 
         this.itemContainer.dropAllItemStacks();
+        ItemStack backpackItem = BackpackItemFactory.createFromContainer(this.cachedBlockId, contents);
 
-        ItemStack backpackItem =
-                BackpackItemFactory.createFromContainer(this.cachedBlockId, contents);
-
-        if (backpackItem == null) return;
+        if (backpackItem == null) {
+            super.onDestroy();
+            return;
+        }
 
         Vector3d dropPosition = this.getBlockPosition().toVector3d().add(0.5, 0.0, 0.5);
 
-        List<ItemStack> toDrop = new ArrayList<>();
-        toDrop.add(backpackItem);
-
-        Holder<EntityStore>[] itemEntityHolders =
-                ItemComponent.generateItemDrops(
-                        store,
-                        toDrop,
-                        dropPosition,
-                        Vector3f.ZERO
-                );
+        Holder<EntityStore>[] itemEntityHolders = ItemComponent.generateItemDrops(
+                store,
+                List.of(backpackItem),
+                dropPosition,
+                Vector3f.ZERO
+        );
 
         if (itemEntityHolders.length > 0) {
-            world.execute(() ->
-                    store.addEntities(itemEntityHolders, AddReason.SPAWN)
-            );
+            world.execute(() -> store.addEntities(itemEntityHolders, AddReason.SPAWN));
         }
     }
 }

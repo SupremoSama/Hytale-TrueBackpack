@@ -6,14 +6,20 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionState;
 import com.hypixel.hytale.protocol.InteractionType;
+import com.hypixel.hytale.protocol.Opacity;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFace;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFaceSupport;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.Rotation;
 import com.hypixel.hytale.server.core.entity.InteractionContext;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.modules.collision.BlockData;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHandler;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInteraction;
@@ -27,15 +33,17 @@ import com.supremosan.truebackpack.registries.BackpackBlockRegistry;
 
 import javax.annotation.Nonnull;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("removal")
 public class BackpackPlaceInteraction extends SimpleInteraction {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
-    public static final BuilderCodec<BackpackPlaceInteraction> CODEC =
-            BuilderCodec.builder(BackpackPlaceInteraction.class,
+    public static final BuilderCodec<BackpackPlaceInteraction> CODEC = BuilderCodec
+            .builder(BackpackPlaceInteraction.class,
                     BackpackPlaceInteraction::new,
-                    SimpleInteraction.CODEC).build();
+                    SimpleInteraction.CODEC)
+            .build();
 
     @Override
     protected void tick0(
@@ -59,6 +67,10 @@ public class BackpackPlaceInteraction extends SimpleInteraction {
         Ref<EntityStore> owningEntity = context.getOwningEntity();
         Store<EntityStore> store = owningEntity.getStore();
         Player player = store.getComponent(owningEntity, Player.getComponentType());
+        if (player == null) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
 
         World world = player.getWorld();
         if (world == null) {
@@ -68,6 +80,19 @@ public class BackpackPlaceInteraction extends SimpleInteraction {
 
         BlockPosition targetBlock = context.getTargetBlock();
         if (targetBlock == null) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        BlockType supportBlockType = world.getBlockType(targetBlock.x, targetBlock.y, targetBlock.z);
+        if (supportBlockType == null) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        int rotationIndex = world.getBlockRotationIndex(targetBlock.x, targetBlock.y, targetBlock.z);
+        Map<BlockFace, BlockFaceSupport[]> supporting = supportBlockType.getSupporting(rotationIndex);
+        if (supporting == null || !supporting.containsKey(BlockFace.UP)) {
             context.getState().state = InteractionState.Failed;
             return;
         }

@@ -11,10 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BackpackDataStorage {
 
-    private static final Map<String, List<ItemStack>> LIVE_CONTENTS       = new ConcurrentHashMap<>();
-    private static final Set<String>                  ARMOR_TOOLTIP_DIRTY = ConcurrentHashMap.newKeySet();
+    private static final Map<String, List<ItemStack>> LIVE_CONTENTS = new ConcurrentHashMap<>();
+    private static final Set<String> ARMOR_TOOLTIP_DIRTY = ConcurrentHashMap.newKeySet();
 
-    private BackpackDataStorage() {}
+    private BackpackDataStorage() {
+    }
 
     public static void clearActiveItem(@Nonnull String playerUuid) {
         LIVE_CONTENTS.remove(playerUuid);
