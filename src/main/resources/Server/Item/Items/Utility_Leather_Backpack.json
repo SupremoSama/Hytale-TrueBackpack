@@ -29,7 +29,7 @@
       }
     ]
   },
-  "Model": "Items/Backpacks/Small_Backpack.blockymodel",
+  "Model": "Items/Blocks/Small_Backpack_Block.blockymodel",
   "Texture": "Items/Back/BackpackBig_Texture.png",
   "PlayerAnimationsId": "Item",
   "Tags": {
