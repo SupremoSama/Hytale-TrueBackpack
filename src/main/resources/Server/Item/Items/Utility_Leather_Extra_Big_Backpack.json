@@ -37,15 +37,15 @@
   "Texture": "Items/Backpacks/Extra_Big_Backpack_Texture.png",
   "PlayerAnimationsId": "Item",
   "IconProperties": {
-    "Scale": 0.26,
+    "Scale": 0.3,
     "Rotation": [
       0,
-      201,
+      28,
       0
     ],
     "Translation": [
-      -13,
-      -11
+      1,
+      -42
     ]
   },
   "Tags": {

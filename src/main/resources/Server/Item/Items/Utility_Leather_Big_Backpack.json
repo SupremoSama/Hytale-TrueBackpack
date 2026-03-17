@@ -38,15 +38,15 @@
   "Texture": "Items/Backpacks/Big_Backpack_Texture.png",
   "PlayerAnimationsId": "Item",
   "IconProperties": {
-    "Scale": 0.26,
+    "Scale": 0.3,
     "Rotation": [
       0,
-      201,
+      14,
       0
     ],
     "Translation": [
-      -13,
-      -11
+      1,
+      -28
     ]
   },
   "Tags": {
