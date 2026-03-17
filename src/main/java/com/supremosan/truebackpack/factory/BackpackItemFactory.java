@@ -6,7 +6,7 @@ import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.meta.state.ItemContainerState;
-import com.supremosan.truebackpack.registries.BackpackBlockRegistry;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonNull;
@@ -104,8 +104,8 @@ public class BackpackItemFactory {
         if (blockId.equalsIgnoreCase("Empty"))
             return null;
 
-        BackpackBlockRegistry.BackpackBlockEntry blockEntry =
-                BackpackBlockRegistry.getByBlock(blockId);
+        BackpackRegistry.BackpackEntry blockEntry =
+                BackpackRegistry.getByBlock(blockId);
 
         if (blockEntry == null) return null;
 

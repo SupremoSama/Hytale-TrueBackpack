@@ -15,7 +15,6 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.filter.FilterActionType;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.TrueBackpack;
-import com.supremosan.truebackpack.registry.BackpackRegistry;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 import com.supremosan.truebackpack.data.BackpackDataStorage;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
@@ -61,8 +60,6 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
     public static void register(@Nonnull TrueBackpack plugin) {
         INSTANCE = new BackpackArmorListener();
         plugin.getEntityStoreRegistry().registerSystem(INSTANCE);
-
-        BackpackRegistry.registerDefaults();
 
         plugin.getEventRegistry().registerGlobal(
                 LivingEntityInventoryChangeEvent.class,
