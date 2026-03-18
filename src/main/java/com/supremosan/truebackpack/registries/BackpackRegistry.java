@@ -49,6 +49,8 @@ public class BackpackRegistry {
     }
 
     public static void registerDefaults() {
+        register("Utility_Heli_Backpack", "", (short) 3,
+                "Items/Backpacks/Helipack.blockymodel", "Items/Back/Helipack_Texture.png");
         register("Utility_Leather_Backpack", "TrueBackpack_Chest_Small", (short) 9,
                 "Items/Backpacks/Small_Backpack.blockymodel", "Items/Back/BackpackBig_Texture.png");
         register("Utility_Leather_Medium_Backpack", "TrueBackpack_Chest_Medium", (short) 18,
