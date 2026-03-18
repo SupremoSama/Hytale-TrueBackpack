@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.supremosan"
-version = "0.2.5"
+version = "0.2.6"
 val javaVersion = 25
 
 repositories {
