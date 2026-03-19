@@ -10,7 +10,6 @@
   "ItemLevel": 20,
   "Model": "Items/Blocks/Helipack_Block.blockymodel",
   "Texture": "Items/Back/Helipack_Texture.png",
-  "PlayerAnimationsId": "Item",
   "IconProperties": {
     "Scale": 0.5,
     "Rotation": [
@@ -56,5 +55,7 @@
         "RequiredTierLevel": 1
       }
     ]
-  }
+  },
+  "PlayerAnimationsId": "HelipackAnimations",
+  "UsePlayerAnimations": true
 }
