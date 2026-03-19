@@ -3,7 +3,6 @@ package com.supremosan.truebackpack.listener;
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.RefSystem;
-import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.entity.LivingEntity;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
@@ -29,16 +28,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BackpackArmorListener extends RefSystem<EntityStore> {
 
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
-
     private static final String ATTACHMENT_SLOT_KEY = "truebackpack:backpack";
 
     private static final Map<String, Short> BACKPACK_SIZES = new ConcurrentHashMap<>();
     private static final Map<String, String[]> BACKPACK_VISUALS = new LinkedHashMap<>();
 
     public interface EquipChangeListener {
-        void onEquipChange(@Nonnull String playerUuid, @Nonnull Player player,
-                           @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref);
+        void onEquipChange(@Nonnull String playerUuid, @Nonnull Player player, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref);
     }
 
     private static final List<EquipChangeListener> EQUIP_CHANGE_LISTENERS = new CopyOnWriteArrayList<>();
@@ -61,17 +57,10 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         INSTANCE = new BackpackArmorListener();
         plugin.getEntityStoreRegistry().registerSystem(INSTANCE);
 
-        plugin.getEventRegistry().registerGlobal(
-                LivingEntityInventoryChangeEvent.class,
-                event -> INSTANCE.handle(event));
-
-        LOGGER.atInfo().log("[TrueBackpack] BackpackArmorListener registered");
+        plugin.getEventRegistry().registerGlobal(LivingEntityInventoryChangeEvent.class, event -> INSTANCE.handle(event));
     }
 
-    public static void registerBackpack(@Nonnull String baseItemId,
-                                        short sizeBonus,
-                                        @Nonnull String modelPath,
-                                        @Nonnull String texturePath) {
+    public static void registerBackpack(@Nonnull String baseItemId, short sizeBonus, @Nonnull String modelPath, @Nonnull String texturePath) {
         BACKPACK_SIZES.put(baseItemId, sizeBonus);
         BACKPACK_VISUALS.put(baseItemId, new String[]{modelPath, texturePath, "", ""});
     }
@@ -84,6 +73,12 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         return LAST_KNOWN_EQUIPPED.containsKey(playerUuid);
     }
 
+    public static boolean hasEquippedHelipack(@Nonnull String playerUuid, @Nonnull String helipackItemId) {
+        String equippedItemId = LAST_KNOWN_EQUIPPED_ITEM_ID.get(playerUuid);
+        if (equippedItemId == null) return false;
+        return equippedItemId.contains(helipackItemId);
+    }
+
     public static short getBackpackSize(@Nonnull String itemId) {
         Short exact = BACKPACK_SIZES.get(itemId);
         if (exact != null) return exact;
@@ -93,21 +88,19 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         return 0;
     }
 
+    private static final Map<String, String> LAST_KNOWN_EQUIPPED_ITEM_ID = new ConcurrentHashMap<>();
+
     @Override
     public @Nonnull Query<EntityStore> getQuery() {
         return QUERY;
     }
 
     @Override
-    public void onEntityAdded(@Nonnull Ref<EntityStore> ref, @Nonnull AddReason reason,
-                              @Nonnull Store<EntityStore> store,
-                              @Nonnull CommandBuffer<EntityStore> buffer) {
+    public void onEntityAdded(@Nonnull Ref<EntityStore> ref, @Nonnull AddReason reason, @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> buffer) {
     }
 
     @Override
-    public void onEntityRemove(@Nonnull Ref<EntityStore> ref, @Nonnull RemoveReason reason,
-                               @Nonnull Store<EntityStore> store,
-                               @Nonnull CommandBuffer<EntityStore> buffer) {
+    public void onEntityRemove(@Nonnull Ref<EntityStore> ref, @Nonnull RemoveReason reason, @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> buffer) {
         UUIDComponent uuidComp = store.getComponent(ref, UUIDComponent.getComponentType());
         if (uuidComp == null) return;
 
@@ -119,6 +112,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         }
 
         LAST_KNOWN_EQUIPPED.remove(playerUuid);
+        LAST_KNOWN_EQUIPPED_ITEM_ID.remove(playerUuid);
         PROCESSING_EQUIP.remove(playerUuid);
         PROCESSING_CONTAINER.remove(playerUuid);
         BackpackDataStorage.clearActiveItem(playerUuid);
@@ -163,8 +157,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         handleEquipContainerChange(entity, ref, store, inv, playerUuid);
     }
 
-    private void handleBackpackContainerChange(@Nonnull Inventory inv,
-                                               @Nonnull String playerUuid) {
+    private void handleBackpackContainerChange(@Nonnull Inventory inv, @Nonnull String playerUuid) {
         if (Boolean.TRUE.equals(PROCESSING_CONTAINER.get(playerUuid))) return;
 
         String equippedInstanceId = LAST_KNOWN_EQUIPPED.get(playerUuid);
@@ -189,11 +182,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         }
     }
 
-    private void handleEquipContainerChange(@Nonnull LivingEntity entity,
-                                            @Nonnull Ref<EntityStore> ref,
-                                            @Nonnull Store<EntityStore> store,
-                                            @Nonnull Inventory inv,
-                                            @Nonnull String playerUuid) {
+    private void handleEquipContainerChange(@Nonnull LivingEntity entity, @Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store, @Nonnull Inventory inv, @Nonnull String playerUuid) {
         if (Boolean.TRUE.equals(PROCESSING_EQUIP.get(playerUuid))) return;
 
         ItemStack liveArmor = inv.getArmor().getItemStack(CHEST_SLOT);
@@ -201,8 +190,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
 
         ItemStack currentEquipped = resolveEquipped(liveArmor, liveStorage);
         String lastKnownId = LAST_KNOWN_EQUIPPED.get(playerUuid);
-        String currentId = currentEquipped != null
-                ? BackpackItemFactory.getInstanceId(currentEquipped) : null;
+        String currentId = currentEquipped != null ? BackpackItemFactory.getInstanceId(currentEquipped) : null;
 
         boolean currentIsNew = currentEquipped != null && currentId == null;
         if (!currentIsNew && Objects.equals(currentId, lastKnownId)) return;
@@ -213,6 +201,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
 
         if (!hadBackpack && !hasBackpack) {
             LAST_KNOWN_EQUIPPED.remove(playerUuid);
+            LAST_KNOWN_EQUIPPED_ITEM_ID.remove(playerUuid);
             return;
         }
 
@@ -221,19 +210,22 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
 
         if (oldBonus == 0 && newBonus == 0) {
             LAST_KNOWN_EQUIPPED.remove(playerUuid);
+            LAST_KNOWN_EQUIPPED_ITEM_ID.remove(playerUuid);
             return;
         }
 
         PROCESSING_EQUIP.put(playerUuid, Boolean.TRUE);
         try {
-            String finalInstanceId = processEquipChange(
-                    entity, ref, store, inv, playerUuid,
-                    currentEquipped, newBonus);
+            String finalInstanceId = processEquipChange(entity, ref, store, inv, playerUuid, currentEquipped, newBonus);
 
             if (finalInstanceId != null) {
                 LAST_KNOWN_EQUIPPED.put(playerUuid, finalInstanceId);
+                if (currentEquipped != null) {
+                    LAST_KNOWN_EQUIPPED_ITEM_ID.put(playerUuid, currentEquipped.getItemId());
+                }
             } else {
                 LAST_KNOWN_EQUIPPED.remove(playerUuid);
+                LAST_KNOWN_EQUIPPED_ITEM_ID.remove(playerUuid);
             }
         } finally {
             PROCESSING_EQUIP.remove(playerUuid);
@@ -241,13 +233,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
     }
 
     @Nullable
-    private String processEquipChange(@Nonnull LivingEntity entity,
-                                      @Nonnull Ref<EntityStore> ref,
-                                      @Nonnull Store<EntityStore> store,
-                                      @Nonnull Inventory inv,
-                                      @Nonnull String playerUuid,
-                                      @Nullable ItemStack newItem,
-                                      short newBonus) {
+    private String processEquipChange(@Nonnull LivingEntity entity, @Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store, @Nonnull Inventory inv, @Nonnull String playerUuid, @Nullable ItemStack newItem, short newBonus) {
         String lastKnownId = LAST_KNOWN_EQUIPPED.get(playerUuid);
 
         if (newBonus > 0 && newItem != null) {
@@ -255,8 +241,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
             short equipSlot = resolveEquipSlot(inv, newItem);
 
             if (equipContainer == null || equipSlot < 0) {
-                equipContainer = bonus(inv.getArmor().getItemStack(CHEST_SLOT)) > 0
-                        ? inv.getArmor() : inv.getStorage();
+                equipContainer = bonus(inv.getArmor().getItemStack(CHEST_SLOT)) > 0 ? inv.getArmor() : inv.getStorage();
                 equipSlot = equipContainer == inv.getArmor() ? CHEST_SLOT : STORAGE_SLOT;
             }
 
@@ -266,12 +251,9 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
 
             newItem = ensureInstanceId(newItem, equipContainer, equipSlot);
 
-            List<ItemStack> savedContents = BackpackItemFactory.hasContents(newItem)
-                    ? BackpackItemFactory.loadContents(newItem)
-                    : null;
+            List<ItemStack> savedContents = BackpackItemFactory.hasContents(newItem) ? BackpackItemFactory.loadContents(newItem) : null;
 
-            applyBackpackResize(entity, ref, store, inv, playerUuid,
-                    newItem, newBonus, equipContainer, savedContents);
+            applyBackpackResize(entity, ref, store, inv, playerUuid, newItem, newBonus, equipContainer, savedContents);
 
             updateVisual(entity, store, ref, playerUuid, newItem);
             return BackpackItemFactory.getInstanceId(newItem);
@@ -281,17 +263,13 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
             clearEquippedFlagByInstanceId(inv, lastKnownId);
         }
 
-        applyBackpackResize(entity, ref, store, inv, playerUuid,
-                null, (short) 0, null, null);
+        applyBackpackResize(entity, ref, store, inv, playerUuid, null, (short) 0, null, null);
         updateVisual(entity, store, ref, playerUuid, null);
         return null;
     }
 
-    private static void clearEquippedFlagByInstanceId(@Nonnull Inventory inv,
-                                                      @Nonnull String instanceId) {
-        ItemContainer[] containers = {
-                inv.getArmor(), inv.getStorage(), inv.getHotbar(), inv.getBackpack()
-        };
+    private static void clearEquippedFlagByInstanceId(@Nonnull Inventory inv, @Nonnull String instanceId) {
+        ItemContainer[] containers = {inv.getArmor(), inv.getStorage(), inv.getHotbar(), inv.getBackpack()};
         for (ItemContainer container : containers) {
             if (container == null) continue;
             for (short slot = 0; slot < container.getCapacity(); slot++) {
@@ -299,8 +277,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
                 if (candidate == null || candidate.isEmpty()) continue;
                 if (instanceId.equals(BackpackItemFactory.getInstanceId(candidate))) {
                     if (BackpackItemFactory.isEquipped(candidate)) {
-                        container.setItemStackForSlot(slot,
-                                BackpackItemFactory.setEquipped(candidate, false));
+                        container.setItemStackForSlot(slot, BackpackItemFactory.setEquipped(candidate, false));
                     }
                     return;
                 }
@@ -308,15 +285,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         }
     }
 
-    private void applyBackpackResize(@Nonnull LivingEntity entity,
-                                     @Nonnull Ref<EntityStore> ref,
-                                     @Nonnull Store<EntityStore> store,
-                                     @Nonnull Inventory inv,
-                                     @Nonnull String playerUuid,
-                                     @Nullable ItemStack equippedItem,
-                                     short newBonus,
-                                     @Nullable ItemContainer equipContainer,
-                                     @Nullable List<ItemStack> preloadedContents) {
+    private void applyBackpackResize(@Nonnull LivingEntity entity, @Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store, @Nonnull Inventory inv, @Nonnull String playerUuid, @Nullable ItemStack equippedItem, short newBonus, @Nullable ItemContainer equipContainer, @Nullable List<ItemStack> preloadedContents) {
         PROCESSING_CONTAINER.put(playerUuid, Boolean.TRUE);
         try {
             inv.resizeBackpack(newBonus, new ObjectArrayList<>());
@@ -325,18 +294,11 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
                 ItemContainer bp = inv.getBackpack();
 
                 for (short slot = 0; slot < bp.getCapacity(); slot++) {
-                    bp.setSlotFilter(FilterActionType.ADD, slot,
-                            (_, _, _, item) -> item == null
-                                    || item.isEmpty()
-                                    || getBackpackSize(item.getItemId()) == 0);
+                    bp.setSlotFilter(FilterActionType.ADD, slot, (_, _, _, item) -> item == null || item.isEmpty() || getBackpackSize(item.getItemId()) == 0);
                     bp.setItemStackForSlot(slot, ItemStack.EMPTY);
                 }
 
-                List<ItemStack> contentsToRestore = preloadedContents != null
-                        ? preloadedContents
-                        : (equippedItem != null && BackpackItemFactory.hasContents(equippedItem)
-                        ? BackpackItemFactory.loadContents(equippedItem)
-                        : null);
+                List<ItemStack> contentsToRestore = preloadedContents != null ? preloadedContents : (equippedItem != null && BackpackItemFactory.hasContents(equippedItem) ? BackpackItemFactory.loadContents(equippedItem) : null);
 
                 if (contentsToRestore != null) {
                     restoreContentsToBackpack(bp, contentsToRestore);
@@ -353,16 +315,11 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         BackpackUIUpdater.updateBackpackUI(entity, ref, store);
     }
 
-    private void updateVisual(@Nonnull LivingEntity entity,
-                              @Nonnull Store<EntityStore> store,
-                              @Nonnull Ref<EntityStore> ref,
-                              @Nonnull String playerUuid,
-                              @Nullable ItemStack equippedItem) {
+    private void updateVisual(@Nonnull LivingEntity entity, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull String playerUuid, @Nullable ItemStack equippedItem) {
         if (!(entity instanceof Player player)) return;
 
         boolean backpackVisible = CosmeticPreferenceUtils.isBackpackVisible(store, ref);
-        ModelAttachment visual = (equippedItem != null && backpackVisible)
-                ? resolveVisual(equippedItem.getItemId()) : null;
+        ModelAttachment visual = (equippedItem != null && backpackVisible) ? resolveVisual(equippedItem.getItemId()) : null;
 
         if (visual != null) {
             CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);
@@ -377,8 +334,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
     }
 
-    private void persistContainerToEquippedItem(@Nonnull Inventory inv,
-                                                @Nonnull String playerUuid) {
+    private void persistContainerToEquippedItem(@Nonnull Inventory inv, @Nonnull String playerUuid) {
         String equippedInstanceId = LAST_KNOWN_EQUIPPED.get(playerUuid);
         if (equippedInstanceId == null) return;
 
@@ -394,8 +350,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         equippedContainer.setItemStackForSlot(equippedSlot, updated);
     }
 
-    public static void syncBackpackAttachment(@Nonnull String playerUuid,
-                                              @Nonnull Player player) {
+    public static void syncBackpackAttachment(@Nonnull String playerUuid, @Nonnull Player player) {
         if (!hasEquippedBackpack(playerUuid)) return;
         String equippedId = LAST_KNOWN_EQUIPPED.get(playerUuid);
         if (equippedId == null) return;
@@ -406,8 +361,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
     }
 
     @Nullable
-    private static ItemContainer resolveEquipContainer(@Nonnull Inventory inv,
-                                                       @Nonnull ItemStack item) {
+    private static ItemContainer resolveEquipContainer(@Nonnull Inventory inv, @Nonnull ItemStack item) {
         String id = BackpackItemFactory.getInstanceId(item);
         if (id == null) {
             ItemStack armor = inv.getArmor().getItemStack(CHEST_SLOT);
@@ -424,43 +378,35 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         return null;
     }
 
-    private static short resolveEquipSlot(@Nonnull Inventory inv,
-                                          @Nonnull ItemStack item) {
+    private static short resolveEquipSlot(@Nonnull Inventory inv, @Nonnull ItemStack item) {
         ItemContainer container = resolveEquipContainer(inv, item);
         if (container == null) return -1;
         return container == inv.getArmor() ? CHEST_SLOT : STORAGE_SLOT;
     }
 
     @Nullable
-    private static ItemStack resolveEquipped(@Nullable ItemStack armorChest,
-                                             @Nullable ItemStack storageSlot0) {
+    private static ItemStack resolveEquipped(@Nullable ItemStack armorChest, @Nullable ItemStack storageSlot0) {
         if (!ItemStack.isEmpty(armorChest) && bonus(armorChest) > 0) return armorChest;
         if (!ItemStack.isEmpty(storageSlot0) && bonus(storageSlot0) > 0) return storageSlot0;
         return null;
     }
 
     @Nullable
-    private static ItemStack findByInstanceId(@Nonnull Inventory inv,
-                                              @Nonnull String targetId) {
-        ItemContainer[] containers = {
-                inv.getArmor(), inv.getStorage(), inv.getBackpack(), inv.getHotbar()
-        };
+    private static ItemStack findByInstanceId(@Nonnull Inventory inv, @Nonnull String targetId) {
+        ItemContainer[] containers = {inv.getArmor(), inv.getStorage(), inv.getBackpack(), inv.getHotbar()};
         for (ItemContainer container : containers) {
             if (container == null) continue;
             for (short slot = 0; slot < container.getCapacity(); slot++) {
                 ItemStack candidate = container.getItemStack(slot);
                 if (candidate == null || candidate.isEmpty()) continue;
-                if (targetId.equals(BackpackItemFactory.getInstanceId(candidate)))
-                    return candidate;
+                if (targetId.equals(BackpackItemFactory.getInstanceId(candidate))) return candidate;
             }
         }
         return null;
     }
 
     @Nonnull
-    private static ItemStack ensureInstanceId(@Nonnull ItemStack item,
-                                              @Nonnull ItemContainer container,
-                                              short slot) {
+    private static ItemStack ensureInstanceId(@Nonnull ItemStack item, @Nonnull ItemContainer container, short slot) {
         boolean changed = false;
         if (!BackpackItemFactory.hasInstanceId(item)) {
             item = BackpackItemFactory.createBackpackInstance(item);
@@ -487,13 +433,11 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         return contents;
     }
 
-    private static void restoreContentsToBackpack(@Nonnull ItemContainer backpack,
-                                                  @Nonnull List<ItemStack> contents) {
+    private static void restoreContentsToBackpack(@Nonnull ItemContainer backpack, @Nonnull List<ItemStack> contents) {
         short capacity = backpack.getCapacity();
         for (int i = 0; i < contents.size() && i < capacity; i++) {
             ItemStack item = contents.get(i);
-            if (item != null && !item.isEmpty())
-                backpack.setItemStackForSlot((short) i, item);
+            if (item != null && !item.isEmpty()) backpack.setItemStackForSlot((short) i, item);
         }
     }
 

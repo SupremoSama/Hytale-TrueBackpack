@@ -29,5 +29,32 @@
     ]
   },
   "Scale": 0.5,
-  "MaxStack": 1
+  "MaxStack": 1,
+  "Recipe": {
+    "TimeSeconds": 2,
+    "Input": [
+      {
+        "ItemId": "Ingredient_Bar_Iron",
+        "Quantity": 16
+      },
+      {
+        "ItemId": "Ingredient_Bar_Copper",
+        "Quantity": 25
+      },
+      {
+        "ItemId": "Ingredient_Leather_Medium",
+        "Quantity": 8
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Id": "Workbench",
+        "Type": "Crafting",
+        "Categories": [
+          "Workbench_Tinkering"
+        ],
+        "RequiredTierLevel": 1
+      }
+    ]
+  }
 }
