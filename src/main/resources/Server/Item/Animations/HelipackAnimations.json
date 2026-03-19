@@ -1,0 +1,34 @@
+{
+  "WiggleWeights": {
+    "X": 3,
+    "XDeceleration": 0.1,
+    "Y": 0.1,
+    "YDeceleration": 0.1,
+    "Z": 0.1,
+    "ZDeceleration": 0.1,
+    "Roll": 0.1,
+    "RollDeceleration": 0.1,
+    "Pitch": 2,
+    "PitchDeceleration": 0.1
+  },
+  "Animations": {
+    "Idle": {
+      "ThirdPerson": "Characters/Animations/Helipack/helipack_idle.blockyanim",
+      "Speed": 1,
+      "Looping": true
+    },
+    "Deploy": {
+      "ThirdPerson": "Characters/Animations/Helipack/helipack_deploy.blockyanim",
+      "Speed": 2
+    },
+    "Retract": {
+      "ThirdPerson": "Characters/Animations/Helipack/helipack_deploy.blockyanim",
+      "Speed": -2
+    },
+    "Active": {
+      "ThirdPerson": "Characters/Animations/Helipack/helipack_working.blockyanim",
+      "Looping": true,
+      "Speed": 2
+    }
+  }
+}
