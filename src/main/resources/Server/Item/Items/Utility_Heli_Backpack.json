@@ -1,6 +1,7 @@
 {
   "TranslationProperties": {
-    "Name": "server.items.Utility_Helipack.name"
+    "Name": "server.items.Utility_Helipack.name",
+    "Description": "server.truebackpack.item.Utility_Helipack.description"
   },
   "Categories": [
     "Items.Armors"
@@ -56,6 +57,6 @@
       }
     ]
   },
-  "PlayerAnimationsId": "HelipackAnimations",
-  "UsePlayerAnimations": true
+  "PlayerAnimationsId": "Item",
+  "UsePlayerAnimations": false
 }

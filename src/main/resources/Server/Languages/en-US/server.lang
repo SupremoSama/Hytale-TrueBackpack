@@ -10,3 +10,4 @@ truebackpack.toggle.backpack.hidden=Your backpack is now hidden
 truebackpack.toggle.quiver.visible=Your quiver is now visible
 truebackpack.toggle.quiver.hidden=Your quiver is now hidden
 truebackpack.toggle.unknown=That is not a valid option, choose 'backpack' or 'quiver'
+truebackpack.item.Utility_Helipack.description=Fuel this backpack with charcoal and soar through the skies. Double jump to activate flight mode and repeat the action to deactivate it.
