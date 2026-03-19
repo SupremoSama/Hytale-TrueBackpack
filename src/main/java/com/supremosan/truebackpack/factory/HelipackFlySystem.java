@@ -24,6 +24,9 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
+import com.supremosan.truebackpack.registries.BackpackRegistry.BackpackEntry;
+import com.supremosan.truebackpack.registries.BackpackRegistry.HelipackConfig;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -33,16 +36,7 @@ import java.util.UUID;
 public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
     private static final float DOUBLE_JUMP_WINDOW = 0.65f;
-    private static final String HELIPACK_ITEM_ID = "Utility_Heli_Backpack";
-    private static final String FUEL_ITEM_ID = "Ingredient_Charcoal";
 
-    private static final float VERTICAL_FLY_SPEED = 6.0f;
-    private static final float HORIZONTAL_FLY_SPEED = 7.0f;
-
-    private static final float FUEL_CONSUME_INTERVAL = 10.0f;
-    private static final int FUEL_CONSUME_AMOUNT = 5;
-
-    private static final String HELIPACK_ANIMATIONS_ID = "HelipackAnimations";
     private static final String ANIM_IDLE = "Idle";
     private static final String ANIM_DEPLOY = "Deploy";
     private static final String ANIM_RETRACT = "Retract";
@@ -86,27 +80,40 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         if (player == null || movementStatesComponent == null) return;
 
         UUID uuid = player.getUuid();
+        if (uuid == null) return;
 
-        if (!BackpackArmorListener.hasEquippedHelipack(uuid.toString(), HELIPACK_ITEM_ID)) {
+        String equippedItemId = BackpackArmorListener.getEquippedItemId(uuid.toString());
+
+        if (equippedItemId == null) {
             jumpStates.remove(uuid);
             return;
         }
 
+        BackpackEntry entry = BackpackRegistry.getByItem(equippedItemId);
+
+        if (entry == null || !entry.isHelipack()) {
+            jumpStates.remove(uuid);
+            return;
+        }
+
+        HelipackConfig config = entry.helipackConfig();
+        if (config == null) return;
+
         MovementStates current = movementStatesComponent.getMovementStates();
         MovementStates sent = movementStatesComponent.getSentMovementStates();
 
-        JumpState jumpState = jumpStates.computeIfAbsent(uuid, k -> new JumpState());
+        JumpState jumpState = jumpStates.computeIfAbsent(uuid, _ -> new JumpState());
 
-        tickAnimationSequence(dt, jumpState, archetypeChunk.getReferenceTo(index), commandBuffer);
+        tickAnimationSequence(dt, jumpState, archetypeChunk.getReferenceTo(index), commandBuffer, config);
 
         jumpState.timeSinceLastTrigger += dt;
 
         if (current.flying) {
             jumpState.fuelTimer += dt;
-            if (jumpState.fuelTimer >= FUEL_CONSUME_INTERVAL) {
+            if (jumpState.fuelTimer >= config.fuelConsumeInterval()) {
                 jumpState.fuelTimer = 0f;
-                if (!consumeFuel(player.getInventory(), FUEL_CONSUME_AMOUNT)) {
-                    disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer);
+                if (config.requiresFuel() && !consumeFuel(player.getInventory(), config.fuelItemId(), config.fuelConsumeAmount())) {
+                    disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer, config);
                     return;
                 }
             }
@@ -118,31 +125,34 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
         boolean wasOnGround = sent.onGround;
         boolean isOnGround = current.onGround;
-        boolean justLeftGround = wasOnGround && !isOnGround;
         boolean justLanded = !wasOnGround && isOnGround;
 
-        if (justLeftGround && !current.flying && isJumping) {
-            if (!hasFuel(player.getInventory())) return;
+        if (justStartedJump && !current.flying) {
+            if (config.requiresFuel() && !hasFuel(player.getInventory(), config.fuelItemId())) return;
 
             boolean withinWindow = jumpState.timeSinceLastTrigger <= DOUBLE_JUMP_WINDOW;
 
             if (jumpState.windowOpen && withinWindow) {
-                enableFlight(uuid, store, archetypeChunk.getReferenceTo(index), jumpState, commandBuffer);
+                enableFlight(uuid, store, archetypeChunk.getReferenceTo(index), jumpState, commandBuffer, config);
                 jumpState.windowOpen = false;
                 jumpState.timeSinceLastTrigger = Float.MAX_VALUE;
                 jumpState.fuelTimer = 0f;
                 return;
-            } else {
-                jumpState.windowOpen = true;
-                jumpState.timeSinceLastTrigger = 0f;
             }
+
+            jumpState.windowOpen = true;
+            jumpState.timeSinceLastTrigger = 0f;
         }
 
-        if (justLanded && jumpState.windowOpen) {
+        if (justLanded) {
+            if (current.flying) {
+                disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer, config);
+                return;
+            }
+
             if (jumpState.timeSinceLastTrigger > DOUBLE_JUMP_WINDOW) {
                 jumpState.windowOpen = false;
                 jumpState.timeSinceLastTrigger = Float.MAX_VALUE;
-                disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer);
             }
         }
 
@@ -150,14 +160,14 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             boolean withinWindow = jumpState.timeSinceLastTrigger <= DOUBLE_JUMP_WINDOW;
 
             if (withinWindow) {
-                disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer);
+                disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer, config);
             } else {
                 jumpState.timeSinceLastTrigger = 0f;
             }
         }
     }
 
-    private void tickAnimationSequence(float dt, JumpState jumpState, Ref<EntityStore> ref, CommandBuffer<EntityStore> commandBuffer) {
+    private void tickAnimationSequence(float dt, JumpState jumpState, Ref<EntityStore> ref, CommandBuffer<EntityStore> commandBuffer, HelipackConfig config) {
         if (jumpState.animState == AnimState.IDLE) return;
 
         jumpState.animTimer += dt;
@@ -165,20 +175,23 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         if (jumpState.animState == AnimState.DEPLOYING && jumpState.animTimer >= jumpState.deployDuration) {
             jumpState.animState = AnimState.ACTIVE;
             jumpState.animTimer = 0f;
-            playAnimation(ref, commandBuffer, ANIM_ACTIVE);
+            playAnimation(ref, commandBuffer, config, ANIM_ACTIVE);
         } else if (jumpState.animState == AnimState.RETRACTING && jumpState.animTimer >= jumpState.retractDuration) {
             jumpState.animState = AnimState.IDLE;
             jumpState.animTimer = 0f;
-            playAnimation(ref, commandBuffer, ANIM_IDLE);
+            playAnimation(ref, commandBuffer, config, ANIM_IDLE);
         }
     }
 
-    private void playAnimation(Ref<EntityStore> ref, CommandBuffer<EntityStore> commandBuffer, String animationId) {
-        AnimationUtils.playAnimation(ref, AnimationSlot.Action, HELIPACK_ANIMATIONS_ID, animationId, true, commandBuffer);
+    private void playAnimation(Ref<EntityStore> ref, CommandBuffer<EntityStore> commandBuffer, HelipackConfig config, String animationId) {
+        if (config.itemAnimationsId() == null) return;
+        AnimationUtils.playAnimation(ref, AnimationSlot.Action, config.itemAnimationsId(), animationId, true, commandBuffer);
     }
 
-    private float resolveAnimationDuration(String animationId) {
-        ItemPlayerAnimations itemAnimations = ItemPlayerAnimations.getAssetMap().getAsset(HELIPACK_ANIMATIONS_ID);
+    private float resolveAnimationDuration(HelipackConfig config, String animationId) {
+        if (config.itemAnimationsId() == null) return FALLBACK_ANIM_DURATION;
+
+        ItemPlayerAnimations itemAnimations = ItemPlayerAnimations.getAssetMap().getAsset(config.itemAnimationsId());
         if (itemAnimations == null) return FALLBACK_ANIM_DURATION;
 
         Map<String, ItemAnimation> animations = itemAnimations.getAnimations();
@@ -190,19 +203,19 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         return 1f / Math.abs(anim.speed);
     }
 
-    private boolean hasFuel(@Nonnull Inventory inventory) {
+    private boolean hasFuel(@Nonnull Inventory inventory, @Nonnull String fuelItemId) {
         ItemContainer backpack = inventory.getBackpack();
         if (backpack == null) return false;
         for (short slot = 0; slot < backpack.getCapacity(); slot++) {
             ItemStack stack = backpack.getItemStack(slot);
-            if (stack != null && !stack.isEmpty() && FUEL_ITEM_ID.equals(stack.getItemId()) && stack.getQuantity() > 0) {
+            if (stack != null && !stack.isEmpty() && fuelItemId.equals(stack.getItemId()) && stack.getQuantity() > 0) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean consumeFuel(@Nonnull Inventory inventory, int amount) {
+    private boolean consumeFuel(@Nonnull Inventory inventory, @Nonnull String fuelItemId, int amount) {
         ItemContainer backpack = inventory.getBackpack();
         if (backpack == null) return false;
 
@@ -210,7 +223,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
         for (short slot = 0; slot < backpack.getCapacity() && remaining > 0; slot++) {
             ItemStack stack = backpack.getItemStack(slot);
-            if (stack == null || stack.isEmpty() || !FUEL_ITEM_ID.equals(stack.getItemId())) continue;
+            if (stack == null || stack.isEmpty() || !fuelItemId.equals(stack.getItemId())) continue;
 
             int available = stack.getQuantity();
             if (available <= 0) continue;
@@ -227,7 +240,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         return remaining == 0;
     }
 
-    private void enableFlight(UUID uuid, Store<EntityStore> store, Ref<EntityStore> ref, JumpState jumpState, CommandBuffer<EntityStore> commandBuffer) {
+    private void enableFlight(UUID uuid, Store<EntityStore> store, Ref<EntityStore> ref, JumpState jumpState, CommandBuffer<EntityStore> commandBuffer, HelipackConfig config) {
         PlayerRef playerRef = Universe.get().getPlayer(uuid);
         if (playerRef == null) return;
 
@@ -235,8 +248,8 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         if (movementManager == null) return;
 
         movementManager.getSettings().canFly = true;
-        movementManager.getSettings().verticalFlySpeed = VERTICAL_FLY_SPEED;
-        movementManager.getSettings().horizontalFlySpeed = HORIZONTAL_FLY_SPEED;
+        movementManager.getSettings().verticalFlySpeed = config.verticalFlySpeed();
+        movementManager.getSettings().horizontalFlySpeed = config.horizontalFlySpeed();
         movementManager.update(playerRef.getPacketHandler());
 
         MovementStatesComponent movementStatesComponent = store.getComponent(ref, movementStatesComponentType);
@@ -245,10 +258,10 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         movementStatesComponent.getMovementStates().flying = true;
         playerRef.getPacketHandler().writeNoCache(new SetMovementStates(new SavedMovementStates(true)));
 
-        jumpState.deployDuration = resolveAnimationDuration(ANIM_DEPLOY);
+        jumpState.deployDuration = resolveAnimationDuration(config, ANIM_DEPLOY);
         jumpState.animState = AnimState.DEPLOYING;
         jumpState.animTimer = 0f;
-        playAnimation(ref, commandBuffer, ANIM_DEPLOY);
+        playAnimation(ref, commandBuffer, config, ANIM_DEPLOY);
     }
 
     private void disableFlight(
@@ -257,7 +270,8 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             Ref<EntityStore> ref,
             MovementStatesComponent movementStatesComponent,
             JumpState jumpState,
-            CommandBuffer<EntityStore> commandBuffer
+            CommandBuffer<EntityStore> commandBuffer,
+            HelipackConfig config
     ) {
         PlayerRef playerRef = Universe.get().getPlayer(uuid);
         if (playerRef == null) return;
@@ -280,10 +294,10 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         jumpState.fuelTimer = 0f;
         jumpState.windowOpen = false;
 
-        jumpState.retractDuration = resolveAnimationDuration(ANIM_RETRACT);
+        jumpState.retractDuration = resolveAnimationDuration(config, ANIM_RETRACT);
         jumpState.animState = AnimState.RETRACTING;
         jumpState.animTimer = 0f;
-        playAnimation(ref, commandBuffer, ANIM_RETRACT);
+        playAnimation(ref, commandBuffer, config, ANIM_RETRACT);
     }
 
     public void onPlayerLeave(UUID uuid) {

@@ -43,6 +43,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
     private static final short STORAGE_SLOT = 0;
 
     private static final Map<String, String> LAST_KNOWN_EQUIPPED = new ConcurrentHashMap<>();
+    private static final Map<String, String> LAST_KNOWN_EQUIPPED_ITEM_ID = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> PROCESSING_EQUIP = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> PROCESSING_CONTAINER = new ConcurrentHashMap<>();
     private static final Query<EntityStore> QUERY = Query.any();
@@ -56,7 +57,6 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
     public static void register(@Nonnull TrueBackpack plugin) {
         INSTANCE = new BackpackArmorListener();
         plugin.getEntityStoreRegistry().registerSystem(INSTANCE);
-
         plugin.getEventRegistry().registerGlobal(LivingEntityInventoryChangeEvent.class, event -> INSTANCE.handle(event));
     }
 
@@ -73,10 +73,9 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         return LAST_KNOWN_EQUIPPED.containsKey(playerUuid);
     }
 
-    public static boolean hasEquippedHelipack(@Nonnull String playerUuid, @Nonnull String helipackItemId) {
-        String equippedItemId = LAST_KNOWN_EQUIPPED_ITEM_ID.get(playerUuid);
-        if (equippedItemId == null) return false;
-        return equippedItemId.contains(helipackItemId);
+    @Nullable
+    public static String getEquippedItemId(@Nonnull String playerUuid) {
+        return LAST_KNOWN_EQUIPPED_ITEM_ID.get(playerUuid);
     }
 
     public static short getBackpackSize(@Nonnull String itemId) {
@@ -87,8 +86,6 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         }
         return 0;
     }
-
-    private static final Map<String, String> LAST_KNOWN_EQUIPPED_ITEM_ID = new ConcurrentHashMap<>();
 
     @Override
     public @Nonnull Query<EntityStore> getQuery() {
@@ -373,8 +370,7 @@ public class BackpackArmorListener extends RefSystem<EntityStore> {
         ItemStack armor = inv.getArmor().getItemStack(CHEST_SLOT);
         if (!ItemStack.isEmpty(armor) && id.equals(BackpackItemFactory.getInstanceId(armor))) return inv.getArmor();
         ItemStack storage = inv.getStorage().getItemStack(STORAGE_SLOT);
-        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage)))
-            return inv.getStorage();
+        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage))) return inv.getStorage();
         return null;
     }
 

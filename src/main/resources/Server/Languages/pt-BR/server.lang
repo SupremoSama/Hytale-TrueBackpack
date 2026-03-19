@@ -10,3 +10,4 @@ truebackpack.toggle.backpack.hidden=Sua mochila agora está oculta
 truebackpack.toggle.quiver.visible=Sua aljava agora está visível
 truebackpack.toggle.quiver.hidden=Sua aljava agora está oculta
 truebackpack.toggle.unknown=Essa não é uma opção válida, selecione 'backpack' ou 'quiver'
+truebackpack.item.Utility_Helipack.description=Abasteça esta mochila com carvão vegetal e voe pelos céus. Dê um pulo duplo para ativar o modo de voo e repita o comando para desativá-lo.
