@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.factory;
+package com.supremosan.truebackpack.system;
 
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
@@ -14,10 +14,11 @@ import com.hypixel.hytale.protocol.SavedMovementStates;
 import com.hypixel.hytale.protocol.packets.player.SetMovementStates;
 import com.hypixel.hytale.server.core.asset.type.itemanimation.config.ItemPlayerAnimations;
 import com.hypixel.hytale.server.core.entity.AnimationUtils;
+import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
-import com.hypixel.hytale.server.core.inventory.Inventory;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -29,6 +30,7 @@ import com.supremosan.truebackpack.registries.BackpackRegistry.BackpackEntry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.HelipackConfig;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -79,11 +81,14 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
         if (player == null || movementStatesComponent == null) return;
 
-        UUID uuid = player.getUuid();
-        if (uuid == null) return;
+        Ref<EntityStore> ref = player.getReference();
+        if (ref == null) return;
 
+        UUIDComponent uuidComp = store.getComponent(ref, UUIDComponent.getComponentType());
+        if (uuidComp == null) return;
+
+        UUID uuid = uuidComp.getUuid();
         String equippedItemId = BackpackArmorListener.getEquippedItemId(uuid.toString());
-
         if (equippedItemId == null) {
             jumpStates.remove(uuid);
             return;
@@ -99,6 +104,8 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         HelipackConfig config = entry.helipackConfig();
         if (config == null) return;
 
+        InventoryComponent.Backpack backpackComp = archetypeChunk.getComponent(index, InventoryComponent.Backpack.getComponentType());
+
         MovementStates current = movementStatesComponent.getMovementStates();
         MovementStates sent = movementStatesComponent.getSentMovementStates();
 
@@ -112,7 +119,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             jumpState.fuelTimer += dt;
             if (jumpState.fuelTimer >= config.fuelConsumeInterval()) {
                 jumpState.fuelTimer = 0f;
-                if (config.requiresFuel() && !consumeFuel(player.getInventory(), config.fuelItemId(), config.fuelConsumeAmount())) {
+                if (config.requiresFuel() && !consumeFuel(backpackComp, config.fuelItemId(), config.fuelConsumeAmount())) {
                     disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer, config);
                     return;
                 }
@@ -128,7 +135,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         boolean justLanded = !wasOnGround && isOnGround;
 
         if (justStartedJump && !current.flying) {
-            if (config.requiresFuel() && !hasFuel(player.getInventory(), config.fuelItemId())) return;
+            if (config.requiresFuel() && !hasFuel(backpackComp, config.fuelItemId())) return;
 
             boolean withinWindow = jumpState.timeSinceLastTrigger <= DOUBLE_JUMP_WINDOW;
 
@@ -203,9 +210,9 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         return 1f / Math.abs(anim.speed);
     }
 
-    private boolean hasFuel(@Nonnull Inventory inventory, @Nonnull String fuelItemId) {
-        ItemContainer backpack = inventory.getBackpack();
-        if (backpack == null) return false;
+    private boolean hasFuel(@Nullable InventoryComponent.Backpack backpackComp, @Nonnull String fuelItemId) {
+        if (backpackComp == null) return false;
+        ItemContainer backpack = backpackComp.getInventory();
         for (short slot = 0; slot < backpack.getCapacity(); slot++) {
             ItemStack stack = backpack.getItemStack(slot);
             if (stack != null && !stack.isEmpty() && fuelItemId.equals(stack.getItemId()) && stack.getQuantity() > 0) {
@@ -215,9 +222,9 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         return false;
     }
 
-    private boolean consumeFuel(@Nonnull Inventory inventory, @Nonnull String fuelItemId, int amount) {
-        ItemContainer backpack = inventory.getBackpack();
-        if (backpack == null) return false;
+    private boolean consumeFuel(@Nullable InventoryComponent.Backpack backpackComp, @Nonnull String fuelItemId, int amount) {
+        if (backpackComp == null) return false;
+        ItemContainer backpack = backpackComp.getInventory();
 
         int remaining = amount;
 

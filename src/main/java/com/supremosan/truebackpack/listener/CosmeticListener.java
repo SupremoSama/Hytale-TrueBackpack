@@ -15,7 +15,7 @@ import com.hypixel.hytale.server.core.cosmetics.PlayerSkinPart;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
-import com.hypixel.hytale.server.core.inventory.Inventory;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
@@ -246,7 +246,7 @@ public class CosmeticListener {
             }
         }
 
-        Set<Cosmetic> hiddenCosmetics = resolveHiddenCosmetics(store, ref, player);
+        Set<Cosmetic> hiddenCosmetics = resolveHiddenCosmetics(store, ref);
 
         List<ModelAttachment> attachments = new ArrayList<>();
         restoreSkinAttachments(attachments, skin, hiddenCosmetics, bodyGradientId);
@@ -284,36 +284,32 @@ public class CosmeticListener {
 
     @Nonnull
     private static Set<Cosmetic> resolveHiddenCosmetics(@Nonnull Store<EntityStore> store,
-                                                        @Nonnull Ref<EntityStore> ref,
-                                                        @Nonnull Player player) {
+                                                        @Nonnull Ref<EntityStore> ref) {
         Set<Cosmetic> hidden = EnumSet.noneOf(Cosmetic.class);
 
-        Inventory inv = player.getInventory();
-        if (inv != null) {
-            ItemContainer armor = inv.getArmor();
-            if (armor != null) {
-                PlayerSettings settings = store.getComponent(ref, PlayerSettings.getComponentType());
+        InventoryComponent.Armor armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
+        if (armorComp == null) return hidden;
 
-                for (short slot = 0; slot < armor.getCapacity(); slot++) {
-                    ItemStack stack = armor.getItemStack(slot);
-                    if (stack == null || stack.isEmpty()) continue;
+        ItemContainer armor = armorComp.getInventory();
+        PlayerSettings settings = store.getComponent(ref, PlayerSettings.getComponentType());
 
-                    if (stack.getItem().getArmor() == null) continue;
-                    com.hypixel.hytale.protocol.ItemArmor protocolArmor =
-                            stack.getItem().getArmor().toPacket();
-                    if (protocolArmor.cosmeticsToHide == null) continue;
+        for (short slot = 0; slot < armor.getCapacity(); slot++) {
+            ItemStack stack = armor.getItemStack(slot);
+            if (stack == null || stack.isEmpty()) continue;
+            if (stack.getItem().getArmor() == null) continue;
 
-                    boolean armorIsHidden = settings != null && switch (protocolArmor.armorSlot) {
-                        case Head -> settings.hideHelmet();
-                        case Chest -> settings.hideCuirass();
-                        case Hands -> settings.hideGauntlets();
-                        case Legs -> settings.hidePants();
-                    };
+            com.hypixel.hytale.protocol.ItemArmor protocolArmor = stack.getItem().getArmor().toPacket();
+            if (protocolArmor.cosmeticsToHide == null) continue;
 
-                    if (!armorIsHidden) {
-                        Collections.addAll(hidden, protocolArmor.cosmeticsToHide);
-                    }
-                }
+            boolean armorIsHidden = settings != null && switch (protocolArmor.armorSlot) {
+                case Head -> settings.hideHelmet();
+                case Chest -> settings.hideCuirass();
+                case Hands -> settings.hideGauntlets();
+                case Legs -> settings.hidePants();
+            };
+
+            if (!armorIsHidden) {
+                Collections.addAll(hidden, protocolArmor.cosmeticsToHide);
             }
         }
 

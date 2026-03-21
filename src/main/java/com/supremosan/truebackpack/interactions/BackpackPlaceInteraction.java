@@ -15,13 +15,14 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.Rotation;
 import com.hypixel.hytale.server.core.entity.InteractionContext;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.modules.block.BlockModule;
+import com.hypixel.hytale.server.core.modules.block.components.ItemContainerBlock;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHandler;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInteraction;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
-import com.hypixel.hytale.server.core.universe.world.meta.BlockState;
-import com.hypixel.hytale.server.core.universe.world.meta.state.ItemContainerState;
+import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
@@ -50,9 +51,7 @@ public class BackpackPlaceInteraction extends SimpleInteraction {
 
         super.tick0(firstRun, time, type, context, cooldownHandler);
 
-        if (!firstRun) {
-            return;
-        }
+        if (!firstRun) return;
 
         if (type != InteractionType.Use) {
             context.getState().state = InteractionState.Failed;
@@ -131,17 +130,24 @@ public class BackpackPlaceInteraction extends SimpleInteraction {
 
         chunk.placeBlock(placeX, placeY, placeZ, entry.blockId(), yaw, Rotation.None, Rotation.None);
 
-        BlockState placedState = world.getState(placeX, placeY, placeZ, false);
-        if (!(placedState instanceof ItemContainerState containerState)) {
+        Ref<ChunkStore> blockEntityRef = BlockModule.getBlockEntity(world, placeX, placeY, placeZ);
+        if (blockEntityRef == null || !blockEntityRef.isValid()) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        Store<ChunkStore> chunkStore = blockEntityRef.getStore();
+        ItemContainerBlock containerBlock = chunkStore.getComponent(blockEntityRef, ItemContainerBlock.getComponentType());
+        if (containerBlock == null) {
             context.getState().state = InteractionState.Failed;
             return;
         }
 
         List<ItemStack> contents = BackpackItemFactory.loadContents(heldItem);
-        for (int i = 0; i < contents.size() && i < containerState.getItemContainer().getCapacity(); i++) {
+        for (int i = 0; i < contents.size() && i < containerBlock.getItemContainer().getCapacity(); i++) {
             ItemStack content = contents.get(i);
             if (content != null && !content.isEmpty()) {
-                containerState.getItemContainer().setItemStackForSlot((short) i, content);
+                containerBlock.getItemContainer().setItemStackForSlot((short) i, content);
             }
         }
 

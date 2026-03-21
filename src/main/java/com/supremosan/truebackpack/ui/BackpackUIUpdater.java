@@ -3,6 +3,7 @@ package com.supremosan.truebackpack.ui;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.protocol.packets.player.SetGameMode;
 import com.hypixel.hytale.server.core.entity.LivingEntity;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -28,11 +29,8 @@ public class BackpackUIUpdater {
                 return;
             }
 
-            player.sendInventory();
-
-            playerRefComponent.getPacketHandler().writeNoCache(
-                    new SetGameMode(player.getGameMode())
-            );
+            GameMode originalGameMode = player.getGameMode();
+            playerRefComponent.getPacketHandler().writeNoCache(new SetGameMode(originalGameMode));
         } catch (Exception e) {
             LOGGER.atWarning().log("Failed to update backpack UI for player %s: %s",
                     player.getDisplayName(),

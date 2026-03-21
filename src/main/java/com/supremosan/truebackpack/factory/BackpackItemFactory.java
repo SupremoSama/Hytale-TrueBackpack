@@ -5,7 +5,7 @@ import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.universe.world.meta.state.ItemContainerState;
+//import com.hypixel.hytale.server.core.universe.world.meta.state.ItemContainerState;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -89,13 +89,6 @@ public class BackpackItemFactory {
 
     public static boolean hasContents(@Nonnull ItemStack backpack) {
         return loadContents(backpack).stream().anyMatch(i -> i != null && !i.isEmpty());
-    }
-
-    public static boolean isBackpackContainer(@Nonnull ItemContainerState containerState) {
-        BlockType blockType = containerState.getBlockType();
-        if (blockType == null) return false;
-        String blockId = blockType.getId();
-        return blockId != null && blockId.contains("backpack");
     }
 
     @Nullable
