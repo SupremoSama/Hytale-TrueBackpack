@@ -26,9 +26,17 @@
     "Material": "Solid",
     "Opacity": "Transparent",
     "ParticleColor": "#7a3d27",
+    "BlockEntity": {
+      "Components": {
+        "ItemContainerBlock": {
+          "Capacity": 27
+        },
+        "BackpackContainerState": {
+          "BackpackBlockId": "TrueBackpack_Chest_Large"
+        }
+      }
+    },
     "State": {
-      "Id": "truebackpack:backpack_container",
-      "Capacity": 27,
       "Definitions": {
         "CloseWindow": {
           "InteractionSoundEventId": "SFX_Chest_Wooden_Close",
@@ -56,13 +64,6 @@
     },
     "VariantRotation": "NESW",
     "Interactions": {
-      "Primary": {
-        "Interactions": [
-          {
-            "Type": "DestroyBlock"
-          }
-        ]
-      },
       "Use": "Open_Container"
     },
     "CustomModelScale": 0.5,

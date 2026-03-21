@@ -1,78 +1,103 @@
 package com.supremosan.truebackpack.listener;
 
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.entity.LivingEntity;
-import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.event.events.entity.LivingEntityInventoryChangeEvent;
-import com.hypixel.hytale.server.core.inventory.Inventory;
+import com.hypixel.hytale.component.*;
+import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.component.system.RefSystem;
+import com.hypixel.hytale.server.core.entity.UUIDComponent;
+import com.hypixel.hytale.server.core.inventory.InventoryChangeEvent;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
-import com.hypixel.hytale.server.core.inventory.transaction.Transaction;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.TrueBackpack;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 
-public class BackpackNestingListener {
-    private BackpackNestingListener() {
+import javax.annotation.Nonnull;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class BackpackNestingListener extends RefSystem<EntityStore> {
+
+    private static final Map<InventoryComponent, Ref<EntityStore>> COMPONENT_TO_REF = new ConcurrentHashMap<>();
+    private static final Query<EntityStore> QUERY = Query.any();
+
+    private static BackpackNestingListener INSTANCE;
+
+    public BackpackNestingListener() {
+        INSTANCE = this;
     }
 
-    public static void register(TrueBackpack plugin) {
-        plugin.getEventRegistry().registerGlobal(
-                LivingEntityInventoryChangeEvent.class,
-                BackpackNestingListener::handle
-        );
+    public static void register(@Nonnull TrueBackpack plugin) {
+        INSTANCE = new BackpackNestingListener();
+        plugin.getEntityStoreRegistry().registerSystem(INSTANCE);
+        plugin.getEventRegistry().registerGlobal(InventoryChangeEvent.class, INSTANCE::handle);
     }
 
-    private static void handle(LivingEntityInventoryChangeEvent event) {
-        ItemContainer container = event.getItemContainer();
-        if (container == null) return;
+    @Override
+    public @Nonnull Query<EntityStore> getQuery() {
+        return QUERY;
+    }
 
-        Transaction transaction = event.getTransaction();
-        if (transaction == null || !transaction.succeeded()) return;
+    @Override
+    public void onEntityAdded(@Nonnull Ref<EntityStore> ref,
+                              @Nonnull AddReason reason,
+                              @Nonnull Store<EntityStore> store,
+                              @Nonnull CommandBuffer<EntityStore> buffer) {
 
-        LivingEntity entity = event.getEntity();
-        if (entity == null) return;
+        InventoryComponent.Backpack backpack =
+                store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
 
-        boolean blocked = isBlockedContainer(entity, container);
-        if (!blocked) return;
-
-        for (short slot = 0; slot < container.getCapacity(); slot++) {
-            if (!transaction.wasSlotModified(slot)) continue;
-
-            ItemStack item = container.getItemStack(slot);
-
-            if (item == null || item.isEmpty()) continue;
-
-            String itemId = item.getItem().getId();
-            boolean isBackpack = BackpackRegistry.getByItem(itemId) != null;
-
-            if (!isBackpack) continue;
-
-            container.setItemStackForSlot(slot, ItemStack.EMPTY);
+        if (backpack != null) {
+            COMPONENT_TO_REF.put(backpack, ref);
         }
     }
 
-    private static boolean isBlockedContainer(LivingEntity entity, ItemContainer container) {
-        Ref<EntityStore> ref = entity.getReference();
-        if (ref == null || !ref.isValid()) {
-            return true;
+    @Override
+    public void onEntityRemove(@Nonnull Ref<EntityStore> ref,
+                               @Nonnull RemoveReason reason,
+                               @Nonnull Store<EntityStore> store,
+                               @Nonnull CommandBuffer<EntityStore> buffer) {
+
+        InventoryComponent.Backpack backpack =
+                store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
+
+        if (backpack != null) {
+            COMPONENT_TO_REF.remove(backpack);
         }
+    }
+
+    private void handle(@Nonnull InventoryChangeEvent event) {
+        InventoryComponent component = event.getInventory();
+        Ref<EntityStore> ref = COMPONENT_TO_REF.get(component);
+
+        if (ref == null || !ref.isValid()) return;
 
         Store<EntityStore> store = ref.getStore();
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player == null) {
-            return true;
+
+        UUIDComponent uuid = store.getComponent(ref, UUIDComponent.getComponentType());
+        if (uuid == null) return;
+
+        InventoryComponent.Backpack backpackComp =
+                store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
+
+        if (backpackComp == null) return;
+
+        ItemContainer changed = event.getItemContainer();
+        ItemContainer backpackContainer = backpackComp.getInventory();
+
+        if (!backpackContainer.equals(changed)) return;
+
+        for (short slot = 0; slot < changed.getCapacity(); slot++) {
+            if (!event.getTransaction().wasSlotModified(slot)) continue;
+
+            ItemStack item = changed.getItemStack(slot);
+            if (item == null || item.isEmpty()) continue;
+
+            String itemId = item.getItemId();
+
+            if (BackpackRegistry.getByItem(itemId) == null) continue;
+
+            changed.setItemStackForSlot(slot, ItemStack.EMPTY);
         }
-
-        Inventory inv = player.getInventory();
-
-        boolean isHotbar = container == inv.getHotbar();
-        boolean isStorage = container == inv.getStorage();
-        boolean isArmor = container == inv.getArmor();
-        boolean isUtility = container == inv.getUtility();
-        boolean isTools = container == inv.getTools();
-
-        return !isHotbar && !isStorage && !isArmor && !isUtility && !isTools;
     }
 }
