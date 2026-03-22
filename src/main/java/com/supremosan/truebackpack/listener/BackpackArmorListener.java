@@ -134,6 +134,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         if (entity == null) return;
 
         handleEquipContainerChange(entity, ref, store, armorComp, storageComp, backpackComp, hotbarComp, playerUuid);
+        BackpackUIUpdater.updateBackpackUI(entity, ref, store);
     }
 
     public static void onPlayerRemove(
@@ -359,8 +360,6 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             @Nonnull Ref<EntityStore> ref,
             @Nonnull String playerUuid,
             @Nullable ItemStack equippedItem) {
-        BackpackUIUpdater.updateBackpackUI(entity, ref, store);
-
         boolean backpackVisible = CosmeticPreferenceUtils.isBackpackVisible(store, ref);
         ModelAttachment visual = (equippedItem != null && backpackVisible) ? resolveVisual(equippedItem.getItemId()) : null;
 
