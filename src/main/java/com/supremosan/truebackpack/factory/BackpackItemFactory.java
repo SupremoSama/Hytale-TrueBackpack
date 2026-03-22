@@ -3,9 +3,7 @@ package com.supremosan.truebackpack.factory;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
-//import com.hypixel.hytale.server.core.universe.world.meta.state.ItemContainerState;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -26,6 +24,9 @@ public class BackpackItemFactory {
 
     public static final KeyedCodec<Boolean> EQUIPPED_CODEC =
             new KeyedCodec<>("Backpack_equipped", Codec.BOOLEAN);
+
+    public static final KeyedCodec<Float> REMAINING_FUEL_TIME_CODEC =
+            new KeyedCodec<>("Backpack_remaining_fuel_time", Codec.FLOAT);
 
     private static final String CONTENTS_KEY = "Backpack_contents";
 
@@ -54,6 +55,16 @@ public class BackpackItemFactory {
 
     public static boolean hasInstanceId(@Nonnull ItemStack stack) {
         return getInstanceId(stack) != null;
+    }
+
+    public static float getRemainingFuelTime(@Nonnull ItemStack stack) {
+        Float val = stack.getFromMetadataOrNull(REMAINING_FUEL_TIME_CODEC);
+        return val != null ? val : 0f;
+    }
+
+    @Nonnull
+    public static ItemStack setRemainingFuelTime(@Nonnull ItemStack stack, float seconds) {
+        return stack.withMetadata(REMAINING_FUEL_TIME_CODEC, Math.max(0f, seconds));
     }
 
     @Nonnull
