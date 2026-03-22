@@ -24,6 +24,7 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.BackpackEntry;
@@ -44,6 +45,9 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
     private static final String ANIM_RETRACT = "Retract";
     private static final String ANIM_ACTIVE = "Active";
     private static final float FALLBACK_ANIM_DURATION = 0.5f;
+
+    private static final short CHEST_SLOT = 1;
+    private static final short STORAGE_SLOT = 0;
 
     private final ComponentType<EntityStore, Player> playerComponentType;
     private final ComponentType<EntityStore, MovementStatesComponent> movementStatesComponentType;
@@ -104,6 +108,8 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         HelipackConfig config = entry.helipackConfig();
         if (config == null) return;
 
+        InventoryComponent.Armor armorComp = archetypeChunk.getComponent(index, InventoryComponent.Armor.getComponentType());
+        InventoryComponent.Storage storageComp = archetypeChunk.getComponent(index, InventoryComponent.Storage.getComponentType());
         InventoryComponent.Backpack backpackComp = archetypeChunk.getComponent(index, InventoryComponent.Backpack.getComponentType());
 
         MovementStates current = movementStatesComponent.getMovementStates();
@@ -120,7 +126,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             if (jumpState.fuelTimer >= config.fuelConsumeInterval()) {
                 jumpState.fuelTimer = 0f;
                 if (config.requiresFuel() && !consumeFuel(backpackComp, config.fuelItemId(), config.fuelConsumeAmount())) {
-                    disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer, config);
+                    disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, armorComp, storageComp, commandBuffer, config);
                     return;
                 }
             }
@@ -135,15 +141,18 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         boolean justLanded = !wasOnGround && isOnGround;
 
         if (justStartedJump && !current.flying) {
-            if (config.requiresFuel() && !hasFuel(backpackComp, config.fuelItemId())) return;
+            if (config.requiresFuel()) {
+                boolean hasFuelItem = hasFuel(backpackComp, config.fuelItemId());
+                float savedTime = readSavedFuelTime(armorComp, storageComp, uuid.toString());
+                if (!hasFuelItem && savedTime <= 0f) return;
+            }
 
             boolean withinWindow = jumpState.timeSinceLastTrigger <= DOUBLE_JUMP_WINDOW;
 
             if (jumpState.windowOpen && withinWindow) {
-                enableFlight(uuid, store, archetypeChunk.getReferenceTo(index), jumpState, commandBuffer, config);
+                enableFlight(uuid, store, archetypeChunk.getReferenceTo(index), jumpState, armorComp, storageComp, backpackComp, commandBuffer, config);
                 jumpState.windowOpen = false;
                 jumpState.timeSinceLastTrigger = Float.MAX_VALUE;
-                jumpState.fuelTimer = 0f;
                 return;
             }
 
@@ -152,8 +161,8 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         }
 
         if (justLanded) {
-            if (current.flying) {
-                disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer, config);
+            if (isFlying(uuid)) {
+                disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, armorComp, storageComp, commandBuffer, config);
                 return;
             }
 
@@ -167,7 +176,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             boolean withinWindow = jumpState.timeSinceLastTrigger <= DOUBLE_JUMP_WINDOW;
 
             if (withinWindow) {
-                disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, commandBuffer, config);
+                disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, armorComp, storageComp, commandBuffer, config);
             } else {
                 jumpState.timeSinceLastTrigger = 0f;
             }
@@ -247,9 +256,64 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         return remaining == 0;
     }
 
-    private void enableFlight(UUID uuid, Store<EntityStore> store, Ref<EntityStore> ref, JumpState jumpState, CommandBuffer<EntityStore> commandBuffer, HelipackConfig config) {
+    @Nullable
+    private EquipLocation findEquipLocation(
+            @Nullable InventoryComponent.Armor armorComp,
+            @Nullable InventoryComponent.Storage storageComp,
+            @Nonnull String playerUuid) {
+        String equippedItemId = BackpackArmorListener.getEquippedItemId(playerUuid);
+        if (equippedItemId == null) return null;
+
+        if (armorComp != null) {
+            ItemStack stack = armorComp.getInventory().getItemStack(CHEST_SLOT);
+            if (stack != null && !stack.isEmpty() && equippedItemId.equals(stack.getItemId())) {
+                return new EquipLocation(armorComp.getInventory(), CHEST_SLOT, stack);
+            }
+        }
+
+        if (storageComp != null) {
+            ItemStack stack = storageComp.getInventory().getItemStack(STORAGE_SLOT);
+            if (stack != null && !stack.isEmpty() && equippedItemId.equals(stack.getItemId())) {
+                return new EquipLocation(storageComp.getInventory(), STORAGE_SLOT, stack);
+            }
+        }
+
+        return null;
+    }
+
+    private float readSavedFuelTime(
+            @Nullable InventoryComponent.Armor armorComp,
+            @Nullable InventoryComponent.Storage storageComp,
+            @Nonnull String playerUuid) {
+        EquipLocation loc = findEquipLocation(armorComp, storageComp, playerUuid);
+        if (loc == null) return 0f;
+        return BackpackItemFactory.getRemainingFuelTime(loc.stack);
+    }
+
+    private void writeSavedFuelTime(
+            @Nullable InventoryComponent.Armor armorComp,
+            @Nullable InventoryComponent.Storage storageComp,
+            @Nonnull String playerUuid,
+            float seconds) {
+        EquipLocation loc = findEquipLocation(armorComp, storageComp, playerUuid);
+        if (loc == null) return;
+        loc.container.setItemStackForSlot(loc.slot, BackpackItemFactory.setRemainingFuelTime(loc.stack, seconds));
+    }
+
+    private void enableFlight(UUID uuid, Store<EntityStore> store, Ref<EntityStore> ref, JumpState jumpState, @Nullable InventoryComponent.Armor armorComp, @Nullable InventoryComponent.Storage storageComp, @Nullable InventoryComponent.Backpack backpackComp, CommandBuffer<EntityStore> commandBuffer, HelipackConfig config) {
         PlayerRef playerRef = Universe.get().getPlayer(uuid);
         if (playerRef == null) return;
+
+        if (config.requiresFuel()) {
+            float savedTime = readSavedFuelTime(armorComp, storageComp, uuid.toString());
+            if (savedTime > 0f) {
+                jumpState.fuelTimer = config.fuelConsumeInterval() - savedTime;
+                writeSavedFuelTime(armorComp, storageComp, uuid.toString(), 0f);
+            } else {
+                if (!consumeFuel(backpackComp, config.fuelItemId(), config.fuelConsumeAmount())) return;
+                jumpState.fuelTimer = 0f;
+            }
+        }
 
         MovementManager movementManager = store.getComponent(ref, MovementManager.getComponentType());
         if (movementManager == null) return;
@@ -265,6 +329,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         movementStatesComponent.getMovementStates().flying = true;
         playerRef.getPacketHandler().writeNoCache(new SetMovementStates(new SavedMovementStates(true)));
 
+        jumpState.isFlying = true;
         jumpState.deployDuration = resolveAnimationDuration(config, ANIM_DEPLOY);
         jumpState.animState = AnimState.DEPLOYING;
         jumpState.animTimer = 0f;
@@ -277,6 +342,8 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             Ref<EntityStore> ref,
             MovementStatesComponent movementStatesComponent,
             JumpState jumpState,
+            @Nullable InventoryComponent.Armor armorComp,
+            @Nullable InventoryComponent.Storage storageComp,
             CommandBuffer<EntityStore> commandBuffer,
             HelipackConfig config
     ) {
@@ -297,6 +364,14 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         movementStatesComponent.getMovementStates().flying = false;
         playerRef.getPacketHandler().writeNoCache(new SetMovementStates(new SavedMovementStates(false)));
 
+        if (config.requiresFuel() && jumpState.fuelTimer > 0f) {
+            float remainingTime = config.fuelConsumeInterval() - jumpState.fuelTimer;
+            if (remainingTime > 0f) {
+                writeSavedFuelTime(armorComp, storageComp, uuid.toString(), remainingTime);
+            }
+        }
+
+        jumpState.isFlying = false;
         jumpState.timeSinceLastTrigger = Float.MAX_VALUE;
         jumpState.fuelTimer = 0f;
         jumpState.windowOpen = false;
@@ -307,7 +382,19 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         playAnimation(ref, commandBuffer, config, ANIM_RETRACT);
     }
 
-    public void onPlayerLeave(UUID uuid) {
+    public boolean isFlying(UUID uuid) {
+        JumpState jumpState = jumpStates.get(uuid);
+        return jumpState != null && jumpState.isFlying;
+    }
+
+    public void onPlayerLeave(UUID uuid, @Nullable InventoryComponent.Armor armorComp, @Nullable InventoryComponent.Storage storageComp, @Nullable HelipackConfig config) {
+        JumpState jumpState = jumpStates.get(uuid);
+        if (jumpState != null && jumpState.isFlying && config != null && config.requiresFuel() && jumpState.fuelTimer > 0f) {
+            float remainingTime = config.fuelConsumeInterval() - jumpState.fuelTimer;
+            if (remainingTime > 0f) {
+                writeSavedFuelTime(armorComp, storageComp, uuid.toString(), remainingTime);
+            }
+        }
         jumpStates.remove(uuid);
     }
 
@@ -322,9 +409,12 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         float timeSinceLastTrigger = Float.MAX_VALUE;
         float fuelTimer = 0f;
         boolean windowOpen = false;
+        boolean isFlying = false;
         AnimState animState = AnimState.IDLE;
         float animTimer = 0f;
         float deployDuration = FALLBACK_ANIM_DURATION;
         float retractDuration = FALLBACK_ANIM_DURATION;
     }
+
+    private record EquipLocation(ItemContainer container, short slot, ItemStack stack) { }
 }

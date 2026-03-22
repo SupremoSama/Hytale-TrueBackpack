@@ -1,15 +1,21 @@
 package com.supremosan.truebackpack;
 
 import com.hypixel.hytale.component.ComponentType;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Interaction;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.commands.ToggleCosmeticCommand;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 import com.supremosan.truebackpack.data.BackpackContainerState;
@@ -64,7 +70,29 @@ public class TrueBackpack extends JavaPlugin {
             CosmeticListener.onPlayerLeave(uuidStr);
 
             if (helipackFlySystem != null) {
-                helipackFlySystem.onPlayerLeave(playerRef.getUuid());
+                InventoryComponent.Armor armorComp = null;
+                InventoryComponent.Storage storageComp = null;
+                BackpackRegistry.HelipackConfig helipackConfig = null;
+
+                World world = Universe.get().getDefaultWorld();
+                if (world != null) {
+                    Ref<EntityStore> ref = world.getEntityRef(playerRef.getUuid());
+                    if (ref != null) {
+                        Store<EntityStore> store = ref.getStore();
+                        armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
+                        storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+
+                        String equippedItemId = BackpackArmorListener.getEquippedItemId(uuidStr);
+                        if (equippedItemId != null) {
+                            BackpackRegistry.BackpackEntry entry = BackpackRegistry.getByItem(equippedItemId);
+                            if (entry != null && entry.isHelipack()) {
+                                helipackConfig = entry.helipackConfig();
+                            }
+                        }
+                    }
+                }
+
+                helipackFlySystem.onPlayerLeave(playerRef.getUuid(), armorComp, storageComp, helipackConfig);
             }
         });
 
