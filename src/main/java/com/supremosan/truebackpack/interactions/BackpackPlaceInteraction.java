@@ -14,12 +14,13 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.Rotation;
 import com.hypixel.hytale.server.core.entity.InteractionContext;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.block.BlockModule;
 import com.hypixel.hytale.server.core.modules.block.components.ItemContainerBlock;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHandler;
-import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInteraction;
+import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInstantInteraction;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
@@ -31,27 +32,18 @@ import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("removal")
-public class BackpackPlaceInteraction extends SimpleInteraction {
-
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+public class BackpackPlaceInteraction extends SimpleInstantInteraction {
     public static final BuilderCodec<BackpackPlaceInteraction> CODEC = BuilderCodec
             .builder(BackpackPlaceInteraction.class,
                     BackpackPlaceInteraction::new,
-                    SimpleInteraction.CODEC)
+                    SimpleInstantInteraction.CODEC)
             .build();
 
     @Override
-    protected void tick0(
-            boolean firstRun,
-            float time,
+    protected void firstRun(
             @Nonnull InteractionType type,
             @Nonnull InteractionContext context,
             @Nonnull CooldownHandler cooldownHandler) {
-
-        super.tick0(firstRun, time, type, context, cooldownHandler);
-
-        if (!firstRun) return;
 
         if (type != InteractionType.Use) {
             context.getState().state = InteractionState.Failed;
@@ -151,7 +143,12 @@ public class BackpackPlaceInteraction extends SimpleInteraction {
             }
         }
 
-        player.getInventory().getHotbar()
-                .removeItemStackFromSlot(context.getHeldItemSlot(), 1, true, false);
+        InventoryComponent.Hotbar hotbar = store.getComponent(owningEntity, InventoryComponent.Hotbar.getComponentType());
+        if (hotbar == null) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        hotbar.getInventory().removeItemStackFromSlot(context.getHeldItemSlot(), 1, true, false);
     }
 }

@@ -11,6 +11,7 @@ import com.hypixel.hytale.protocol.MovementStates;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
 import javax.annotation.Nonnull;
 
 public class MovementDebugSystem extends EntityTickingSystem<EntityStore> {
@@ -62,33 +63,33 @@ public class MovementDebugSystem extends EntityTickingSystem<EntityStore> {
 
         StringBuilder sb = new StringBuilder();
 
-        if (sent.idle != current.idle)                       sb.append("idle=").append(current.idle).append(" ");
-        if (sent.horizontalIdle != current.horizontalIdle)   sb.append("horizontalIdle=").append(current.horizontalIdle).append(" ");
-        if (sent.jumping != current.jumping)                 sb.append("jumping=").append(current.jumping).append(" ");
-        if (sent.flying != current.flying)                   sb.append("flying=").append(current.flying).append(" ");
-        if (sent.walking != current.walking)                 sb.append("walking=").append(current.walking).append(" ");
-        if (sent.running != current.running)                 sb.append("running=").append(current.running).append(" ");
-        if (sent.sprinting != current.sprinting)             sb.append("sprinting=").append(current.sprinting).append(" ");
-        if (sent.crouching != current.crouching)             sb.append("crouching=").append(current.crouching).append(" ");
-        if (sent.forcedCrouching != current.forcedCrouching) sb.append("forcedCrouching=").append(current.forcedCrouching).append(" ");
-        if (sent.falling != current.falling)                 sb.append("falling=").append(current.falling).append(" ");
-        if (sent.climbing != current.climbing)               sb.append("climbing=").append(current.climbing).append(" ");
-        if (sent.inFluid != current.inFluid)                 sb.append("inFluid=").append(current.inFluid).append(" ");
-        if (sent.swimming != current.swimming)               sb.append("swimming=").append(current.swimming).append(" ");
-        if (sent.swimJumping != current.swimJumping)         sb.append("swimJumping=").append(current.swimJumping).append(" ");
-        if (sent.onGround != current.onGround)               sb.append("onGround=").append(current.onGround).append(" ");
-        if (sent.mantling != current.mantling)               sb.append("mantling=").append(current.mantling).append(" ");
-        if (sent.sliding != current.sliding)                 sb.append("sliding=").append(current.sliding).append(" ");
-        if (sent.mounting != current.mounting)               sb.append("mounting=").append(current.mounting).append(" ");
-        if (sent.rolling != current.rolling)                 sb.append("rolling=").append(current.rolling).append(" ");
-        if (sent.sitting != current.sitting)                 sb.append("sitting=").append(current.sitting).append(" ");
-        if (sent.gliding != current.gliding)                 sb.append("gliding=").append(current.gliding).append(" ");
-        if (sent.sleeping != current.sleeping)               sb.append("sleeping=").append(current.sleeping).append(" ");
+        if (sent.idle != current.idle) sb.append("idle=").append(current.idle).append(" ");
+        if (sent.horizontalIdle != current.horizontalIdle)
+            sb.append("horizontalIdle=").append(current.horizontalIdle).append(" ");
+        if (sent.jumping != current.jumping) sb.append("jumping=").append(current.jumping).append(" ");
+        if (sent.flying != current.flying) sb.append("flying=").append(current.flying).append(" ");
+        if (sent.walking != current.walking) sb.append("walking=").append(current.walking).append(" ");
+        if (sent.running != current.running) sb.append("running=").append(current.running).append(" ");
+        if (sent.sprinting != current.sprinting) sb.append("sprinting=").append(current.sprinting).append(" ");
+        if (sent.crouching != current.crouching) sb.append("crouching=").append(current.crouching).append(" ");
+        if (sent.forcedCrouching != current.forcedCrouching)
+            sb.append("forcedCrouching=").append(current.forcedCrouching).append(" ");
+        if (sent.falling != current.falling) sb.append("falling=").append(current.falling).append(" ");
+        if (sent.climbing != current.climbing) sb.append("climbing=").append(current.climbing).append(" ");
+        if (sent.inFluid != current.inFluid) sb.append("inFluid=").append(current.inFluid).append(" ");
+        if (sent.swimming != current.swimming) sb.append("swimming=").append(current.swimming).append(" ");
+        if (sent.swimJumping != current.swimJumping) sb.append("swimJumping=").append(current.swimJumping).append(" ");
+        if (sent.onGround != current.onGround) sb.append("onGround=").append(current.onGround).append(" ");
+        if (sent.mantling != current.mantling) sb.append("mantling=").append(current.mantling).append(" ");
+        if (sent.sliding != current.sliding) sb.append("sliding=").append(current.sliding).append(" ");
+        if (sent.mounting != current.mounting) sb.append("mounting=").append(current.mounting).append(" ");
+        if (sent.rolling != current.rolling) sb.append("rolling=").append(current.rolling).append(" ");
+        if (sent.sitting != current.sitting) sb.append("sitting=").append(current.sitting).append(" ");
+        if (sent.gliding != current.gliding) sb.append("gliding=").append(current.gliding).append(" ");
+        if (sent.sleeping != current.sleeping) sb.append("sleeping=").append(current.sleeping).append(" ");
 
         if (!sb.isEmpty()) {
-            ((HytaleLogger.Api) LOGGER.atInfo()).log(
-                    "[MovementDebug] " + player.getUuid() + " changed: " + sb.toString().trim()
-            );
+            LOGGER.atInfo().log("[MovementDebug] " + player.getUuid() + " changed: " + sb.toString().trim());
         }
     }
 }
