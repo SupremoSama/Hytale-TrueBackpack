@@ -10,16 +10,16 @@
     "TimeSeconds": 2,
     "Input": [
       {
-        "ItemId": "Ingredient_Voidheart",
-        "Quantity": 2
+        "ItemId": "Utility_Leather_Big_Backpack",
+        "Quantity": 1
       },
       {
-        "ItemId": "Ingredient_Bar_Adamantite",
-        "Quantity": 16
+        "Quantity": 16,
+        "ItemId": "Ingredient_Fibre"
       },
       {
-        "ItemId": "Ingredient_Leather_Storm",
-        "Quantity": 22
+        "ResourceTypeId": "Wood_Trunk",
+        "Quantity": 8
       }
     ],
     "BenchRequirement": [

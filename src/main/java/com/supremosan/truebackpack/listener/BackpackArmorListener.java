@@ -3,6 +3,7 @@ package com.supremosan.truebackpack.listener;
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -26,6 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BackpackArmorListener extends EntityEventSystem<EntityStore, InventoryChangeEvent> {
+
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+
+    private static boolean REFRESH_UI = false;
+    private static int REFRESH_TIMES = 0;
 
     private static final String ATTACHMENT_SLOT_KEY = "truebackpack:backpack";
 
@@ -107,6 +113,8 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         if (uuidComponent == null) return;
 
         String playerUuid = uuidComponent.getUuid().toString();
+        Player entity = archetypeChunk.getComponent(index, Player.getComponentType());
+        if (entity == null) return;
 
         if (CosmeticListener.isProcessing()) return;
 
@@ -130,11 +138,18 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         if (isArmorEvent && !event.getTransaction().wasSlotModified(CHEST_SLOT)) return;
         if (isStorageEvent && !event.getTransaction().wasSlotModified(STORAGE_SLOT)) return;
 
-        Player entity = archetypeChunk.getComponent(index, Player.getComponentType());
-        if (entity == null) return;
-
         handleEquipContainerChange(entity, ref, store, armorComp, storageComp, backpackComp, hotbarComp, playerUuid);
-        BackpackUIUpdater.updateBackpackUI(entity, ref, store);
+
+        if (REFRESH_UI) {
+            if (REFRESH_TIMES > 5)
+            {
+                BackpackUIUpdater.updateBackpackUI(entity, ref, store);
+                REFRESH_UI = false;
+                REFRESH_TIMES = 0;
+            }
+
+            REFRESH_TIMES = REFRESH_TIMES + 1;
+        }
     }
 
     public static void onPlayerRemove(
@@ -241,6 +256,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             }
         } finally {
             PROCESSING_EQUIP.remove(playerUuid);
+            REFRESH_UI = true;
         }
     }
 
@@ -434,7 +450,8 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         ItemStack armor = armorContainer.getItemStack(CHEST_SLOT);
         if (!ItemStack.isEmpty(armor) && id.equals(BackpackItemFactory.getInstanceId(armor))) return armorContainer;
         ItemStack storage = storageContainer.getItemStack(STORAGE_SLOT);
-        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage))) return storageContainer;
+        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage)))
+            return storageContainer;
         return null;
     }
 

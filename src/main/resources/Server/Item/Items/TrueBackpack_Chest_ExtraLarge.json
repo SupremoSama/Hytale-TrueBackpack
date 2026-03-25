@@ -39,12 +39,10 @@
     "State": {
       "Definitions": {
         "CloseWindow": {
-          "InteractionSoundEventId": "SFX_Chest_Wooden_Close",
-          "CustomModelAnimation": "Blocks/Animations/Chest/Chest_Close.blockyanim"
+          "InteractionSoundEventId": "SFX_Cloth_Hit"
         },
         "OpenWindow": {
-          "InteractionSoundEventId": "SFX_Chest_Wooden_Open",
-          "CustomModelAnimation": "Blocks/Animations/Chest/Chest_Open.blockyanim"
+          "InteractionSoundEventId": "SFX_Cloth_Hit"
         }
       }
     },
@@ -67,7 +65,12 @@
         }
       ]
     },
-    "SupportDropType": "Destroy"
+    "SupportDropType": "Destroy",
+    "Gathering": {
+      "Soft": {
+        "DropList": {}
+      }
+    }
   },
   "Tags": {
     "Type": [
