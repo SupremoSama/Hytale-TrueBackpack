@@ -31,6 +31,7 @@ import com.supremosan.truebackpack.registries.BackpackRegistry;
 import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class BackpackPlaceInteraction extends SimpleInstantInteraction {
     public static final BuilderCodec<BackpackPlaceInteraction> CODEC = BuilderCodec
@@ -91,7 +92,7 @@ public class BackpackPlaceInteraction extends SimpleInstantInteraction {
 
         String itemId = heldItem.getItem().getId();
         BackpackRegistry.BackpackEntry entry = BackpackRegistry.getByItem(itemId);
-        if (entry == null) {
+        if (entry == null || Objects.equals(entry.blockId(), "")) {
             context.getState().state = InteractionState.Failed;
             return;
         }

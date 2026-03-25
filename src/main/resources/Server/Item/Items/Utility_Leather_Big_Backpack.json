@@ -3,7 +3,7 @@
     "Items.Armors"
   ],
   "Icon": "Icons/ItemsGenerated/Utility_Leather_Big_Backpack.png",
-  "Quality": "Rare",
+  "Quality": "Epic",
   "MaxStack": 1,
   "ItemLevel": 50,
   "Recipe": {

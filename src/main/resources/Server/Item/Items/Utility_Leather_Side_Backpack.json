@@ -2,20 +2,20 @@
   "Categories": [
     "Items.Armors"
   ],
-  "Icon": "Icons/ItemsGenerated/Utility_Leather_Backpack.png",
-  "Quality": "Uncommon",
+  "Icon": "Icons/ItemsGenerated/Utility_Leather_Side_Backpack.png",
+  "Quality": "Common",
   "MaxStack": 1,
-  "ItemLevel": 20,
+  "ItemLevel": 10,
   "Recipe": {
     "TimeSeconds": 2,
     "Input": [
       {
         "ItemId": "Ingredient_Bar_Iron",
-        "Quantity": 8
+        "Quantity": 1
       },
       {
         "ItemId": "Ingredient_Leather_Medium",
-        "Quantity": 16
+        "Quantity": 4
       }
     ],
     "BenchRequirement": [
@@ -29,8 +29,8 @@
       }
     ]
   },
-  "Model": "Items/Blocks/Small_Backpack_Block.blockymodel",
-  "Texture": "Items/Back/BackpackBig_Texture.png",
+  "Model": "Items/Blocks/Side_Backpack_Block.blockymodel",
+  "Texture": "Items/Backpacks/Side_Backpack_Texture.png",
   "PlayerAnimationsId": "Item",
   "Tags": {
     "Family": [
@@ -41,19 +41,19 @@
     ]
   },
   "IconProperties": {
-    "Scale": 0.6,
+    "Scale": 0.5,
     "Rotation": [
-      22.5,
-      45,
-      22.5
+      16,
+      34,
+      16
     ],
     "Translation": [
-      0,
+      -1,
       -12
     ]
   },
   "TranslationProperties": {
-    "Name": "server.truebackpack.items.Utility_Leather_Backpack.name"
+    "Name": "server.truebackpack.items.Utility_Leather_Side_Backpack.name"
   },
   "DropOnDeath": false,
   "Interactions": {

@@ -6,7 +6,7 @@
     "Items.Armors"
   ],
   "Icon": "Icons/ItemsGenerated/Utility_Leather_Medium_Backpack.png",
-  "Quality": "Uncommon",
+  "Quality": "Rare",
   "MaxStack": 1,
   "ItemLevel": 30,
   "Recipe": {
