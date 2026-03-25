@@ -1,0 +1,71 @@
+{
+  "Categories": [
+    "Items.Armors"
+  ],
+  "Icon": "Icons/ItemsGenerated/Utility_Leather_Side_Backpack.png",
+  "Quality": "Common",
+  "MaxStack": 1,
+  "ItemLevel": 10,
+  "Recipe": {
+    "TimeSeconds": 2,
+    "Input": [
+      {
+        "ItemId": "Ingredient_Bar_Iron",
+        "Quantity": 1
+      },
+      {
+        "ItemId": "Ingredient_Leather_Medium",
+        "Quantity": 4
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Id": "Workbench",
+        "Type": "Crafting",
+        "Categories": [
+          "Workbench_Tinkering"
+        ],
+        "RequiredTierLevel": 1
+      }
+    ]
+  },
+  "Model": "Items/Blocks/Side_Backpack_Block.blockymodel",
+  "Texture": "Items/Backpacks/Side_Backpack_Texture.png",
+  "PlayerAnimationsId": "Item",
+  "Tags": {
+    "Family": [
+      "Backpack"
+    ],
+    "Type": [
+      "Utility"
+    ]
+  },
+  "IconProperties": {
+    "Scale": 0.5,
+    "Rotation": [
+      16,
+      34,
+      16
+    ],
+    "Translation": [
+      -1,
+      -12
+    ]
+  },
+  "TranslationProperties": {
+    "Name": "server.truebackpack.items.Utility_Leather_Side_Backpack.name"
+  },
+  "DropOnDeath": false,
+  "Interactions": {
+    "Use": {
+      "Interactions": [
+        {
+          "Type": "TrueBackpack_PlaceBackpack"
+        }
+      ]
+    },
+    "Primary": "Block_Primary",
+    "Secondary": "Block_Secondary"
+  },
+  "Scale": 0.5
+}

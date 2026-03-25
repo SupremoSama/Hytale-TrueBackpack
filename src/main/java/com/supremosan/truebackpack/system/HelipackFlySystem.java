@@ -7,10 +7,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
-import com.hypixel.hytale.protocol.AnimationSlot;
-import com.hypixel.hytale.protocol.ItemAnimation;
-import com.hypixel.hytale.protocol.MovementStates;
-import com.hypixel.hytale.protocol.SavedMovementStates;
+import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.protocol.packets.player.SetMovementStates;
 import com.hypixel.hytale.server.core.asset.type.itemanimation.config.ItemPlayerAnimations;
 import com.hypixel.hytale.server.core.entity.AnimationUtils;
@@ -326,6 +323,11 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         MovementStatesComponent movementStatesComponent = store.getComponent(ref, movementStatesComponentType);
         if (movementStatesComponent == null) return;
 
+//        int index = SoundEvent.getAssetMap().getIndex("SFX_Battleaxe_T1_Launch_Local");
+//        TransformComponent transform = store.getComponent(ref, EntityModule.get().getTransformComponentType());
+//        if (transform != null)
+//            SoundUtil.playSoundEvent3dToPlayer(ref, index, SoundCategory.SFX, transform.getPosition(), store);
+
         movementStatesComponent.getMovementStates().flying = true;
         playerRef.getPacketHandler().writeNoCache(new SetMovementStates(new SavedMovementStates(true)));
 
@@ -416,5 +418,6 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         float retractDuration = FALLBACK_ANIM_DURATION;
     }
 
-    private record EquipLocation(ItemContainer container, short slot, ItemStack stack) { }
+    private record EquipLocation(ItemContainer container, short slot, ItemStack stack) {
+    }
 }

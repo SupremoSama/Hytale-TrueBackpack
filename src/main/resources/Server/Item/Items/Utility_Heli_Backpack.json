@@ -7,7 +7,7 @@
     "Items.Armors"
   ],
   "Icon": "Icons/ItemsGenerated/Utility_Heli_Backpack.png",
-  "Quality": "Common",
+  "Quality": "Uncommon",
   "ItemLevel": 20,
   "Model": "Items/Blocks/Helipack_Block.blockymodel",
   "Texture": "Items/Back/Helipack_Texture.png",

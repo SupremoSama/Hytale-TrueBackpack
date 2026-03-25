@@ -3,7 +3,7 @@
     "Items.Armors"
   ],
   "Icon": "Icons/ItemsGenerated/Utility_Leather_Backpack.png",
-  "Quality": "Common",
+  "Quality": "Uncommon",
   "MaxStack": 1,
   "ItemLevel": 20,
   "Recipe": {
@@ -15,7 +15,7 @@
       },
       {
         "ItemId": "Ingredient_Leather_Medium",
-        "Quantity": 8
+        "Quantity": 16
       }
     ],
     "BenchRequirement": [
