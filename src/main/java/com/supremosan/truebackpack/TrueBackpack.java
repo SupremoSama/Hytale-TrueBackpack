@@ -49,7 +49,6 @@ public class TrueBackpack extends JavaPlugin {
         CosmeticPreference.register(this);
 
         BackpackTooltipListener.register();
-        BackpackNestingListener.register(this);
 
         this.getCommandRegistry().registerCommand(new ToggleCosmeticCommand());
 
@@ -75,6 +74,7 @@ public class TrueBackpack extends JavaPlugin {
 
         BackpackArmorListener.register(this);
         QuiverListener.register(this);
+        BackpackNestingListener.register(this);
 
         LOGGER.atInfo().log("[TrueBackpack] Ready");
     }

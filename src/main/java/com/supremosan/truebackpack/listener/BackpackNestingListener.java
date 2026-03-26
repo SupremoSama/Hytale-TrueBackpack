@@ -3,7 +3,6 @@ package com.supremosan.truebackpack.listener;
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.RefSystem;
-import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.inventory.InventoryChangeEvent;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
@@ -13,29 +12,22 @@ import com.supremosan.truebackpack.TrueBackpack;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 
 import javax.annotation.Nonnull;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BackpackNestingListener extends RefSystem<EntityStore> {
 
-    private static final Map<InventoryComponent, Ref<EntityStore>> COMPONENT_TO_REF = new ConcurrentHashMap<>();
-    private static final Query<EntityStore> QUERY = Query.any();
-
-    private static BackpackNestingListener INSTANCE;
-
-    public BackpackNestingListener() {
-        INSTANCE = this;
-    }
+    private static final Set<Ref<EntityStore>> BACKPACK_ENTITIES = ConcurrentHashMap.newKeySet();
 
     public static void register(@Nonnull TrueBackpack plugin) {
-        INSTANCE = new BackpackNestingListener();
-        plugin.getEntityStoreRegistry().registerSystem(INSTANCE);
-        plugin.getEventRegistry().registerGlobal(InventoryChangeEvent.class, INSTANCE::handle);
+        BackpackNestingListener listener = new BackpackNestingListener();
+        plugin.getEntityStoreRegistry().registerSystem(listener);
+        plugin.getEventRegistry().registerGlobal(InventoryChangeEvent.class, listener::handle);
     }
 
     @Override
     public @Nonnull Query<EntityStore> getQuery() {
-        return QUERY;
+        return InventoryComponent.Backpack.getComponentType();
     }
 
     @Override
@@ -44,12 +36,7 @@ public class BackpackNestingListener extends RefSystem<EntityStore> {
                               @Nonnull Store<EntityStore> store,
                               @Nonnull CommandBuffer<EntityStore> buffer) {
 
-        InventoryComponent.Backpack backpack =
-                store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
-
-        if (backpack != null) {
-            COMPONENT_TO_REF.put(backpack, ref);
-        }
+        BACKPACK_ENTITIES.add(ref);
     }
 
     @Override
@@ -58,46 +45,48 @@ public class BackpackNestingListener extends RefSystem<EntityStore> {
                                @Nonnull Store<EntityStore> store,
                                @Nonnull CommandBuffer<EntityStore> buffer) {
 
-        InventoryComponent.Backpack backpack =
-                store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
-
-        if (backpack != null) {
-            COMPONENT_TO_REF.remove(backpack);
-        }
+        BACKPACK_ENTITIES.remove(ref);
     }
 
     private void handle(@Nonnull InventoryChangeEvent event) {
         InventoryComponent component = event.getInventory();
-        Ref<EntityStore> ref = COMPONENT_TO_REF.get(component);
 
-        if (ref == null || !ref.isValid()) return;
+        for (Ref<EntityStore> ref : BACKPACK_ENTITIES) {
+            if (!ref.isValid()) continue;
 
-        Store<EntityStore> store = ref.getStore();
+            Store<EntityStore> store = ref.getStore();
 
-        UUIDComponent uuid = store.getComponent(ref, UUIDComponent.getComponentType());
-        if (uuid == null) return;
+            InventoryComponent.Backpack backpackComp =
+                    store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
 
-        InventoryComponent.Backpack backpackComp =
-                store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
+            if (backpackComp == null) continue;
 
-        if (backpackComp == null) return;
+            if (component != backpackComp) continue;
 
-        ItemContainer changed = event.getItemContainer();
-        ItemContainer backpackContainer = backpackComp.getInventory();
+            ItemContainer changed = event.getItemContainer();
+            ItemContainer backpackContainer = backpackComp.getInventory();
 
-        if (!backpackContainer.equals(changed)) return;
+            if (changed != backpackContainer) return;
 
-        for (short slot = 0; slot < changed.getCapacity(); slot++) {
+            handleModifiedSlots(event, changed);
+            return;
+        }
+    }
+
+    private void handleModifiedSlots(@Nonnull InventoryChangeEvent event,
+                                     @Nonnull ItemContainer container) {
+
+        for (short slot = 0; slot < container.getCapacity(); slot++) {
             if (!event.getTransaction().wasSlotModified(slot)) continue;
 
-            ItemStack item = changed.getItemStack(slot);
+            ItemStack item = container.getItemStack(slot);
             if (item == null || item.isEmpty()) continue;
 
             String itemId = item.getItemId();
 
             if (BackpackRegistry.getByItem(itemId) == null) continue;
 
-            changed.setItemStackForSlot(slot, ItemStack.EMPTY);
+            container.setItemStackForSlot(slot, ItemStack.EMPTY);
         }
     }
 }
