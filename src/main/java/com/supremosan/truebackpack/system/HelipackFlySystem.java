@@ -7,6 +7,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
+import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.protocol.packets.player.SetMovementStates;
 import com.hypixel.hytale.server.core.asset.type.itemanimation.config.ItemPlayerAnimations;
@@ -34,6 +35,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
+
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
     private static final float DOUBLE_JUMP_WINDOW = 0.65f;
 
@@ -90,15 +93,23 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
         UUID uuid = uuidComp.getUuid();
         String equippedItemId = BackpackArmorListener.getEquippedItemId(uuid.toString());
+
+        JumpState jumpState = jumpStates.get(uuid);
+        boolean hadState = jumpState != null;
+
         if (equippedItemId == null) {
-            jumpStates.remove(uuid);
+            if (hadState) {
+                jumpStates.remove(uuid);
+            }
             return;
         }
 
         BackpackEntry entry = BackpackRegistry.getByItem(equippedItemId);
 
         if (entry == null || !entry.isHelipack()) {
-            jumpStates.remove(uuid);
+            if (hadState) {
+                jumpStates.remove(uuid);
+            }
             return;
         }
 
@@ -112,7 +123,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         MovementStates current = movementStatesComponent.getMovementStates();
         MovementStates sent = movementStatesComponent.getSentMovementStates();
 
-        JumpState jumpState = jumpStates.computeIfAbsent(uuid, _ -> new JumpState());
+        jumpState = jumpStates.computeIfAbsent(uuid, _ -> new JumpState());
 
         tickAnimationSequence(dt, jumpState, archetypeChunk.getReferenceTo(index), commandBuffer, config);
 
@@ -145,7 +156,6 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             }
 
             boolean withinWindow = jumpState.timeSinceLastTrigger <= DOUBLE_JUMP_WINDOW;
-
             if (jumpState.windowOpen && withinWindow) {
                 enableFlight(uuid, store, archetypeChunk.getReferenceTo(index), jumpState, armorComp, storageComp, backpackComp, commandBuffer, config);
                 jumpState.windowOpen = false;
@@ -171,7 +181,6 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
         if (justStartedJump && current.flying) {
             boolean withinWindow = jumpState.timeSinceLastTrigger <= DOUBLE_JUMP_WINDOW;
-
             if (withinWindow) {
                 disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, armorComp, storageComp, commandBuffer, config);
             } else {
@@ -323,11 +332,6 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         MovementStatesComponent movementStatesComponent = store.getComponent(ref, movementStatesComponentType);
         if (movementStatesComponent == null) return;
 
-//        int index = SoundEvent.getAssetMap().getIndex("SFX_Battleaxe_T1_Launch_Local");
-//        TransformComponent transform = store.getComponent(ref, EntityModule.get().getTransformComponentType());
-//        if (transform != null)
-//            SoundUtil.playSoundEvent3dToPlayer(ref, index, SoundCategory.SFX, transform.getPosition(), store);
-
         movementStatesComponent.getMovementStates().flying = true;
         playerRef.getPacketHandler().writeNoCache(new SetMovementStates(new SavedMovementStates(true)));
 
@@ -335,6 +339,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         jumpState.deployDuration = resolveAnimationDuration(config, ANIM_DEPLOY);
         jumpState.animState = AnimState.DEPLOYING;
         jumpState.animTimer = 0f;
+
         playAnimation(ref, commandBuffer, config, ANIM_DEPLOY);
     }
 
@@ -381,6 +386,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         jumpState.retractDuration = resolveAnimationDuration(config, ANIM_RETRACT);
         jumpState.animState = AnimState.RETRACTING;
         jumpState.animTimer = 0f;
+
         playAnimation(ref, commandBuffer, config, ANIM_RETRACT);
     }
 

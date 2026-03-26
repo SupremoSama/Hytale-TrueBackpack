@@ -141,13 +141,11 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         handleEquipContainerChange(entity, ref, store, armorComp, storageComp, backpackComp, hotbarComp, playerUuid);
 
         if (REFRESH_UI) {
-            if (REFRESH_TIMES > 5)
-            {
+            if (REFRESH_TIMES > 5) {
                 BackpackUIUpdater.updateBackpackUI(entity, ref, store);
                 REFRESH_UI = false;
                 REFRESH_TIMES = 0;
             }
-
             REFRESH_TIMES = REFRESH_TIMES + 1;
         }
     }
@@ -219,8 +217,24 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         String lastKnownId = LAST_KNOWN_EQUIPPED.get(playerUuid);
         String currentId = currentEquipped != null ? BackpackItemFactory.getInstanceId(currentEquipped) : null;
 
-        boolean currentIsNew = currentEquipped != null && currentId == null;
-        if (!currentIsNew && Objects.equals(currentId, lastKnownId)) return;
+        if (currentId != null && currentId.equals(lastKnownId)) {
+            return;
+        }
+
+        if (currentId == null && lastKnownId != null && currentEquipped != null) {
+            String lastItemId = LAST_KNOWN_EQUIPPED_ITEM_ID.get(playerUuid);
+            if (currentEquipped.getItemId().equals(lastItemId)) {
+                ItemContainer equipContainer = resolveEquipContainer(armorComp, storageComp, currentEquipped);
+                short equipSlot = resolveEquipSlot(armorComp, storageComp, currentEquipped);
+                if (equipContainer != null && equipSlot >= 0) {
+                    ItemStack retagged = ensureInstanceId(currentEquipped, equipContainer, equipSlot);
+                    String retaggedId = BackpackItemFactory.getInstanceId(retagged);
+                    if (lastKnownId.equals(retaggedId)) {
+                        return;
+                    }
+                }
+            }
+        }
 
         short newBonus = bonus(currentEquipped);
         boolean hadBackpack = lastKnownId != null;

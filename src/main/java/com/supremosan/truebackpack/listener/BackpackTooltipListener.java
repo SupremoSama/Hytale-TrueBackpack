@@ -1,11 +1,7 @@
 package com.supremosan.truebackpack.listener;
 
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.protocol.ItemBase;
-import com.hypixel.hytale.protocol.ItemTranslationProperties;
-import com.hypixel.hytale.protocol.ItemWithAllMetadata;
-import com.hypixel.hytale.protocol.InventorySection;
-import com.hypixel.hytale.protocol.UpdateType;
+import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.protocol.packets.assets.UpdateItems;
 import com.hypixel.hytale.protocol.packets.assets.UpdateTranslations;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChain;
@@ -23,29 +19,26 @@ import org.bson.BsonDocument;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BackpackTooltipListener {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+
     private static final String VIRTUAL_SEP = "__bp_";
     private static final String DESC_KEY_PREFIX = "server.items.dynamic.backpack.";
 
     private static final ThreadLocal<Boolean> PROCESSING =
             ThreadLocal.withInitial(() -> false);
 
-    private static final ConcurrentHashMap<UUID, Set<String>> SENT_VIRTUAL_IDS =
-            new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<UUID, Map<String, String>> LAST_SENT_TRANSLATIONS =
-            new ConcurrentHashMap<>();
+    private static final Map<UUID, Set<String>> SENT_VIRTUAL_IDS = new ConcurrentHashMap<>();
+    private static final Map<UUID, Map<String, String>> LAST_SENT_TRANSLATIONS = new ConcurrentHashMap<>();
 
     private static PacketFilter outboundFilter;
     private static PacketFilter inboundFilter;
 
-    private BackpackTooltipListener() {
-    }
+    private BackpackTooltipListener() {}
 
     public static void register() {
         outboundFilter = PacketAdapters.registerOutbound(BackpackTooltipListener::onOutbound);
@@ -53,58 +46,59 @@ public class BackpackTooltipListener {
     }
 
     public static void deregister() {
-        if (outboundFilter != null) {
-            try {
-                PacketAdapters.deregisterOutbound(outboundFilter);
-            } catch (Exception e) {
-                LOGGER.atWarning().log("[TrueBackpack] Failed to deregister outbound filter: " + e.getMessage());
-            }
-            outboundFilter = null;
-        }
-        if (inboundFilter != null) {
-            try {
-                PacketAdapters.deregisterInbound(inboundFilter);
-            } catch (Exception e) {
-                LOGGER.atWarning().log("[TrueBackpack] Failed to deregister inbound filter: " + e.getMessage());
-            }
-            inboundFilter = null;
-        }
+        safeDeregisterOutbound();
+        safeDeregisterInbound();
     }
 
-    public static void onPlayerLeave(@Nonnull UUID playerUuid) {
-        SENT_VIRTUAL_IDS.remove(playerUuid);
-        LAST_SENT_TRANSLATIONS.remove(playerUuid);
+    private static void safeDeregisterOutbound() {
+        if (outboundFilter == null) return;
+        try {
+            PacketAdapters.deregisterOutbound(outboundFilter);
+        } catch (Exception ignored) {}
+        outboundFilter = null;
+    }
+
+    private static void safeDeregisterInbound() {
+        if (inboundFilter == null) return;
+        try {
+            PacketAdapters.deregisterInbound(inboundFilter);
+        } catch (Exception ignored) {}
+        inboundFilter = null;
+    }
+
+    public static void onPlayerLeave(@Nonnull UUID uuid) {
+        SENT_VIRTUAL_IDS.remove(uuid);
+        LAST_SENT_TRANSLATIONS.remove(uuid);
     }
 
     private static boolean onInbound(@Nonnull PlayerRef playerRef,
                                      @Nonnull com.hypixel.hytale.protocol.Packet packet) {
+
         try {
             if (packet instanceof MouseInteraction mouse) {
-                if (mouse.itemInHandId != null && isVirtualId(mouse.itemInHandId)) {
+                if (isVirtualId(mouse.itemInHandId)) {
                     mouse.itemInHandId = getBaseItemId(mouse.itemInHandId);
                 }
             } else if (packet instanceof SyncInteractionChains sync) {
-                if (sync.updates != null) {
-                    for (SyncInteractionChain chain : sync.updates) {
-                        if (chain != null) translateChain(chain);
-                    }
+                for (SyncInteractionChain chain : sync.updates) {
+                    if (chain != null) translateChain(chain);
                 }
             }
         } catch (Exception e) {
-            LOGGER.atWarning().log("[TrueBackpack] Error in inbound filter for "
-                    + playerRef.getUuid() + ": " + e.getMessage());
+            LOGGER.atWarning().log("[TrueBackpack] inbound error: " + e.getMessage());
         }
+
         return false;
     }
 
     private static void translateChain(@Nonnull SyncInteractionChain chain) {
-        if (chain.itemInHandId != null && isVirtualId(chain.itemInHandId)) {
+        if (isVirtualId(chain.itemInHandId)) {
             chain.itemInHandId = getBaseItemId(chain.itemInHandId);
         }
-        if (chain.utilityItemId != null && isVirtualId(chain.utilityItemId)) {
+        if (isVirtualId(chain.utilityItemId)) {
             chain.utilityItemId = getBaseItemId(chain.utilityItemId);
         }
-        if (chain.toolsItemId != null && isVirtualId(chain.toolsItemId)) {
+        if (isVirtualId(chain.toolsItemId)) {
             chain.toolsItemId = getBaseItemId(chain.toolsItemId);
         }
         if (chain.newForks != null) {
@@ -116,15 +110,13 @@ public class BackpackTooltipListener {
 
     private static void onOutbound(@Nonnull PlayerRef playerRef,
                                    @Nonnull com.hypixel.hytale.protocol.Packet packet) {
+
         if (PROCESSING.get()) return;
-        if (!(packet instanceof UpdatePlayerInventory invPacket)) return;
+        if (!(packet instanceof UpdatePlayerInventory inv)) return;
 
         PROCESSING.set(true);
         try {
-            processInventory(playerRef, invPacket);
-        } catch (Exception e) {
-            LOGGER.atWarning().log("[TrueBackpack] Error in tooltip outbound filter for "
-                    + playerRef.getUuid() + ": " + e.getMessage());
+            processInventory(playerRef, inv);
         } finally {
             PROCESSING.set(false);
         }
@@ -132,238 +124,178 @@ public class BackpackTooltipListener {
 
     private static void processInventory(@Nonnull PlayerRef playerRef,
                                          @Nonnull UpdatePlayerInventory packet) {
-        UUID playerUuid = playerRef.getUuid();
-        String language = playerRef.getLanguage();
 
-        Map<String, ItemBase> newVirtualItems = new LinkedHashMap<>();
-        Map<String, String> translations = new LinkedHashMap<>();
+        UUID uuid = playerRef.getUuid();
+        String lang = playerRef.getLanguage();
 
-        processSection(packet.hotbar, language, newVirtualItems, translations);
-        processSection(packet.utility, language, newVirtualItems, translations);
-        processSection(packet.tools, language, newVirtualItems, translations);
-        processSection(packet.storage, language, newVirtualItems, translations);
-        processSection(packet.backpack, language, newVirtualItems, translations);
+        Map<String, ItemBase> newVirtual = new HashMap<>();
+        Map<String, String> translations = new HashMap<>();
 
-        processArmorSection(playerUuid, packet.armor, language, newVirtualItems, translations);
+        processSection(packet.hotbar, lang, newVirtual, translations);
+        processSection(packet.utility, lang, newVirtual, translations);
+        processSection(packet.tools, lang, newVirtual, translations);
+        processSection(packet.storage, lang, newVirtual, translations);
+        processSection(packet.backpack, lang, newVirtual, translations);
 
-        sendAuxiliary(playerRef, newVirtualItems, translations);
+        processArmor(packet.armor, uuid, lang, newVirtual, translations);
+
+        if (newVirtual.isEmpty() && translations.isEmpty()) return;
+
+        sendAux(playerRef, newVirtual, translations);
     }
 
-    private static void processSection(
-            @Nullable InventorySection section,
-            @Nullable String language,
-            @Nonnull Map<String, ItemBase> newVirtual,
-            @Nonnull Map<String, String> translations) {
+    private static void processSection(@Nullable InventorySection section,
+                                       String lang,
+                                       Map<String, ItemBase> newVirtual,
+                                       Map<String, String> translations) {
 
         if (section == null || section.items == null) return;
 
-        for (Map.Entry<Integer, ItemWithAllMetadata> entry : section.items.entrySet()) {
-            ItemWithAllMetadata item = entry.getValue();
+        for (Map.Entry<Integer, ItemWithAllMetadata> e : section.items.entrySet()) {
+
+            ItemWithAllMetadata item = e.getValue();
             if (item == null || item.itemId.isBlank()) continue;
             if (isVirtualId(item.itemId)) continue;
+
             if (BackpackArmorListener.getBackpackSize(item.itemId) == 0) continue;
 
-            ItemStack fakeStack = buildFakeStack(item);
-            if (fakeStack == null) continue;
+            ItemStack stack = buildFakeStack(item);
+            if (stack == null) continue;
 
-            String tooltipText = BackpackTooltipProvider.buildTooltip(fakeStack, language);
-            if (tooltipText == null) continue;
+            String tooltip = BackpackTooltipProvider.buildTooltip(stack, lang);
+            if (tooltip == null) continue;
 
-            String contentHash = hash(tooltipText);
-            String virtualId = item.itemId + VIRTUAL_SEP + contentHash;
+            String hash = fastHash(tooltip);
+            String virtualId = item.itemId + VIRTUAL_SEP + hash;
             String descKey = DESC_KEY_PREFIX + virtualId + ".description";
 
-            ItemBase virtualBase = buildVirtualItemBase(item.itemId, virtualId, descKey);
-            if (virtualBase == null) continue;
+            ItemBase base = buildVirtual(item.itemId, virtualId, descKey);
+            if (base == null) continue;
 
-            newVirtual.put(virtualId, virtualBase);
-            translations.put(descKey, tooltipText);
+            newVirtual.put(virtualId, base);
+            translations.put(descKey, tooltip);
 
-            ItemWithAllMetadata cloned = item.clone();
-            cloned.itemId = virtualId;
-            entry.setValue(cloned);
+            ItemWithAllMetadata clone = item.clone();
+            clone.itemId = virtualId;
+            e.setValue(clone);
         }
     }
 
-    private static void processArmorSection(
-            @Nonnull UUID playerUuid,
-            @Nullable InventorySection armorSection,
-            @Nullable String language,
-            @Nonnull Map<String, ItemBase> newVirtual,
-            @Nonnull Map<String, String> translations) {
+    private static void processArmor(@Nullable InventorySection armor,
+                                     UUID uuid,
+                                     String lang,
+                                     Map<String, ItemBase> newVirtual,
+                                     Map<String, String> translations) {
 
-        if (armorSection == null || armorSection.items == null) return;
+        if (armor == null || armor.items == null) return;
 
-        ItemWithAllMetadata chestItem = armorSection.items.get(1);
-        if (chestItem == null || chestItem.itemId.isBlank()) return;
-        if (isVirtualId(chestItem.itemId)) return;
+        ItemWithAllMetadata chest = armor.items.get(1);
+        if (chest == null || chest.itemId.isBlank()) return;
+        if (isVirtualId(chest.itemId)) return;
 
-        short sizeBonus = BackpackArmorListener.getBackpackSize(chestItem.itemId);
-        if (sizeBonus == 0) return;
+        short size = BackpackArmorListener.getBackpackSize(chest.itemId);
+        if (size == 0) return;
 
-        String playerUuidStr = playerUuid.toString();
+        List<ItemStack> contents = BackpackDataStorage.getLiveContents(uuid.toString());
 
-        if (BackpackDataStorage.consumeArmorTooltipDirty(playerUuidStr)) {
-            Set<String> sentIds = SENT_VIRTUAL_IDS.get(playerUuid);
-            if (sentIds != null) {
-                sentIds.removeIf(id -> id.startsWith(chestItem.itemId + VIRTUAL_SEP));
-            }
-            Map<String, String> lastSent = LAST_SENT_TRANSLATIONS.get(playerUuid);
-            if (lastSent != null) {
-                lastSent.entrySet().removeIf(e ->
-                        e.getKey().startsWith(DESC_KEY_PREFIX + chestItem.itemId + VIRTUAL_SEP));
-            }
-        }
+        String tooltip = contents != null
+                ? BackpackTooltipProvider.buildTooltipFromLiveContents(contents, size, lang)
+                : BackpackTooltipProvider.buildEmptyTooltip(size, lang);
 
-        List<ItemStack> liveContents = BackpackDataStorage.getLiveContents(playerUuidStr);
-
-        String tooltipText = liveContents != null
-                ? BackpackTooltipProvider.buildTooltipFromLiveContents(liveContents, sizeBonus, language)
-                : BackpackTooltipProvider.buildEmptyTooltip(sizeBonus, language);
-
-        String contentHash = hash(tooltipText);
-        String virtualId = chestItem.itemId + VIRTUAL_SEP + contentHash;
+        String hash = fastHash(tooltip);
+        String virtualId = chest.itemId + VIRTUAL_SEP + hash;
         String descKey = DESC_KEY_PREFIX + virtualId + ".description";
 
-        ItemBase virtualBase = buildVirtualItemBase(chestItem.itemId, virtualId, descKey);
-        if (virtualBase == null) return;
+        ItemBase base = buildVirtual(chest.itemId, virtualId, descKey);
+        if (base == null) return;
 
-        newVirtual.put(virtualId, virtualBase);
-        translations.put(descKey, tooltipText);
+        newVirtual.put(virtualId, base);
+        translations.put(descKey, tooltip);
 
-        ItemWithAllMetadata cloned = chestItem.clone();
-        cloned.itemId = virtualId;
-        armorSection.items.put(1, cloned);
+        ItemWithAllMetadata clone = chest.clone();
+        clone.itemId = virtualId;
+        armor.items.put(1, clone);
     }
 
-    @Nullable
-    private static ItemBase buildVirtualItemBase(@Nonnull String baseItemId,
-                                                 @Nonnull String virtualId,
-                                                 @Nonnull String descKey) {
+    private static void sendAux(PlayerRef ref,
+                                Map<String, ItemBase> items,
+                                Map<String, String> translations) {
+
+        UUID uuid = ref.getUuid();
+
+        Set<String> sent = SENT_VIRTUAL_IDS.computeIfAbsent(uuid, k -> ConcurrentHashMap.newKeySet());
+        Map<String, String> last = LAST_SENT_TRANSLATIONS.computeIfAbsent(uuid, k -> new ConcurrentHashMap<>());
+
+        items.entrySet().removeIf(e -> !sent.add(e.getKey()));
+
+        if (!items.isEmpty()) {
+            UpdateItems pkt = new UpdateItems();
+            pkt.type = UpdateType.AddOrUpdate;
+            pkt.items = items;
+            pkt.removedItems = new String[0];
+            ref.getPacketHandler().writeNoCache(pkt);
+        }
+
+        Map<String, String> delta = new HashMap<>();
+        for (Map.Entry<String, String> e : translations.entrySet()) {
+            if (!e.getValue().equals(last.get(e.getKey()))) {
+                delta.put(e.getKey(), e.getValue());
+            }
+        }
+
+        if (!delta.isEmpty()) {
+            ref.getPacketHandler().writeNoCache(new UpdateTranslations(UpdateType.AddOrUpdate, delta));
+            last.putAll(delta);
+        }
+
+        if (sent.size() > 500) {
+            sent.clear();
+        }
+    }
+
+    private static boolean isVirtualId(String id) {
+        return id != null && id.contains(VIRTUAL_SEP);
+    }
+
+    private static String getBaseItemId(String id) {
+        int i = id.indexOf(VIRTUAL_SEP);
+        return i > 0 ? id.substring(0, i) : id;
+    }
+
+    private static String fastHash(String s) {
+        return Integer.toHexString(s.hashCode());
+    }
+
+    private static ItemBase buildVirtual(String baseId, String virtualId, String descKey) {
         try {
-            Item originalItem = Item.getAssetMap().getAsset(baseItemId);
-            if (originalItem == null) {
-                LOGGER.atWarning().log("[TrueBackpack] Base item not found for virtual tooltip: " + baseItemId);
-                return null;
-            }
+            Item item = Item.getAssetMap().getAsset(baseId);
+            if (item == null) return null;
 
-            ItemBase clone = originalItem.toPacket().clone();
-            clone.id = virtualId;
+            ItemBase base = item.toPacket().clone();
+            base.id = virtualId;
 
-            if (clone.translationProperties == null) {
-                clone.translationProperties = new ItemTranslationProperties();
-            } else {
-                clone.translationProperties = clone.translationProperties.clone();
-            }
+            base.translationProperties = base.translationProperties != null
+                    ? base.translationProperties.clone()
+                    : new ItemTranslationProperties();
 
-            clone.translationProperties.description = descKey;
-            clone.variant = true;
+            base.translationProperties.description = descKey;
+            base.variant = true;
 
-            return clone;
+            return base;
         } catch (Exception e) {
-            LOGGER.atWarning().log("[TrueBackpack] Failed to build virtual item base for "
-                    + baseItemId + ": " + e.getMessage());
             return null;
         }
     }
 
-    private static void sendAuxiliary(@Nonnull PlayerRef playerRef,
-                                      @Nonnull Map<String, ItemBase> newVirtual,
-                                      @Nonnull Map<String, String> translations) {
-        if (newVirtual.isEmpty() && translations.isEmpty()) return;
-
-        UUID playerUuid = playerRef.getUuid();
-
-        Set<String> sentIds = SENT_VIRTUAL_IDS.computeIfAbsent(
-                playerUuid, _ -> ConcurrentHashMap.newKeySet());
-
-        Map<String, ItemBase> toSend = new LinkedHashMap<>();
-        for (Map.Entry<String, ItemBase> e : newVirtual.entrySet()) {
-            if (sentIds.add(e.getKey())) {
-                toSend.put(e.getKey(), e.getValue());
-            }
-        }
-
-        if (!toSend.isEmpty()) {
-            try {
-                UpdateItems itemsPacket = new UpdateItems();
-                itemsPacket.type = UpdateType.AddOrUpdate;
-                itemsPacket.items = toSend;
-                itemsPacket.removedItems = new String[0];
-                itemsPacket.updateModels = false;
-                itemsPacket.updateIcons = false;
-                playerRef.getPacketHandler().writeNoCache(itemsPacket);
-            } catch (Exception e) {
-                LOGGER.atWarning().log("[TrueBackpack] Failed to send UpdateItems: " + e.getMessage());
-            }
-        }
-
-        if (!translations.isEmpty()) {
-            Map<String, String> lastSent = LAST_SENT_TRANSLATIONS.get(playerUuid);
-            Map<String, String> delta = new LinkedHashMap<>();
-
-            for (Map.Entry<String, String> e : translations.entrySet()) {
-                String prev = lastSent != null ? lastSent.get(e.getKey()) : null;
-                if (!e.getValue().equals(prev)) {
-                    delta.put(e.getKey(), e.getValue());
-                }
-            }
-
-            if (!delta.isEmpty()) {
-                try {
-                    UpdateTranslations transPacket =
-                            new UpdateTranslations(UpdateType.AddOrUpdate, delta);
-                    playerRef.getPacketHandler().writeNoCache(transPacket);
-
-                    if (lastSent == null) {
-                        LAST_SENT_TRANSLATIONS.put(playerUuid, new ConcurrentHashMap<>(delta));
-                    } else {
-                        lastSent.putAll(delta);
-                    }
-                } catch (Exception e) {
-                    LOGGER.atWarning().log("[TrueBackpack] Failed to send UpdateTranslations: " + e.getMessage());
-                }
-            }
-        }
-    }
-
-    @Nullable
-    private static ItemStack buildFakeStack(@Nonnull ItemWithAllMetadata item) {
+    private static ItemStack buildFakeStack(ItemWithAllMetadata item) {
         try {
-            if (item.itemId == null || item.itemId.isBlank()) return null;
-            BsonDocument metadataDoc = item.metadata != null
-                    ? BsonDocument.parse(item.metadata)
-                    : new BsonDocument();
-            return new ItemStack(item.itemId, item.quantity, metadataDoc);
+            return new ItemStack(
+                    item.itemId,
+                    item.quantity,
+                    item.metadata != null ? BsonDocument.parse(item.metadata) : new BsonDocument()
+            );
         } catch (Exception e) {
-            LOGGER.atFine().log("[TrueBackpack] Could not build fake stack for "
-                    + item.itemId + ": " + e.getMessage());
             return null;
-        }
-    }
-
-    private static boolean isVirtualId(@Nonnull String itemId) {
-        return itemId.contains(VIRTUAL_SEP);
-    }
-
-    @Nonnull
-    private static String getBaseItemId(@Nonnull String virtualId) {
-        int idx = virtualId.indexOf(VIRTUAL_SEP);
-        return idx > 0 ? virtualId.substring(0, idx) : virtualId;
-    }
-
-    @Nonnull
-    private static String hash(@Nonnull String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 4; i++) {
-                sb.append(String.format("%02x", digest[i]));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            return String.format("%08x", input.hashCode());
         }
     }
 }
