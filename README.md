@@ -13,7 +13,7 @@ Try the mod: https://www.curseforge.com/hytale/mods/true-backpack
 
 - Make backpacks wearable
 - Use the game’s native UI instead of interacting with backpacks like chests
-- Drop all backpack items on death, regardless of game configuration
+- Drop all backpack items on death, if the game settings are configured to lose items.
 - Remove backpack upgrade recipes so only backpack equipment is used
 - Make backpacks behave similarly to shulker boxes (Minecraft)
 - Add an extra inventory slot so players can equip both armor and a backpack
@@ -23,6 +23,7 @@ Try the mod: https://www.curseforge.com/hytale/mods/true-backpack
 - Backpacks are wearable.
 - Backpacks open using the original in-game UI.
 - Added the Giant Backpack (36 slots).
+- Backpacks drop on death, if the game settings are configured to lose items.
 - Backpacks function similarly to Minecraft Shulker Boxes.
 - Backpacks can be placed on the ground and used as containers.
 - Original game recipes have been removed and are no longer craftable.
