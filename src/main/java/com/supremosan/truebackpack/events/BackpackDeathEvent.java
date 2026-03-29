@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFace;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFaceSupport;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.Rotation;
+import com.hypixel.hytale.server.core.asset.type.gameplay.DeathConfig;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
@@ -72,6 +73,9 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
 
         World world = player.getWorld();
         if (world == null) return;
+
+        DeathConfig deathConfig = world.getDeathConfig();
+        if (deathConfig.getItemsLossMode() == DeathConfig.ItemsLossMode.NONE) return;
 
         TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
         if (transform == null) return;
