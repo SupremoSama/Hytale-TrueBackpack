@@ -4,8 +4,6 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.dependency.Dependency;
-import com.hypixel.hytale.component.dependency.Order;
-import com.hypixel.hytale.component.dependency.SystemDependency;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.GameMode;
@@ -55,9 +53,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
 
     @Override
     public @NonNull Set<Dependency<EntityStore>> getDependencies() {
-        return Set.of(
-                new SystemDependency<>(Order.BEFORE, DeathSystems.DropPlayerDeathItems.class)
-        );
+        return Set.of();
     }
 
     @Override
