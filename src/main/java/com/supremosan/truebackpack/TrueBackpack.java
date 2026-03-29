@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.supremosan.truebackpack.commands.ToggleCosmeticCommand;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 import com.supremosan.truebackpack.data.BackpackContainerState;
+import com.supremosan.truebackpack.events.BackpackDeathEvent;
 import com.supremosan.truebackpack.system.BackpackContainerSystem;
 import com.supremosan.truebackpack.system.HelipackFlySystem;
 import com.supremosan.truebackpack.interactions.BackpackPlaceInteraction;
@@ -75,6 +76,8 @@ public class TrueBackpack extends JavaPlugin {
         BackpackArmorListener.register(this);
         QuiverListener.register(this);
         BackpackNestingListener.register(this);
+
+        this.getEntityStoreRegistry().registerSystem(new BackpackDeathEvent());
 
         LOGGER.atInfo().log("[TrueBackpack] Ready");
     }
