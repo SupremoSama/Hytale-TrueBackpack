@@ -72,7 +72,7 @@ public class BackpackRegistry {
 
     public static void registerDefaults() {
         registerHelipack("Utility_Heli_Backpack", "", (short) 3, "Items/Backpacks/Helipack.blockymodel", "Items/Back/Helipack_Texture.png", HelipackConfig.of("Ingredient_Charcoal", "HelipackAnimations", 6.0f, 7.0f, 10.0f, 5));
-        register("Utility_Leather_Side_Backpack", "", (short) 5, "Items/Backpacks/Side_Backpack.blockymodel", "Items/Backpacks/Side_Backpack_Texture.png");
+        register("Utility_Leather_Side_Backpack", "TrueBackpack_Chest_Side", (short) 6, "Items/Backpacks/Side_Backpack.blockymodel", "Items/Backpacks/Side_Backpack_Texture.png");
         register("Utility_Leather_Backpack", "TrueBackpack_Chest_Small", (short) 9, "Items/Backpacks/Small_Backpack.blockymodel", "Items/Back/BackpackBig_Texture.png");
         register("Utility_Leather_Medium_Backpack", "TrueBackpack_Chest_Medium", (short) 18, "Items/Back/BackpackBig.blockymodel", "Items/Back/BackpackBig_Texture.png");
         register("Utility_Leather_Big_Backpack", "TrueBackpack_Chest_Large", (short) 27, "Items/Backpacks/Big_Backpack.blockymodel", "Items/Backpacks/Big_Backpack_Texture.png");
