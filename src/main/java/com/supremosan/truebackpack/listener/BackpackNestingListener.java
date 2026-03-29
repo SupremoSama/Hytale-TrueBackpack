@@ -10,6 +10,8 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.TrueBackpack;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
+import com.supremosan.truebackpack.registries.BackpackRegistry.BackpackEntry;
+import com.supremosan.truebackpack.registries.BackpackRegistry.HelipackConfig;
 
 import javax.annotation.Nonnull;
 import java.util.Set;
@@ -35,7 +37,6 @@ public class BackpackNestingListener extends RefSystem<EntityStore> {
                               @Nonnull AddReason reason,
                               @Nonnull Store<EntityStore> store,
                               @Nonnull CommandBuffer<EntityStore> buffer) {
-
         BACKPACK_ENTITIES.add(ref);
     }
 
@@ -44,7 +45,6 @@ public class BackpackNestingListener extends RefSystem<EntityStore> {
                                @Nonnull RemoveReason reason,
                                @Nonnull Store<EntityStore> store,
                                @Nonnull CommandBuffer<EntityStore> buffer) {
-
         BACKPACK_ENTITIES.remove(ref);
     }
 
@@ -60,7 +60,6 @@ public class BackpackNestingListener extends RefSystem<EntityStore> {
                     store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
 
             if (backpackComp == null) continue;
-
             if (component != backpackComp) continue;
 
             ItemContainer changed = event.getItemContainer();
@@ -68,14 +67,44 @@ public class BackpackNestingListener extends RefSystem<EntityStore> {
 
             if (changed != backpackContainer) return;
 
-            handleModifiedSlots(event, changed);
+            String equippedFuelItemId = resolveEquippedFuelItemId(ref, store);
+            handleModifiedSlots(event, changed, equippedFuelItemId);
             return;
         }
     }
 
-    private void handleModifiedSlots(@Nonnull InventoryChangeEvent event,
-                                     @Nonnull ItemContainer container) {
+    private String resolveEquippedFuelItemId(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
+        InventoryComponent.Armor armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
+        if (armorComp != null) {
+            ItemStack chestStack = armorComp.getInventory().getItemStack((short) 1);
+            if (chestStack != null && !chestStack.isEmpty()) {
+                String fuelId = getFuelItemId(chestStack.getItemId());
+                if (fuelId != null) return fuelId;
+            }
+        }
 
+        InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        if (storageComp != null) {
+            ItemStack storageStack = storageComp.getInventory().getItemStack((short) 0);
+            if (storageStack != null && !storageStack.isEmpty()) {
+                return getFuelItemId(storageStack.getItemId());
+            }
+        }
+
+        return null;
+    }
+
+    private String getFuelItemId(@Nonnull String itemId) {
+        BackpackEntry entry = BackpackRegistry.getByItem(itemId);
+        if (entry == null || !entry.isHelipack()) return null;
+        HelipackConfig config = entry.helipackConfig();
+        if (config == null || !config.requiresFuel()) return null;
+        return config.fuelItemId();
+    }
+
+    private void handleModifiedSlots(@Nonnull InventoryChangeEvent event,
+                                     @Nonnull ItemContainer container,
+                                     String requiredFuelItemId) {
         for (short slot = 0; slot < container.getCapacity(); slot++) {
             if (!event.getTransaction().wasSlotModified(slot)) continue;
 
@@ -84,9 +113,14 @@ public class BackpackNestingListener extends RefSystem<EntityStore> {
 
             String itemId = item.getItemId();
 
-            if (BackpackRegistry.getByItem(itemId) == null) continue;
+            if (BackpackRegistry.getByItem(itemId) != null) {
+                container.setItemStackForSlot(slot, ItemStack.EMPTY);
+                continue;
+            }
 
-            container.setItemStackForSlot(slot, ItemStack.EMPTY);
+            if (requiredFuelItemId != null && !requiredFuelItemId.equals(itemId)) {
+                container.setItemStackForSlot(slot, ItemStack.EMPTY);
+            }
         }
     }
 }
