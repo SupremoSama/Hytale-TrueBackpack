@@ -16,6 +16,9 @@ import com.supremosan.truebackpack.TrueBackpack;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 import com.supremosan.truebackpack.data.BackpackDataStorage;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
+import com.supremosan.truebackpack.registries.BackpackRegistry.BackpackEntry;
+import com.supremosan.truebackpack.registries.BackpackRegistry.HelipackConfig;
 import com.supremosan.truebackpack.ui.BackpackUIUpdater;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -362,8 +365,17 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             if (newBonus > 0 && equipContainer != null) {
                 ItemContainer bp = backpackComp.getInventory();
 
+                String fuelItemId = resolveFuelItemId(equippedItem);
+
                 for (short slot = 0; slot < bp.getCapacity(); slot++) {
-                    bp.setSlotFilter(FilterActionType.ADD, slot, (_, _, _, item) -> item == null || item.isEmpty() || getBackpackSize(item.getItemId()) == 0);
+                    if (fuelItemId != null) {
+                        final String requiredFuel = fuelItemId;
+                        bp.setSlotFilter(FilterActionType.ADD, slot, (_, _, _, item) ->
+                                item == null || item.isEmpty() || requiredFuel.equals(item.getItemId()));
+                    } else {
+                        bp.setSlotFilter(FilterActionType.ADD, slot, (_, _, _, item) ->
+                                item == null || item.isEmpty() || getBackpackSize(item.getItemId()) == 0);
+                    }
                     bp.setItemStackForSlot(slot, ItemStack.EMPTY);
                 }
 
@@ -382,6 +394,16 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         } finally {
             PROCESSING_CONTAINER.remove(playerUuid);
         }
+    }
+
+    @Nullable
+    private static String resolveFuelItemId(@Nullable ItemStack equippedItem) {
+        if (equippedItem == null) return null;
+        BackpackEntry entry = BackpackRegistry.getByItem(equippedItem.getItemId());
+        if (entry == null || !entry.isHelipack()) return null;
+        HelipackConfig config = entry.helipackConfig();
+        if (config == null || !config.requiresFuel()) return null;
+        return config.fuelItemId();
     }
 
     private void updateVisual(
