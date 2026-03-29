@@ -66,10 +66,6 @@ public class BackpackRegistry {
         return BY_BLOCK.get(blockId);
     }
 
-    public static List<BackpackEntry> getAll() {
-        return ALL;
-    }
-
     public static void registerDefaults() {
         registerHelipack("Utility_Heli_Backpack", "", (short) 3, "Items/Backpacks/Helipack.blockymodel", "Items/Back/Helipack_Texture.png", HelipackConfig.of("Ingredient_Charcoal", "HelipackAnimations", 6.0f, 7.0f, 10.0f, 5));
         register("Utility_Leather_Side_Backpack", "TrueBackpack_Chest_Side", (short) 6, "Items/Backpacks/Side_Backpack.blockymodel", "Items/Backpacks/Side_Backpack_Texture.png");
