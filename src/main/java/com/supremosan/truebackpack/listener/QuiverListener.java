@@ -108,10 +108,8 @@ public class QuiverListener {
         boolean visible = CosmeticPreferenceUtils.isQuiverVisible(store, ref);
         boolean shouldHave = hasArrow && visible;
 
-        boolean hasAttachment = CosmeticListener.hasAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
-
         if (!shouldHave) {
-            if (!hasAttachment) return;
+            if (!CosmeticListener.hasAttachment(playerUuid, ATTACHMENT_SLOT_KEY)) return;
             CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
             CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
             return;
@@ -121,7 +119,9 @@ public class QuiverListener {
                 ? QUIVER_BACKPACK_ATTACHMENT
                 : QUIVER_ATTACHMENT;
 
-        if (hasAttachment && CosmeticListener.getAttachment(playerUuid, ATTACHMENT_SLOT_KEY) == correct) return;
+        ModelAttachment current = CosmeticListener.getAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
+
+        if (correct.equals(current)) return;
 
         CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, correct);
         CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);

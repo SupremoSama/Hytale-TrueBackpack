@@ -3,7 +3,6 @@ package com.supremosan.truebackpack.listener;
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
-import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -27,9 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BackpackArmorListener extends EntityEventSystem<EntityStore, InventoryChangeEvent> {
-
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
-
     private static boolean REFRESH_UI = false;
     private static int REFRESH_TIMES = 0;
 
@@ -268,6 +264,10 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
                 LAST_KNOWN_EQUIPPED.remove(playerUuid);
                 LAST_KNOWN_EQUIPPED_ITEM_ID.remove(playerUuid);
             }
+
+            for (EquipChangeListener listener : EQUIP_CHANGE_LISTENERS) {
+                listener.onEquipChange(playerUuid, entity, store, ref);
+            }
         } finally {
             PROCESSING_EQUIP.remove(playerUuid);
             REFRESH_UI = true;
@@ -397,10 +397,6 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);
         } else {
             CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
-        }
-
-        for (EquipChangeListener listener : EQUIP_CHANGE_LISTENERS) {
-            listener.onEquipChange(playerUuid, entity, store, ref);
         }
 
         CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);

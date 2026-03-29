@@ -1,0 +1,95 @@
+{
+  "TranslationProperties": {
+    "Name": "server.truebackpack.items.Utility_Leather_Backpack.name"
+  },
+  "PlayerAnimationsId": "Item",
+  "Categories": [
+    "Furniture.Containers"
+  ],
+  "Set": "Furniture_Adventure",
+  "Icon": "Icons/ItemsGenerated/TrueBackpack_Chest_Side.png",
+  "BlockType": {
+    "BlockParticleSetId": "Snow",
+    "BlockSoundSetId": "Cloth",
+    "CustomModel": "Items/Blocks/Side_Backpack_Block.blockymodel",
+    "CustomModelTexture": [
+      {
+        "Texture": "Items/Backpacks/Side_Backpack_Texture.png",
+        "Weight": 1
+      }
+    ],
+    "DrawType": "Model",
+    "Flags": {
+      "IsUsable": true
+    },
+    "HitboxType": "Potion",
+    "Material": "Empty",
+    "Opacity": "Transparent",
+    "ParticleColor": "#7a3d27",
+    "BlockEntity": {
+      "Components": {
+        "ItemContainerBlock": {
+          "Capacity": 6
+        },
+        "BackpackContainerState": {
+          "BackpackBlockId": "TrueBackpack_Chest_Side"
+        }
+      }
+    },
+    "State": {
+      "Definitions": {
+        "CloseWindow": {
+          "InteractionSoundEventId": "SFX_Cloth_Hit"
+        },
+        "OpenWindow": {
+          "InteractionSoundEventId": "SFX_Cloth_Hit"
+        }
+      }
+    },
+    "Support": {
+      "Down": [
+        {
+          "FaceType": "Full"
+        }
+      ]
+    },
+    "VariantRotation": "NESW",
+    "Interactions": {
+      "Use": "Open_Container"
+    },
+    "CustomModelScale": 0.5,
+    "SupportDropType": "Destroy",
+    "Gathering": {
+      "Soft": {
+        "DropList": {}
+      }
+    }
+  },
+  "Tags": {
+    "Type": [
+      "Furniture"
+    ],
+    "Family": [
+      "Backpack"
+    ]
+  },
+  "IconProperties": {
+    "Scale": 0.7,
+    "Rotation": [
+      8,
+      27,
+      5
+    ],
+    "Translation": [
+      -2,
+      -11
+    ]
+  },
+  "ItemSoundSetId": "ISS_Armor_Cloth",
+  "MaxStack": 1,
+  "Interactions": {
+    "Primary": "Block_Primary",
+    "Secondary": "Block_Secondary"
+  },
+  "Quality": "Template"
+}

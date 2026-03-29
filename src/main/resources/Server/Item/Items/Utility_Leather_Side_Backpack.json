@@ -41,15 +41,15 @@
     ]
   },
   "IconProperties": {
-    "Scale": 0.5,
+    "Scale": 0.7,
     "Rotation": [
       16,
       34,
       16
     ],
     "Translation": [
-      -1,
-      -12
+      -2,
+      -10
     ]
   },
   "TranslationProperties": {
