@@ -2,7 +2,7 @@
   "nodes": [
     {
       "id": "1",
-      "name": "Chest",
+      "name": "Pelvis",
       "position": {"x": 0, "y": 0, "z": 0},
       "orientation": {"x": 0, "y": 0, "z": 0, "w": 1},
       "shape": {
@@ -21,9 +21,9 @@
       "children": [
         {
           "id": "2",
-          "name": "Bag2",
-          "position": {"x": -21.775, "y": -35.5, "z": 15},
-          "orientation": {"x": 0, "y": -0.40275, "z": 0, "w": 0.91531},
+          "name": "Bag_1",
+          "position": {"x": -18.775, "y": -7.5, "z": 8},
+          "orientation": {"x": -0.10704, "y": -0.71712, "z": 0.00967, "w": 0.68862},
           "shape": {
             "type": "box",
             "offset": {"x": 0, "y": 0.25, "z": 0},
@@ -55,8 +55,8 @@
               },
               "top": {
                 "offset": {"x": 30, "y": 9},
-                "mirror": {"x": false, "y": false},
-                "angle": 90
+                "mirror": {"x": true, "y": true},
+                "angle": 270
               },
               "bottom": {
                 "offset": {"x": 21, "y": 9},
@@ -206,8 +206,8 @@
                       },
                       "bottom": {
                         "offset": {"x": 30, "y": 9},
-                        "mirror": {"x": false, "y": false},
-                        "angle": 90
+                        "mirror": {"x": true, "y": true},
+                        "angle": 270
                       }
                     },
                     "unwrapMode": "custom",
@@ -219,255 +219,6 @@
                     {
                       "id": "7",
                       "name": "Bag-Inner",
-                      "position": {"x": 0, "y": 0.25, "z": 0},
-                      "orientation": {"x": 0, "y": 0, "z": 0, "w": 1},
-                      "shape": {
-                        "type": "box",
-                        "offset": {"x": 0, "y": -0.25, "z": 0},
-                        "stretch": {"x": 1, "y": 1, "z": -1},
-                        "settings": {
-                          "isPiece": false,
-                          "size": {"x": 10, "y": 4, "z": 7}
-                        },
-                        "textureLayout": {
-                          "back": {
-                            "offset": {"x": 0, "y": 9},
-                            "mirror": {"x": false, "y": false},
-                            "angle": 0
-                          },
-                          "right": {
-                            "offset": {"x": 10, "y": 9},
-                            "mirror": {"x": false, "y": false},
-                            "angle": 0
-                          },
-                          "front": {
-                            "offset": {"x": 0, "y": 8},
-                            "mirror": {"x": false, "y": false},
-                            "angle": 0
-                          },
-                          "left": {
-                            "offset": {"x": 10, "y": 9},
-                            "mirror": {"x": false, "y": false},
-                            "angle": 0
-                          },
-                          "bottom": {
-                            "offset": {"x": 13, "y": 1},
-                            "mirror": {"x": false, "y": false},
-                            "angle": 0
-                          }
-                        },
-                        "unwrapMode": "custom",
-                        "visible": true,
-                        "doubleSided": true,
-                        "shadingMode": "flat"
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "8",
-          "name": "Bag8",
-          "position": {"x": -9.775, "y": -35.5, "z": 20},
-          "orientation": {"x": 0, "y": -0.0654, "z": 0, "w": 0.99786},
-          "shape": {
-            "type": "box",
-            "offset": {"x": 0, "y": 0.25, "z": 0},
-            "stretch": {"x": 1, "y": 1, "z": 1.1},
-            "settings": {
-              "isPiece": false,
-              "size": {"x": 12, "y": 11, "z": 9}
-            },
-            "textureLayout": {
-              "back": {
-                "offset": {"x": 0, "y": 16},
-                "mirror": {"x": false, "y": false},
-                "angle": 0
-              },
-              "right": {
-                "offset": {"x": 12, "y": 16},
-                "mirror": {"x": false, "y": false},
-                "angle": 0
-              },
-              "front": {
-                "offset": {"x": 0, "y": 16},
-                "mirror": {"x": false, "y": false},
-                "angle": 0
-              },
-              "left": {
-                "offset": {"x": 12, "y": 16},
-                "mirror": {"x": false, "y": false},
-                "angle": 0
-              },
-              "top": {
-                "offset": {"x": 30, "y": 9},
-                "mirror": {"x": false, "y": false},
-                "angle": 90
-              },
-              "bottom": {
-                "offset": {"x": 21, "y": 9},
-                "mirror": {"x": true, "y": false},
-                "angle": 270
-              }
-            },
-            "unwrapMode": "custom",
-            "visible": true,
-            "doubleSided": false,
-            "shadingMode": "flat"
-          },
-          "children": [
-            {
-              "id": "9",
-              "name": "Bag-Flaps5",
-              "position": {"x": 0, "y": -2.25, "z": 0},
-              "orientation": {"x": 0, "y": -0.34202, "z": 0, "w": 0.93969},
-              "shape": {
-                "type": "quad",
-                "offset": {"x": 0.25, "y": -1, "z": 0},
-                "stretch": {"x": 1, "y": 1, "z": 1},
-                "settings": {
-                  "isPiece": false,
-                  "size": {"x": 20, "y": 4},
-                  "normal": "+Z"
-                },
-                "textureLayout": {
-                  "front": {
-                    "offset": {"x": 0, "y": 28},
-                    "mirror": {"x": false, "y": false},
-                    "angle": 0
-                  }
-                },
-                "unwrapMode": "custom",
-                "visible": true,
-                "doubleSided": true,
-                "shadingMode": "flat"
-              }
-            },
-            {
-              "id": "10",
-              "name": "Bag-Flaps6",
-              "position": {"x": 0, "y": -3.25, "z": 0},
-              "orientation": {"x": 0, "y": 0.34202, "z": 0, "w": 0.93969},
-              "shape": {
-                "type": "quad",
-                "offset": {"x": 0.25, "y": 0, "z": 0},
-                "stretch": {"x": 1, "y": 1, "z": 1},
-                "settings": {
-                  "isPiece": false,
-                  "size": {"x": 20, "y": 4},
-                  "normal": "+Z"
-                },
-                "textureLayout": {
-                  "front": {
-                    "offset": {"x": 0, "y": 28},
-                    "mirror": {"x": false, "y": false},
-                    "angle": 0
-                  }
-                },
-                "unwrapMode": "custom",
-                "visible": true,
-                "doubleSided": true,
-                "shadingMode": "flat"
-              }
-            },
-            {
-              "id": "11",
-              "name": "Bag9",
-              "position": {"x": 0, "y": 4.25, "z": 0},
-              "orientation": {"x": 0.04358, "y": -0.0019, "z": 0.04358, "w": 0.9981},
-              "shape": {
-                "type": "box",
-                "offset": {"x": 0, "y": 2, "z": 0},
-                "stretch": {"x": 0.9, "y": 1, "z": 0.9},
-                "settings": {
-                  "isPiece": false,
-                  "size": {"x": 12, "y": 5, "z": 9}
-                },
-                "textureLayout": {
-                  "back": {
-                    "offset": {"x": 4, "y": 27},
-                    "mirror": {"x": false, "y": false},
-                    "angle": 0
-                  },
-                  "right": {
-                    "offset": {"x": 21, "y": 9},
-                    "mirror": {"x": false, "y": false},
-                    "angle": 0
-                  },
-                  "front": {
-                    "offset": {"x": 4, "y": 27},
-                    "mirror": {"x": false, "y": false},
-                    "angle": 0
-                  },
-                  "left": {
-                    "offset": {"x": 21, "y": 9},
-                    "mirror": {"x": false, "y": false},
-                    "angle": 0
-                  }
-                },
-                "unwrapMode": "custom",
-                "visible": true,
-                "doubleSided": false,
-                "shadingMode": "flat"
-              },
-              "children": [
-                {
-                  "id": "12",
-                  "name": "Bag10",
-                  "position": {"x": 0, "y": 2.5, "z": 0},
-                  "orientation": {"x": 0, "y": 0, "z": 0, "w": 1},
-                  "shape": {
-                    "type": "box",
-                    "offset": {"x": 0, "y": 1.5, "z": 0},
-                    "stretch": {"x": 1, "y": 1, "z": 1},
-                    "settings": {
-                      "isPiece": false,
-                      "size": {"x": 12, "y": 4, "z": 9}
-                    },
-                    "textureLayout": {
-                      "back": {
-                        "offset": {"x": 0, "y": 9},
-                        "mirror": {"x": false, "y": false},
-                        "angle": 0
-                      },
-                      "right": {
-                        "offset": {"x": 12, "y": 9},
-                        "mirror": {"x": false, "y": false},
-                        "angle": 0
-                      },
-                      "front": {
-                        "offset": {"x": 0, "y": 9},
-                        "mirror": {"x": false, "y": false},
-                        "angle": 0
-                      },
-                      "left": {
-                        "offset": {"x": 12, "y": 9},
-                        "mirror": {"x": false, "y": false},
-                        "angle": 0
-                      },
-                      "top": {
-                        "offset": {"x": 0, "y": 0},
-                        "mirror": {"x": false, "y": false},
-                        "angle": 0
-                      },
-                      "bottom": {
-                        "offset": {"x": 30, "y": 9},
-                        "mirror": {"x": false, "y": false},
-                        "angle": 90
-                      }
-                    },
-                    "unwrapMode": "custom",
-                    "visible": true,
-                    "doubleSided": false,
-                    "shadingMode": "flat"
-                  },
-                  "children": [
-                    {
-                      "id": "13",
-                      "name": "Bag-Inner3",
                       "position": {"x": 0, "y": 0.25, "z": 0},
                       "orientation": {"x": 0, "y": 0, "z": 0, "w": 1},
                       "shape": {

@@ -1,0 +1,73 @@
+{
+  "Categories": [
+    "Items.Armors"
+  ],
+  "Icon": "Icons/ItemsGenerated/Utility_Fibre_Side_Bag.png",
+  "Quality": "Common",
+  "MaxStack": 1,
+  "ItemLevel": 5,
+  "Recipe": {
+    "TimeSeconds": 0,
+    "Input": [
+      {
+        "ItemId": "Ingredient_Fibre",
+        "Quantity": 16
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Id": "Workbench",
+        "Type": "Crafting",
+        "Categories": [
+          "Workbench_Tinkering"
+        ],
+        "RequiredTierLevel": 0
+      },
+      {
+        "Id": "Fieldcraft",
+        "Categories": [
+          "Tools"
+        ]
+      }
+    ]
+  },
+  "Model": "Items/Blocks/Side_Bag_Block.blockymodel",
+  "Texture": "Items/Backpacks/Side_Bag_Texture.png",
+  "PlayerAnimationsId": "Item",
+  "Tags": {
+    "Family": [
+      "Backpack"
+    ],
+    "Type": [
+      "Utility"
+    ]
+  },
+  "IconProperties": {
+    "Scale": 0.9,
+    "Rotation": [
+      29,
+      56,
+      16
+    ],
+    "Translation": [
+      7,
+      12
+    ]
+  },
+  "TranslationProperties": {
+    "Name": "server.truebackpack.items.Utility_Fibre_Bag.name"
+  },
+  "DropOnDeath": false,
+  "Interactions": {
+    "Use": {
+      "Interactions": [
+        {
+          "Type": "TrueBackpack_PlaceBackpack"
+        }
+      ]
+    },
+    "Primary": "Block_Primary",
+    "Secondary": "Block_Secondary"
+  },
+  "Scale": 0.5
+}
