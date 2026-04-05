@@ -89,7 +89,7 @@ public class MovementDebugSystem extends EntityTickingSystem<EntityStore> {
         if (sent.sleeping != current.sleeping) sb.append("sleeping=").append(current.sleeping).append(" ");
 
         if (!sb.isEmpty()) {
-            LOGGER.atInfo().log("[MovementDebug] " + player.getUuid() + " changed: " + sb.toString().trim());
+            LOGGER.atInfo().log("[MovementDebug] changed: " + sb.toString().trim());
         }
     }
 }
