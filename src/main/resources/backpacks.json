@@ -1,0 +1,61 @@
+{
+  "backpacks": [
+    {
+      "itemId": "Utility_Heli_Backpack",
+      "blockId": "",
+      "capacity": 3,
+      "model": "Items/Backpacks/Helipack.blockymodel",
+      "texture": "Items/Back/Helipack_Texture.png",
+      "helipack": {
+        "fuelItemId": "Ingredient_Charcoal",
+        "itemAnimationsId": "HelipackAnimations",
+        "verticalFlySpeed": 6.0,
+        "horizontalFlySpeed": 7.0,
+        "fuelConsumeInterval": 10.0,
+        "fuelConsumeAmount": 5
+      }
+    },
+    {
+      "itemId": "Utility_Fibre_Side_Bag",
+      "blockId": "TrueBackpack_Chest_Bag",
+      "capacity": 3,
+      "model": "Items/Backpacks/Side_Bag.blockymodel",
+      "texture": "Items/Backpacks/Side_Bag_Texture.png"
+    },
+    {
+      "itemId": "Utility_Leather_Side_Backpack",
+      "blockId": "TrueBackpack_Chest_Side",
+      "capacity": 6,
+      "model": "Items/Backpacks/Side_Backpack.blockymodel",
+      "texture": "Items/Backpacks/Side_Backpack_Texture.png"
+    },
+    {
+      "itemId": "Utility_Leather_Backpack",
+      "blockId": "TrueBackpack_Chest_Small",
+      "capacity": 9,
+      "model": "Items/Backpacks/Small_Backpack.blockymodel",
+      "texture": "Items/Back/BackpackBig_Texture.png"
+    },
+    {
+      "itemId": "Utility_Leather_Medium_Backpack",
+      "blockId": "TrueBackpack_Chest_Medium",
+      "capacity": 18,
+      "model": "Items/Back/BackpackBig.blockymodel",
+      "texture": "Items/Back/BackpackBig_Texture.png"
+    },
+    {
+      "itemId": "Utility_Leather_Big_Backpack",
+      "blockId": "TrueBackpack_Chest_Large",
+      "capacity": 27,
+      "model": "Items/Backpacks/Big_Backpack.blockymodel",
+      "texture": "Items/Backpacks/Big_Backpack_Texture.png"
+    },
+    {
+      "itemId": "Utility_Leather_Extra_Big_Backpack",
+      "blockId": "TrueBackpack_Chest_ExtraLarge",
+      "capacity": 36,
+      "model": "Items/Backpacks/Extra_Big_Backpack.blockymodel",
+      "texture": "Items/Backpacks/Extra_Big_Backpack_Texture.png"
+    }
+  ]
+}
