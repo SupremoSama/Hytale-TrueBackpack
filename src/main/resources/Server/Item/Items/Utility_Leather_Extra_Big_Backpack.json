@@ -68,7 +68,12 @@
         }
       ]
     },
-    "Primary": "Block_Primary"
+    "Primary": {
+      "Interactions": [{ "Type": "TrueBackpack_ChestTransfer" }]
+    },
+    "Secondary": {
+      "Interactions": [{ "Type": "TrueBackpack_ChestTransfer" }]
+    }
   },
   "Model": "Items/Blocks/Extra_Big_Backpack_Block.blockymodel",
   "Scale": 0.5
