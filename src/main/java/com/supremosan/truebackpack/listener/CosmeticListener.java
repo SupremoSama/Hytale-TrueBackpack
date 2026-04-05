@@ -21,6 +21,8 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerSettings;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerSkinComponent;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.protocol.Cosmetic;
@@ -139,6 +141,34 @@ public class CosmeticListener {
         else world.execute(task);
     }
 
+    public static void scheduleRebuildForUuid(@Nonnull String playerUuid) {
+        PlayerRef playerRef;
+        try {
+            playerRef = Universe.get().getPlayer(UUID.fromString(playerUuid));
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        if (playerRef == null) return;
+
+        UUID worldUuid = playerRef.getWorldUuid();
+        if (worldUuid == null) return;
+
+        World world = Universe.get().getWorld(worldUuid);
+        if (world == null) return;
+
+        Ref<EntityStore> ref = playerRef.getReference();
+        if (ref == null || !ref.isValid()) return;
+
+        Store<EntityStore> store = ref.getStore();
+
+        world.execute(() -> {
+            if (!ref.isValid()) return;
+            Player player = store.getComponent(ref, Player.getComponentType());
+            if (player == null) return;
+            scheduleRebuild(player, store, ref, playerUuid);
+        });
+    }
+
     public static void onPlayerLeave(@Nonnull String playerUuid) {
         PLAYER_ATTACHMENTS.remove(playerUuid);
     }
@@ -236,10 +266,8 @@ public class CosmeticListener {
         if (skin.bodyCharacteristic != null) {
             String[] bodyParts = skin.bodyCharacteristic.split("\\.");
             if (bodyParts.length > 1) bodyGradientId = bodyParts[1];
-            com.hypixel.hytale.server.core.cosmetics.CosmeticRegistry registry =
-                    CosmeticsModule.get().getRegistry();
-            com.hypixel.hytale.server.core.cosmetics.PlayerSkinPart bodyPart =
-                    registry.getBodyCharacteristics().get(bodyParts[0]);
+            CosmeticRegistry registry = CosmeticsModule.get().getRegistry();
+            PlayerSkinPart bodyPart = registry.getBodyCharacteristics().get(bodyParts[0]);
             if (bodyPart != null) {
                 bodyGradientSet = bodyPart.getGradientSet();
                 bodyTexture = bodyPart.getGreyscaleTexture();
@@ -400,7 +428,7 @@ public class CosmeticListener {
         String[] parts = skin.headAccessory.split("\\.");
         PlayerSkinPart headAcc = registry.getHeadAccessories().get(parts[0]);
         return headAcc != null
-                && headAcc.getHeadAccessoryType() == com.hypixel.hytale.server.core.cosmetics.PlayerSkinPart.HeadAccessoryType.HalfCovering;
+                && headAcc.getHeadAccessoryType() == PlayerSkinPart.HeadAccessoryType.HalfCovering;
     }
 
     private static void addSkinPart(@Nonnull List<ModelAttachment> attachments,

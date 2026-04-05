@@ -10,7 +10,11 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
+import com.supremosan.truebackpack.commands.ReloadBackpackCommand;
+import com.supremosan.truebackpack.commands.SetBackpackModelCommand;
+import com.supremosan.truebackpack.commands.SetHelipackFuelCommand;
 import com.supremosan.truebackpack.commands.ToggleCosmeticCommand;
+import com.supremosan.truebackpack.config.BackpackConfigService;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.events.BackpackDeathEvent;
@@ -18,11 +22,14 @@ import com.supremosan.truebackpack.system.BackpackContainerSystem;
 import com.supremosan.truebackpack.system.HelipackFlySystem;
 import com.supremosan.truebackpack.interactions.BackpackPlaceInteraction;
 import com.supremosan.truebackpack.listener.*;
-import com.supremosan.truebackpack.registries.BackpackRegistry;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TrueBackpack extends JavaPlugin {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+    private static final Logger JUL = Logger.getLogger("TrueBackpack");
 
     public TrueBackpack(JavaPluginInit init) {
         super(init);
@@ -30,7 +37,11 @@ public class TrueBackpack extends JavaPlugin {
 
     @Override
     protected void setup() {
-        BackpackRegistry.registerDefaults();
+        try {
+            BackpackConfigService.reloadAndRegister(JUL);
+        } catch (Exception e) {
+            JUL.log(Level.SEVERE, "[TrueBackpack] Failed to load backpack config", e);
+        }
 
         this.getCodecRegistry(Interaction.CODEC).register(
                 "TrueBackpack_PlaceBackpack",
@@ -52,6 +63,9 @@ public class TrueBackpack extends JavaPlugin {
         BackpackTooltipListener.register();
 
         this.getCommandRegistry().registerCommand(new ToggleCosmeticCommand());
+        this.getCommandRegistry().registerCommand(new ReloadBackpackCommand());
+        this.getCommandRegistry().registerCommand(new SetHelipackFuelCommand());
+        this.getCommandRegistry().registerCommand(new SetBackpackModelCommand());
 
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {
             PlayerRef playerRef = event.getPlayerRef();

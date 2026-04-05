@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.filter.FilterActionType;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.TrueBackpack;
+import com.supremosan.truebackpack.cosmetic.BackpackVisualOverride;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 import com.supremosan.truebackpack.data.BackpackDataStorage;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
@@ -86,6 +87,11 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             if (itemId.contains(e.getKey())) return e.getValue();
         }
         return 0;
+    }
+
+    public static void clear() {
+        BACKPACK_SIZES.clear();
+        BACKPACK_VISUALS.clear();
     }
 
     @Override
@@ -413,7 +419,16 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             @Nonnull String playerUuid,
             @Nullable ItemStack equippedItem) {
         boolean backpackVisible = CosmeticPreferenceUtils.isBackpackVisible(store, ref);
-        ModelAttachment visual = (equippedItem != null && backpackVisible) ? resolveVisual(equippedItem.getItemId()) : null;
+
+        ModelAttachment visual = null;
+        if (equippedItem != null && backpackVisible) {
+            BackpackVisualOverride.Override override = BackpackVisualOverride.get(UUID.fromString(playerUuid));
+            if (override != null) {
+                visual = new ModelAttachment(override.model(), override.texture(), "", "", 1.0);
+            } else {
+                visual = resolveVisual(equippedItem.getItemId());
+            }
+        }
 
         if (visual != null) {
             CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);

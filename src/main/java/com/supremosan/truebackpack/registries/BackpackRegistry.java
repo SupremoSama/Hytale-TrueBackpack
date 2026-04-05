@@ -35,6 +35,13 @@ public class BackpackRegistry {
     private BackpackRegistry() {
     }
 
+    public static void clear() {
+        BY_ITEM.clear();
+        BY_BLOCK.clear();
+        ALL.clear();
+        BackpackArmorListener.clear();
+    }
+
     public static void register(String itemId, String blockId, short capacity, String model, String texture) {
         register(itemId, blockId, capacity, model, texture, null);
     }
@@ -64,15 +71,5 @@ public class BackpackRegistry {
     @Nullable
     public static BackpackEntry getByBlock(String blockId) {
         return BY_BLOCK.get(blockId);
-    }
-
-    public static void registerDefaults() {
-        registerHelipack("Utility_Heli_Backpack", "", (short) 3, "Items/Backpacks/Helipack.blockymodel", "Items/Back/Helipack_Texture.png", HelipackConfig.of("Ingredient_Charcoal", "HelipackAnimations", 6.0f, 7.0f, 10.0f, 5));
-        register("Utility_Fibre_Side_Bag", "TrueBackpack_Chest_Bag", (short) 3, "Items/Backpacks/Side_Bag.blockymodel", "Items/Backpacks/Side_Bag_Texture.png");
-        register("Utility_Leather_Side_Backpack", "TrueBackpack_Chest_Side", (short) 6, "Items/Backpacks/Side_Backpack.blockymodel", "Items/Backpacks/Side_Backpack_Texture.png");
-        register("Utility_Leather_Backpack", "TrueBackpack_Chest_Small", (short) 9, "Items/Backpacks/Small_Backpack.blockymodel", "Items/Back/BackpackBig_Texture.png");
-        register("Utility_Leather_Medium_Backpack", "TrueBackpack_Chest_Medium", (short) 18, "Items/Back/BackpackBig.blockymodel", "Items/Back/BackpackBig_Texture.png");
-        register("Utility_Leather_Big_Backpack", "TrueBackpack_Chest_Large", (short) 27, "Items/Backpacks/Big_Backpack.blockymodel", "Items/Backpacks/Big_Backpack_Texture.png");
-        register("Utility_Leather_Extra_Big_Backpack", "TrueBackpack_Chest_ExtraLarge", (short) 36, "Items/Backpacks/Extra_Big_Backpack.blockymodel", "Items/Backpacks/Extra_Big_Backpack_Texture.png");
     }
 }
