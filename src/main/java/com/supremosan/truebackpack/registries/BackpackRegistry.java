@@ -3,9 +3,7 @@ package com.supremosan.truebackpack.registries;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class BackpackRegistry {
@@ -24,13 +22,12 @@ public class BackpackRegistry {
     public record BackpackEntry(String itemId, String blockId, short capacity, String model, String texture,
                                 @Nullable HelipackConfig helipackConfig) {
         public boolean isHelipack() {
-            return helipackConfig != null;
+            return helipackConfig == null;
         }
     }
 
     private static final Map<String, BackpackEntry> BY_ITEM = new HashMap<>();
     private static final Map<String, BackpackEntry> BY_BLOCK = new HashMap<>();
-    private static final List<BackpackEntry> ALL = new ArrayList<>();
 
     private BackpackRegistry() {
     }
@@ -38,7 +35,6 @@ public class BackpackRegistry {
     public static void clear() {
         BY_ITEM.clear();
         BY_BLOCK.clear();
-        ALL.clear();
         BackpackArmorListener.clear();
     }
 
@@ -54,7 +50,6 @@ public class BackpackRegistry {
         BackpackEntry entry = new BackpackEntry(itemId, blockId, capacity, model, texture, helipackConfig);
         BY_ITEM.put(itemId, entry);
         if (blockId != null && !blockId.isEmpty()) BY_BLOCK.put(blockId, entry);
-        ALL.add(entry);
         BackpackArmorListener.registerBackpack(itemId, capacity, model, texture);
     }
 

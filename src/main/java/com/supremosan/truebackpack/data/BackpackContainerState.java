@@ -5,18 +5,11 @@ import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Component;
 import com.hypixel.hytale.component.ComponentType;
-import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
-import com.hypixel.hytale.server.core.inventory.container.filter.FilterActionType;
-import com.hypixel.hytale.server.core.modules.block.components.ItemContainerBlock;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
-import com.supremosan.truebackpack.registries.BackpackRegistry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class BackpackContainerState implements Component<ChunkStore> {
 
@@ -24,24 +17,30 @@ public class BackpackContainerState implements Component<ChunkStore> {
 
     public static final BuilderCodec<BackpackContainerState> CODEC = BuilderCodec
             .builder(BackpackContainerState.class, BackpackContainerState::new)
-            .addField(new KeyedCodec<>("Custom", Codec.BOOLEAN),
+            .append(new KeyedCodec<>("Custom", Codec.BOOLEAN),
                     (state, o) -> state.custom = o,
                     state -> state.custom)
-            .addField(new KeyedCodec<>("AllowViewing", Codec.BOOLEAN),
+            .add()
+            .append(new KeyedCodec<>("AllowViewing", Codec.BOOLEAN),
                     (state, o) -> state.allowViewing = o,
                     state -> state.allowViewing)
-            .addField(new KeyedCodec<>("Droplist", Codec.STRING),
+            .add()
+            .append(new KeyedCodec<>("Droplist", Codec.STRING),
                     (state, o) -> state.droplist = o,
                     state -> state.droplist)
-            .addField(new KeyedCodec<>("ItemContainer", SimpleItemContainer.CODEC),
+            .add()
+            .append(new KeyedCodec<>("ItemContainer", SimpleItemContainer.CODEC),
                     (state, o) -> state.itemContainer = o,
                     state -> state.itemContainer)
-            .addField(new KeyedCodec<>("Capacity", Codec.SHORT),
+            .add()
+            .append(new KeyedCodec<>("Capacity", Codec.SHORT),
                     (state, o) -> state.capacity = o,
                     state -> state.capacity)
-            .addField(new KeyedCodec<>("BackpackBlockId", Codec.STRING),
+            .add()
+            .append(new KeyedCodec<>("BackpackBlockId", Codec.STRING),
                     (state, o) -> state.cachedBlockId = o,
                     state -> state.cachedBlockId)
+            .add()
             .build();
 
     @Nullable

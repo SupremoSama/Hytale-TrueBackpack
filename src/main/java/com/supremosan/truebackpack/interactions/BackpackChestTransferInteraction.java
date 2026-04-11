@@ -57,10 +57,7 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
         }
 
         MovementStatesComponent movementStatesComponent = store.getComponent(owningEntity, MovementStatesComponent.getComponentType());
-        if (movementStatesComponent == null || !movementStatesComponent.getMovementStates().crouching) {
-            context.getState().state = InteractionState.Failed;
-            return;
-        }
+        boolean crouching = movementStatesComponent != null && movementStatesComponent.getMovementStates().crouching;
 
         ItemStack heldItem = context.getHeldItem();
         if (heldItem == null || heldItem.isEmpty()) {
@@ -75,7 +72,7 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        if (!BackpackItemFactory.hasInstanceId(heldItem)) {
+        if (BackpackItemFactory.hasInstanceId(heldItem)) {
             context.getState().state = InteractionState.Failed;
             return;
         }
@@ -111,9 +108,9 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
         int backpackCapacity = entry.capacity();
 
         if (type == InteractionType.Primary) {
-            transferBackpackToChest(backpackContents, chestContainer, backpackCapacity, heldItem, context);
+            transferBackpackToChest(backpackContents, chestContainer, backpackCapacity, heldItem, context, crouching);
         } else {
-            transferChestToBackpack(chestContainer, backpackContents, backpackCapacity, heldItem, context);
+            transferChestToBackpack(chestContainer, backpackContents, backpackCapacity, heldItem, context, crouching);
         }
     }
 
@@ -122,7 +119,8 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
             @Nonnull ItemContainer chestContainer,
             int backpackCapacity,
             @Nonnull ItemStack heldItem,
-            @Nonnull InteractionContext context) {
+            @Nonnull InteractionContext context,
+            boolean crouching) {
 
         List<ItemStack> updatedBackpack = new ArrayList<>(backpackContents);
 
@@ -130,7 +128,9 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
             ItemStack item = updatedBackpack.get(i);
             if (item == null || item.isEmpty()) continue;
 
-            ItemStack remainder = insertIntoContainer(chestContainer, item);
+            ItemStack remainder = crouching
+                    ? insertIntoContainer(chestContainer, item, true)
+                    : insertIntoContainerMatchingOnly(chestContainer, item);
             updatedBackpack.set(i, remainder);
         }
 
@@ -151,7 +151,8 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
             @Nonnull List<ItemStack> backpackContents,
             int backpackCapacity,
             @Nonnull ItemStack heldItem,
-            @Nonnull InteractionContext context) {
+            @Nonnull InteractionContext context,
+            boolean crouching) {
 
         List<ItemStack> updatedBackpack = new ArrayList<>(backpackContents);
 
@@ -163,7 +164,9 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
             ItemStack item = chestContainer.getItemStack(slot);
             if (item == null || item.isEmpty()) continue;
 
-            ItemStack remainder = insertIntoList(updatedBackpack, item, backpackCapacity);
+            ItemStack remainder = crouching
+                    ? insertIntoList(updatedBackpack, item, backpackCapacity, true)
+                    : insertIntoListMatchingOnly(updatedBackpack, item, backpackCapacity);
             chestContainer.setItemStackForSlot(slot, remainder);
         }
 
@@ -175,7 +178,7 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
                 .setItemStackForSlot(context.getHeldItemSlot(), updatedBackpackItem);
     }
 
-    private @Nullable ItemStack insertIntoContainer(@Nonnull ItemContainer container, @Nonnull ItemStack toInsert) {
+    private @Nullable ItemStack insertIntoContainer(@Nonnull ItemContainer container, @Nonnull ItemStack toInsert, boolean fillEmpty) {
         int remaining = toInsert.getQuantity();
         int maxStack = toInsert.getItem().getMaxStack();
 
@@ -190,12 +193,14 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
             }
         }
 
-        for (short slot = 0; slot < container.getCapacity() && remaining > 0; slot++) {
-            ItemStack existing = container.getItemStack(slot);
-            if (existing == null || existing.isEmpty()) {
-                int transfer = Math.min(maxStack, remaining);
-                container.setItemStackForSlot(slot, toInsert.withQuantity(transfer));
-                remaining -= transfer;
+        if (fillEmpty) {
+            for (short slot = 0; slot < container.getCapacity() && remaining > 0; slot++) {
+                ItemStack existing = container.getItemStack(slot);
+                if (existing == null || existing.isEmpty()) {
+                    int transfer = Math.min(maxStack, remaining);
+                    container.setItemStackForSlot(slot, toInsert.withQuantity(transfer));
+                    remaining -= transfer;
+                }
             }
         }
 
@@ -203,7 +208,11 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
         return toInsert.withQuantity(remaining);
     }
 
-    private @Nullable ItemStack insertIntoList(@Nonnull List<ItemStack> list, @Nonnull ItemStack toInsert, int capacity) {
+    private @Nullable ItemStack insertIntoContainerMatchingOnly(@Nonnull ItemContainer container, @Nonnull ItemStack toInsert) {
+        return insertIntoContainer(container, toInsert, false);
+    }
+
+    private @Nullable ItemStack insertIntoList(@Nonnull List<ItemStack> list, @Nonnull ItemStack toInsert, int capacity, boolean fillEmpty) {
         int remaining = toInsert.getQuantity();
         int maxStack = toInsert.getItem().getMaxStack();
 
@@ -218,16 +227,22 @@ public class BackpackChestTransferInteraction extends SimpleInstantInteraction {
             }
         }
 
-        for (int i = 0; i < Math.min(list.size(), capacity) && remaining > 0; i++) {
-            ItemStack existing = list.get(i);
-            if (existing == null || existing.isEmpty()) {
-                int transfer = Math.min(maxStack, remaining);
-                list.set(i, toInsert.withQuantity(transfer));
-                remaining -= transfer;
+        if (fillEmpty) {
+            for (int i = 0; i < Math.min(list.size(), capacity) && remaining > 0; i++) {
+                ItemStack existing = list.get(i);
+                if (existing == null || existing.isEmpty()) {
+                    int transfer = Math.min(maxStack, remaining);
+                    list.set(i, toInsert.withQuantity(transfer));
+                    remaining -= transfer;
+                }
             }
         }
 
         if (remaining <= 0) return ItemStack.EMPTY;
         return toInsert.withQuantity(remaining);
+    }
+
+    private @Nullable ItemStack insertIntoListMatchingOnly(@Nonnull List<ItemStack> list, @Nonnull ItemStack toInsert, int capacity) {
+        return insertIntoList(list, toInsert, capacity, false);
     }
 }
