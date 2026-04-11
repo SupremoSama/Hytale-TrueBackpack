@@ -223,8 +223,8 @@ public class BackpackTooltipListener {
 
         UUID uuid = ref.getUuid();
 
-        Set<String> sent = SENT_VIRTUAL_IDS.computeIfAbsent(uuid, k -> ConcurrentHashMap.newKeySet());
-        Map<String, String> last = LAST_SENT_TRANSLATIONS.computeIfAbsent(uuid, k -> new ConcurrentHashMap<>());
+        Set<String> sent = SENT_VIRTUAL_IDS.computeIfAbsent(uuid, _ -> ConcurrentHashMap.newKeySet());
+        Map<String, String> last = LAST_SENT_TRANSLATIONS.computeIfAbsent(uuid, _ -> new ConcurrentHashMap<>());
 
         items.entrySet().removeIf(e -> !sent.add(e.getKey()));
 

@@ -24,6 +24,7 @@ import com.supremosan.truebackpack.system.HelipackFlySystem;
 import com.supremosan.truebackpack.interactions.BackpackPlaceInteraction;
 import com.supremosan.truebackpack.listener.*;
 
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -75,10 +76,11 @@ public class TrueBackpack extends JavaPlugin {
 
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {
             PlayerRef playerRef = event.getPlayerRef();
-            String uuidStr = playerRef.getUuid().toString();
+            UUID uuid = playerRef.getUuid();
+            String uuidStr = uuid.toString();
 
-            BackpackTooltipListener.onPlayerLeave(playerRef.getUuid());
-            BackpackArmorListener.onPlayerRemove(playerRef.getUuid().toString(), null, null, null, null);
+            BackpackTooltipListener.onPlayerLeave(uuid);
+            BackpackArmorListener.onPlayerRemove(uuidStr, null, null, null, null);
             CosmeticListener.onPlayerLeave(uuidStr);
         });
 

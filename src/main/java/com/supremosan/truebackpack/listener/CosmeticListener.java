@@ -327,7 +327,7 @@ public class CosmeticListener {
             if (stack.getItem().getArmor() == null) continue;
 
             com.hypixel.hytale.protocol.ItemArmor protocolArmor = stack.getItem().getArmor().toPacket();
-            if (protocolArmor.cosmeticsToHide == null) continue;
+            if (protocolArmor.cosmeticsToHide == null || protocolArmor.cosmeticsToHide.length == 0) continue;
 
             boolean armorIsHidden = settings != null && switch (protocolArmor.armorSlot) {
                 case Head -> settings.hideHelmet();
@@ -404,6 +404,9 @@ public class CosmeticListener {
         PlayerSkinPart part = registry.getHaircuts().get(parts[0]);
         if (part == null) return;
 
+        String wardrobeVariantId = parts.length > 1 ? parts[1] : null;
+        String resolvedGradientId = wardrobeVariantId != null ? wardrobeVariantId : bodyGradientId;
+
         ModelAttachment attachment = CosmeticUtils.resolveAttachment(part, parts, bodyGradientId);
 
         if (part.doesRequireGenericHaircut() && part.getHairType() != null && isHalfCoveringHelmetEquipped(skin, registry)) {
@@ -412,8 +415,8 @@ public class CosmeticListener {
                 attachment = new ModelAttachment(
                         generic.getModel(),
                         generic.getGreyscaleTexture(),
-                        attachment.getGradientSet(),
-                        attachment.getGradientId(),
+                        generic.getGradientSet() != null ? generic.getGradientSet() : part.getGradientSet(),
+                        resolvedGradientId,
                         DEFAULT_SCALE
                 );
             }

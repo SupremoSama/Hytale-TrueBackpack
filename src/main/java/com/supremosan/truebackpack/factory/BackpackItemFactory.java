@@ -1,8 +1,8 @@
 package com.supremosan.truebackpack.factory;
 
 import com.hypixel.hytale.codec.Codec;
+import com.hypixel.hytale.codec.ExtraInfo;
 import com.hypixel.hytale.codec.KeyedCodec;
-import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import org.bson.BsonArray;
@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class BackpackItemFactory {
-
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     public static final KeyedCodec<String> INSTANCE_ID_CODEC =
             new KeyedCodec<>("Backpack_instance_id", Codec.STRING);
 
@@ -54,7 +52,7 @@ public class BackpackItemFactory {
     }
 
     public static boolean hasInstanceId(@Nonnull ItemStack stack) {
-        return getInstanceId(stack) != null;
+        return getInstanceId(stack) == null;
     }
 
     public static float getRemainingFuelTime(@Nonnull ItemStack stack) {
@@ -75,7 +73,7 @@ public class BackpackItemFactory {
             if (item == null || item.isEmpty()) {
                 array.add(BsonNull.VALUE);
             } else {
-                array.add(ItemStack.CODEC.encode(item));
+                array.add(ItemStack.CODEC.encode(item, ExtraInfo.THREAD_LOCAL.get()));
             }
         }
         return backpack.withMetadata(CONTENTS_KEY, array);
@@ -92,7 +90,7 @@ public class BackpackItemFactory {
             if (val == null || val.isNull()) {
                 result.add(null);
             } else {
-                result.add(ItemStack.CODEC.decode(val));
+                result.add(ItemStack.CODEC.decode(val, ExtraInfo.THREAD_LOCAL.get()));
             }
         }
         return result;

@@ -34,44 +34,50 @@ public final class CosmeticUtils {
         String wardrobeVariantId = parts.length > 1 ? parts[1] : null;
         String wardrobeOptionId = parts.length > 2 ? parts[2] : null;
 
-        PlayerSkinPart.Variant variant = get(part.getVariants(), wardrobeOptionId);
-        if (variant != null) {
+        if (part.getVariants() != null && !part.getVariants().isEmpty()) {
+            PlayerSkinPart.Variant variant = get(part.getVariants(), wardrobeOptionId);
+            if (variant == null) {
+                return fromPlayerSkinPart(part, wardrobeVariantId != null ? wardrobeVariantId : bodyGradientId);
+            }
+
+            String model = variant.getModel();
+            String texture;
+            String gradientSet = null;
+            String gradientId = null;
+
             if (variant.getTextures() != null) {
                 PlayerSkinPartTexture tex = get(variant.getTextures(), wardrobeVariantId);
-                if (tex != null) {
-                    return new ModelAttachment(
-                            variant.getModel(),
-                            tex.getTexture(),
-                            null,
-                            null,
-                            DEFAULT_SCALE
-                    );
+                if (tex == null) {
+                    return fromPlayerSkinPart(part, wardrobeVariantId != null ? wardrobeVariantId : bodyGradientId);
                 }
+                texture = tex.getTexture();
             } else {
-                return new ModelAttachment(
-                        variant.getModel(),
-                        variant.getGreyscaleTexture(),
-                        part.getGradientSet(),
-                        wardrobeVariantId != null ? wardrobeVariantId : bodyGradientId,
-                        DEFAULT_SCALE
-                );
+                texture = variant.getGreyscaleTexture();
+                gradientSet = part.getGradientSet();
+                gradientId = wardrobeVariantId;
             }
+
+            return new ModelAttachment(model, texture, gradientSet, gradientId, DEFAULT_SCALE);
         }
+
+        String model = part.getModel();
+        String texture;
+        String gradientSet = null;
+        String gradientId = null;
 
         if (part.getTextures() != null) {
             PlayerSkinPartTexture tex = get(part.getTextures(), wardrobeVariantId);
-            if (tex != null) {
-                return new ModelAttachment(
-                        part.getModel(),
-                        tex.getTexture(),
-                        null,
-                        null,
-                        DEFAULT_SCALE
-                );
+            if (tex == null) {
+                return fromPlayerSkinPart(part, wardrobeVariantId != null ? wardrobeVariantId : bodyGradientId);
             }
+            texture = tex.getTexture();
+        } else {
+            texture = part.getGreyscaleTexture();
+            gradientSet = part.getGradientSet();
+            gradientId = wardrobeVariantId != null ? wardrobeVariantId : bodyGradientId;
         }
 
-        return fromPlayerSkinPart(part, wardrobeVariantId != null ? wardrobeVariantId : bodyGradientId);
+        return new ModelAttachment(model, texture, gradientSet, gradientId, DEFAULT_SCALE);
     }
 
     @Nullable

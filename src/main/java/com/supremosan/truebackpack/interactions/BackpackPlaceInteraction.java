@@ -3,7 +3,6 @@ package com.supremosan.truebackpack.interactions;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionState;
@@ -97,9 +96,15 @@ public class BackpackPlaceInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        if (!BackpackItemFactory.hasInstanceId(heldItem)) {
+        InventoryComponent.Hotbar hotbar = store.getComponent(owningEntity, InventoryComponent.Hotbar.getComponentType());
+        if (hotbar == null) {
             context.getState().state = InteractionState.Failed;
             return;
+        }
+
+        if (BackpackItemFactory.hasInstanceId(heldItem)) {
+            heldItem = BackpackItemFactory.createBackpackInstance(heldItem);
+            hotbar.getInventory().setItemStackForSlot(context.getHeldItemSlot(), heldItem);
         }
 
         int placeX = targetBlock.x;
@@ -142,12 +147,6 @@ public class BackpackPlaceInteraction extends SimpleInstantInteraction {
             if (content != null && !content.isEmpty()) {
                 containerBlock.getItemContainer().setItemStackForSlot((short) i, content);
             }
-        }
-
-        InventoryComponent.Hotbar hotbar = store.getComponent(owningEntity, InventoryComponent.Hotbar.getComponentType());
-        if (hotbar == null) {
-            context.getState().state = InteractionState.Failed;
-            return;
         }
 
         hotbar.getInventory().removeItemStackFromSlot(context.getHeldItemSlot(), 1, true, false);

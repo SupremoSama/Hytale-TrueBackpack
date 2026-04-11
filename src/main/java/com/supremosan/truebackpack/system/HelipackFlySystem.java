@@ -7,7 +7,6 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
-import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.protocol.packets.player.SetMovementStates;
 import com.hypixel.hytale.server.core.asset.type.itemanimation.config.ItemPlayerAnimations;
@@ -35,9 +34,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
-
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
-
     private static final float DOUBLE_JUMP_WINDOW = 0.65f;
 
     private static final String ANIM_IDLE = "Idle";
@@ -106,7 +102,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
         BackpackEntry entry = BackpackRegistry.getByItem(equippedItemId);
 
-        if (entry == null || !entry.isHelipack()) {
+        if (entry == null || entry.isHelipack()) {
             if (hadState) {
                 jumpStates.remove(uuid);
             }
@@ -133,7 +129,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             jumpState.fuelTimer += dt;
             if (jumpState.fuelTimer >= config.fuelConsumeInterval()) {
                 jumpState.fuelTimer = 0f;
-                if (config.requiresFuel() && !consumeFuel(backpackComp, config.fuelItemId(), config.fuelConsumeAmount())) {
+                if (config.requiresFuel() && consumeFuel(backpackComp, config.fuelItemId(), config.fuelConsumeAmount())) {
                     disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, armorComp, storageComp, commandBuffer, config);
                     return;
                 }
@@ -238,7 +234,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
     }
 
     private boolean consumeFuel(@Nullable InventoryComponent.Backpack backpackComp, @Nonnull String fuelItemId, int amount) {
-        if (backpackComp == null) return false;
+        if (backpackComp == null) return true;
         ItemContainer backpack = backpackComp.getInventory();
 
         int remaining = amount;
@@ -259,7 +255,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             }
         }
 
-        return remaining == 0;
+        return remaining != 0;
     }
 
     @Nullable
@@ -316,7 +312,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
                 jumpState.fuelTimer = config.fuelConsumeInterval() - savedTime;
                 writeSavedFuelTime(armorComp, storageComp, uuid.toString(), 0f);
             } else {
-                if (!consumeFuel(backpackComp, config.fuelItemId(), config.fuelConsumeAmount())) return;
+                if (consumeFuel(backpackComp, config.fuelItemId(), config.fuelConsumeAmount())) return;
                 jumpState.fuelTimer = 0f;
             }
         }
@@ -393,17 +389,6 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
     public boolean isFlying(UUID uuid) {
         JumpState jumpState = jumpStates.get(uuid);
         return jumpState != null && jumpState.isFlying;
-    }
-
-    public void onPlayerLeave(UUID uuid, @Nullable InventoryComponent.Armor armorComp, @Nullable InventoryComponent.Storage storageComp, @Nullable HelipackConfig config) {
-        JumpState jumpState = jumpStates.get(uuid);
-        if (jumpState != null && jumpState.isFlying && config != null && config.requiresFuel() && jumpState.fuelTimer > 0f) {
-            float remainingTime = config.fuelConsumeInterval() - jumpState.fuelTimer;
-            if (remainingTime > 0f) {
-                writeSavedFuelTime(armorComp, storageComp, uuid.toString(), remainingTime);
-            }
-        }
-        jumpStates.remove(uuid);
     }
 
     private enum AnimState {

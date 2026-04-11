@@ -140,8 +140,17 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         }
 
         if (!isArmorEvent && !isStorageEvent) return;
-        if (isArmorEvent && !event.getTransaction().wasSlotModified(CHEST_SLOT)) return;
-        if (isStorageEvent && !event.getTransaction().wasSlotModified(STORAGE_SLOT)) return;
+
+        boolean isChestSlotModified = isArmorEvent && event.getTransaction().wasSlotModified(CHEST_SLOT);
+        boolean isStorageSlotModified = isStorageEvent && event.getTransaction().wasSlotModified(STORAGE_SLOT);
+        boolean isOtherArmorSlotModified = isArmorEvent && !isChestSlotModified;
+
+        if (isOtherArmorSlotModified) {
+            CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);
+            return;
+        }
+
+        if (!isChestSlotModified && !isStorageSlotModified) return;
 
         handleEquipContainerChange(entity, ref, store, armorComp, storageComp, backpackComp, hotbarComp, playerUuid);
 
@@ -406,7 +415,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     private static String resolveFuelItemId(@Nullable ItemStack equippedItem) {
         if (equippedItem == null) return null;
         BackpackEntry entry = BackpackRegistry.getByItem(equippedItem.getItemId());
-        if (entry == null || !entry.isHelipack()) return null;
+        if (entry == null || entry.isHelipack()) return null;
         HelipackConfig config = entry.helipackConfig();
         if (config == null || !config.requiresFuel()) return null;
         return config.fuelItemId();
@@ -545,7 +554,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     @Nonnull
     private static ItemStack ensureInstanceId(@Nonnull ItemStack item, @Nonnull ItemContainer container, short slot) {
         boolean changed = false;
-        if (!BackpackItemFactory.hasInstanceId(item)) {
+        if (BackpackItemFactory.hasInstanceId(item)) {
             item = BackpackItemFactory.createBackpackInstance(item);
             changed = true;
         }

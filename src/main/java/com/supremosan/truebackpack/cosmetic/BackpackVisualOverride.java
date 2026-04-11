@@ -27,8 +27,4 @@ public final class BackpackVisualOverride {
     public static Override get(UUID playerUuid) {
         return OVERRIDES.get(playerUuid);
     }
-
-    public static boolean has(UUID playerUuid) {
-        return OVERRIDES.containsKey(playerUuid);
-    }
 }

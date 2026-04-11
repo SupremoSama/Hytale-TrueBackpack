@@ -111,7 +111,7 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
         int y = ChunkUtil.yFromBlockInColumn(index);
         int z = ChunkUtil.zFromBlockInColumn(index);
 
-        World world = ((ChunkStore) store.getExternalData()).getWorld();
+        World world = store.getExternalData().getWorld();
         Store<EntityStore> entityStore = world.getEntityStore().getStore();
 
         Vector3d dropPosition = new Vector3d(
