@@ -22,7 +22,7 @@
         {
           "id": "2",
           "name": "Quiver-Strap",
-          "position": {"x": 0, "y": 24, "z": 2.5},
+          "position": {"x": 0, "y": 26, "z": 2.5},
           "orientation": {"x": 0, "y": 0, "z": 0.302, "w": 0.95331},
           "shape": {
             "type": "none",
