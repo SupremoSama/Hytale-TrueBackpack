@@ -59,18 +59,11 @@
   },
   "DropOnDeath": false,
   "Interactions": {
-    "Use": {
-      "Interactions": [
-        {
-          "Type": "TrueBackpack_PlaceBackpack"
-        }
-      ]
-    },
     "Primary": {
-      "Interactions": [{ "Type": "TrueBackpack_ChestTransfer" }]
+      "Interactions": [{ "Type": "TrueBackpack_BackpackInteraction" }]
     },
     "Secondary": {
-      "Interactions": [{ "Type": "TrueBackpack_ChestTransfer" }]
+      "Interactions": [{ "Type": "TrueBackpack_BackpackInteraction" }]
     }
   },
   "Scale": 0.5

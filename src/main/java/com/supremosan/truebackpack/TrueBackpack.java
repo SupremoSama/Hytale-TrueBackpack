@@ -18,10 +18,9 @@ import com.supremosan.truebackpack.config.BackpackConfigService;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.events.BackpackDeathEvent;
-import com.supremosan.truebackpack.interactions.BackpackChestTransferInteraction;
 import com.supremosan.truebackpack.system.BackpackContainerSystem;
 import com.supremosan.truebackpack.system.HelipackFlySystem;
-import com.supremosan.truebackpack.interactions.BackpackPlaceInteraction;
+import com.supremosan.truebackpack.interactions.BackpackInteraction;
 import com.supremosan.truebackpack.listener.*;
 
 import java.util.UUID;
@@ -46,14 +45,9 @@ public class TrueBackpack extends JavaPlugin {
         }
 
         this.getCodecRegistry(Interaction.CODEC).register(
-                "TrueBackpack_PlaceBackpack",
-                BackpackPlaceInteraction.class,
-                BackpackPlaceInteraction.CODEC);
-
-        this.getCodecRegistry(Interaction.CODEC).register(
-                "TrueBackpack_ChestTransfer",
-                BackpackChestTransferInteraction.class,
-                BackpackChestTransferInteraction.CODEC);
+                "TrueBackpack_BackpackInteraction",
+                BackpackInteraction.class,
+                BackpackInteraction.CODEC);
 
         ComponentType<ChunkStore, BackpackContainerState> type =
                 this.getChunkStoreRegistry().registerComponent(
