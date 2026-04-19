@@ -58,5 +58,14 @@
     ]
   },
   "PlayerAnimationsId": "Item",
-  "UsePlayerAnimations": false
+  "UsePlayerAnimations": false,
+  "Interactions": {
+    "Use": {
+      "Interactions": [
+        {
+          "Type": "TrueBackpack_BackpackInteraction"
+        }
+      ]
+    }
+  }
 }

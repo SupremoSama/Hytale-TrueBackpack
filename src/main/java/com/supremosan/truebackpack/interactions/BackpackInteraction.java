@@ -45,6 +45,8 @@ public class BackpackInteraction extends SimpleInstantInteraction {
                     SimpleInstantInteraction.CODEC)
             .build();
 
+    private static final short STORAGE_SLOT = 0;
+
     @Override
     protected void firstRun(
             @Nonnull InteractionType type,
@@ -96,7 +98,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         BlockPosition targetBlock = context.getTargetBlock();
 
         if (type == InteractionType.Primary || type == InteractionType.Use) {
-            handlePrimary(context, entry, heldItem, hotbar, world, targetBlock, crouching, type);
+            handlePrimary(context, store, owningEntity, entry, heldItem, hotbar, world, targetBlock, crouching, type);
         } else {
             handleSecondary(context, store, owningEntity, entry, heldItem, hotbar, world, targetBlock, crouching, type);
         }
@@ -104,6 +106,8 @@ public class BackpackInteraction extends SimpleInstantInteraction {
 
     private void handlePrimary(
             @Nonnull InteractionContext context,
+            @Nonnull Store<EntityStore> store,
+            @Nonnull Ref<EntityStore> owningEntity,
             @Nonnull BackpackRegistry.BackpackEntry entry,
             @Nonnull ItemStack heldItem,
             @Nonnull InventoryComponent.Hotbar hotbar,
@@ -120,7 +124,41 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             }
         }
 
+        if (type == InteractionType.Use && !crouching) {
+            if (targetBlock != null) {
+                Ref<ChunkStore> blockEntityRef = BlockModule.getBlockEntity(world, targetBlock.x, targetBlock.y, targetBlock.z);
+                if (blockEntityRef != null && blockEntityRef.isValid() && hasItemContainer(blockEntityRef)) {
+                    return;
+                }
+            }
+            handleEquipFromHotbar(context, store, owningEntity, heldItem, hotbar);
+            return;
+        }
+
         context.getState().state = InteractionState.Skip;
+    }
+
+    private void handleEquipFromHotbar(
+            @Nonnull InteractionContext context,
+            @Nonnull Store<EntityStore> store,
+            @Nonnull Ref<EntityStore> owningEntity,
+            @Nonnull ItemStack heldItem,
+            @Nonnull InventoryComponent.Hotbar hotbar) {
+
+        InventoryComponent.Storage storageComp = store.getComponent(owningEntity, InventoryComponent.Storage.getComponentType());
+        if (storageComp == null) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        ItemContainer targetContainer = storageComp.getInventory();
+        ItemStack existing = targetContainer.getItemStack(STORAGE_SLOT);
+        short heldSlot = context.getHeldItemSlot();
+
+        targetContainer.setItemStackForSlot(STORAGE_SLOT, heldItem);
+        hotbar.getInventory().setItemStackForSlot(heldSlot, (existing != null && !existing.isEmpty()) ? existing : ItemStack.EMPTY);
+
+        context.getState().state = InteractionState.Finished;
     }
 
     private void handleSecondary(
