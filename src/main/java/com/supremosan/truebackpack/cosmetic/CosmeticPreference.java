@@ -6,7 +6,7 @@ import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Component;
 import com.hypixel.hytale.component.ComponentType;
 import com.supremosan.truebackpack.TrueBackpack;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nonnull;
 
@@ -55,9 +55,8 @@ public final class CosmeticPreference implements Component<com.hypixel.hytale.se
         this.showQuiver = showQuiver;
     }
 
-    @NullableDecl
     @Override
-    public Component<com.hypixel.hytale.server.core.universe.world.storage.EntityStore> clone() {
+    public @NonNull Component<com.hypixel.hytale.server.core.universe.world.storage.EntityStore> clone() {
         return new CosmeticPreference(showBackpack, showQuiver);
     }
 

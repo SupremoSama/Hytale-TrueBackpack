@@ -31,7 +31,6 @@ import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -52,7 +51,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
     private static final Random RANDOM = new Random();
 
     @Override
-    public @NonNull Set<Dependency<EntityStore>> getDependencies() {
+    public @Nonnull Set<Dependency<EntityStore>> getDependencies() {
         return Set.of();
     }
 
@@ -89,9 +88,9 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
 
         if (backpacks.isEmpty()) return;
 
-        int originX = (int) Math.floor(transform.getPosition().getX());
-        int originY = (int) Math.floor(transform.getPosition().getY());
-        int originZ = (int) Math.floor(transform.getPosition().getZ());
+        int originX = (int) Math.floor(transform.getPosition().x);
+        int originY = (int) Math.floor(transform.getPosition().y);
+        int originZ = (int) Math.floor(transform.getPosition().z);
 
         for (BackpackEntry entry : backpacks) {
             int[] pos = findPlacementPosition(world, originX, originY, originZ);

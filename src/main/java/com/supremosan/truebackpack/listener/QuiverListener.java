@@ -13,7 +13,7 @@ import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.inventory.InventoryChangeEvent;
+import com.hypixel.hytale.server.core.event.events.ecs.InventoryChangeEvent;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
@@ -23,8 +23,8 @@ import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class QuiverListener {
 
@@ -39,7 +39,7 @@ public class QuiverListener {
     private static final ModelAttachment QUIVER_BACKPACK_ATTACHMENT =
             new ModelAttachment("Items/Quivers/Horizontal_Quiver.blockymodel", "Items/Quivers/Horizontal_Quiver_Texture.png", "", "", 1.0);
 
-    private static final Map<String, Boolean> PLAYER_HAS_ARROW = new HashMap<>();
+    private static final Map<String, Boolean> PLAYER_HAS_ARROW = new ConcurrentHashMap<>();
 
     private QuiverListener() {}
 
@@ -54,7 +54,6 @@ public class QuiverListener {
                                             @Nonnull Player player,
                                             @Nonnull Store<EntityStore> store,
                                             @Nonnull Ref<EntityStore> ref) {
-
         InventoryComponent.Hotbar hotbarComp = store.getComponent(ref, InventoryComponent.Hotbar.getComponentType());
         InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
         InventoryComponent.Backpack backpackComp = store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
@@ -69,14 +68,12 @@ public class QuiverListener {
                                               @Nonnull Player player,
                                               @Nonnull Store<EntityStore> store,
                                               @Nonnull Ref<EntityStore> ref) {
-
         boolean hasArrow = PLAYER_HAS_ARROW.getOrDefault(playerUuid, false);
         updateQuiver(playerUuid, player, store, ref, hasArrow);
     }
 
     private static void handleInventoryChange(@Nonnull Ref<EntityStore> ref,
                                               @Nonnull Store<EntityStore> store) {
-
         UUIDComponent uuidComponent = store.getComponent(ref, UUIDComponent.getComponentType());
         if (uuidComponent == null) return;
 
@@ -104,7 +101,6 @@ public class QuiverListener {
                                      @Nonnull Store<EntityStore> store,
                                      @Nonnull Ref<EntityStore> ref,
                                      boolean hasArrow) {
-
         boolean visible = CosmeticPreferenceUtils.isQuiverVisible(store, ref);
         boolean shouldHave = hasArrow && visible;
 
@@ -131,7 +127,6 @@ public class QuiverListener {
             @Nullable InventoryComponent.Hotbar hotbarComp,
             @Nullable InventoryComponent.Storage storageComp,
             @Nullable InventoryComponent.Backpack backpackComp) {
-
         ItemContainer[] containers = {
                 hotbarComp != null ? hotbarComp.getInventory() : null,
                 storageComp != null ? storageComp.getInventory() : null,
@@ -140,14 +135,10 @@ public class QuiverListener {
 
         for (ItemContainer container : containers) {
             if (container == null) continue;
-
             for (short slot = 0; slot < container.getCapacity(); slot++) {
                 ItemStack stack = container.getItemStack(slot);
                 if (stack == null || stack.isEmpty()) continue;
-
-                if (stack.getItemId().contains(ARROW_ID_FRAGMENT)) {
-                    return true;
-                }
+                if (stack.getItemId().contains(ARROW_ID_FRAGMENT)) return true;
             }
         }
 
@@ -166,7 +157,6 @@ public class QuiverListener {
                            @Nonnull Store<EntityStore> store,
                            @Nonnull CommandBuffer<EntityStore> commandBuffer,
                            @Nonnull InventoryChangeEvent event) {
-
             Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
             handleInventoryChange(ref, store);
         }
@@ -192,12 +182,10 @@ public class QuiverListener {
                                    @Nonnull RemoveReason reason,
                                    @Nonnull Store<EntityStore> store,
                                    @Nonnull CommandBuffer<EntityStore> commandBuffer) {
-
             UUIDComponent uuidComp = store.getComponent(ref, UUIDComponent.getComponentType());
             if (uuidComp == null) return;
 
             String playerUuid = uuidComp.getUuid().toString();
-
             PLAYER_HAS_ARROW.remove(playerUuid);
             CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
         }

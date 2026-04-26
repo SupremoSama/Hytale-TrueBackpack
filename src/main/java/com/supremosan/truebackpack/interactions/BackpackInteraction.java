@@ -29,9 +29,9 @@ import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
-import org.jspecify.annotations.Nullable;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -193,6 +193,11 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         return blockEntityRef.getStore().getComponent(blockEntityRef, ItemContainerBlock.getComponentType()) != null;
     }
 
+    private boolean isBackpack(@Nullable ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        return BackpackRegistry.getByItem(stack.getItem().getId()) != null;
+    }
+
     private void handlePlace(
             @Nonnull InteractionContext context,
             @Nonnull BackpackRegistry.BackpackEntry entry,
@@ -239,7 +244,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         Rotation yaw = Rotation.None;
         TransformComponent transform = store.getComponent(owningEntity, TransformComponent.getComponentType());
         if (transform != null) {
-            float radians = transform.getRotation().getY();
+            float radians = transform.getRotation().yaw();
             float degrees = (float) Math.toDegrees(radians);
             float normalized = ((degrees % 360f) + 360f) % 360f;
             yaw = Rotation.closestOfDegrees(normalized);
@@ -316,6 +321,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             for (int i = 0; i < updatedBackpack.size(); i++) {
                 ItemStack item = updatedBackpack.get(i);
                 if (item == null || item.isEmpty()) continue;
+                if (isBackpack(item)) continue;
                 updatedBackpack.set(i, insertIntoContainer(chestContainer, item, !matchOnly));
             }
             while (updatedBackpack.size() < backpackCapacity) updatedBackpack.add(null);
@@ -324,6 +330,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             for (short slot = 0; slot < chestContainer.getCapacity(); slot++) {
                 ItemStack item = chestContainer.getItemStack(slot);
                 if (item == null || item.isEmpty()) continue;
+                if (isBackpack(item)) continue;
                 chestContainer.setItemStackForSlot(slot, insertIntoList(updatedBackpack, item, backpackCapacity, !matchOnly));
             }
         }

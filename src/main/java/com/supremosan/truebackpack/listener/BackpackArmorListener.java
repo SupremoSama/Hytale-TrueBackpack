@@ -6,7 +6,7 @@ import com.hypixel.hytale.component.system.EntityEventSystem;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.inventory.InventoryChangeEvent;
+import com.hypixel.hytale.server.core.event.events.ecs.InventoryChangeEvent;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
@@ -30,8 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BackpackArmorListener extends EntityEventSystem<EntityStore, InventoryChangeEvent> {
-    private static boolean REFRESH_UI = false;
-    private static int REFRESH_TIMES = 0;
 
     private static final String ATTACHMENT_SLOT_KEY = "truebackpack:backpack";
 
@@ -51,6 +49,8 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     private static final Map<String, String> LAST_KNOWN_EQUIPPED_ITEM_ID = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> PROCESSING_EQUIP = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> PROCESSING_CONTAINER = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> REFRESH_TIMES = new ConcurrentHashMap<>();
+    private static final Map<String, Boolean> REFRESH_UI = new ConcurrentHashMap<>();
 
     private static volatile Query<EntityStore> QUERY;
 
@@ -98,9 +98,11 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     @Nullable
     public Query<EntityStore> getQuery() {
         if (QUERY == null) {
-            QUERY = Query.or(InventoryComponent.Armor.getComponentType(),
+            QUERY = Query.or(
+                    InventoryComponent.Armor.getComponentType(),
                     InventoryComponent.Storage.getComponentType(),
-                    InventoryComponent.Backpack.getComponentType());
+                    InventoryComponent.Backpack.getComponentType()
+            );
         }
         return QUERY;
     }
@@ -154,13 +156,13 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
 
         handleEquipContainerChange(entity, ref, store, armorComp, storageComp, backpackComp, hotbarComp, playerUuid);
 
-        if (REFRESH_UI) {
-            if (REFRESH_TIMES > 5) {
+        if (Boolean.TRUE.equals(REFRESH_UI.get(playerUuid))) {
+            int times = REFRESH_TIMES.merge(playerUuid, 1, Integer::sum);
+            if (times > 5) {
                 BackpackUIUpdater.updateBackpackUI(entity, ref, store);
-                REFRESH_UI = false;
-                REFRESH_TIMES = 0;
+                REFRESH_UI.remove(playerUuid);
+                REFRESH_TIMES.remove(playerUuid);
             }
-            REFRESH_TIMES = REFRESH_TIMES + 1;
         }
     }
 
@@ -178,6 +180,8 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         LAST_KNOWN_EQUIPPED_ITEM_ID.remove(playerUuid);
         PROCESSING_EQUIP.remove(playerUuid);
         PROCESSING_CONTAINER.remove(playerUuid);
+        REFRESH_UI.remove(playerUuid);
+        REFRESH_TIMES.remove(playerUuid);
         BackpackDataStorage.clearActiveItem(playerUuid);
         CosmeticListener.onPlayerLeave(playerUuid);
     }
@@ -231,9 +235,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         String lastKnownId = LAST_KNOWN_EQUIPPED.get(playerUuid);
         String currentId = currentEquipped != null ? BackpackItemFactory.getInstanceId(currentEquipped) : null;
 
-        if (currentId != null && currentId.equals(lastKnownId)) {
-            return;
-        }
+        if (currentId != null && currentId.equals(lastKnownId)) return;
 
         if (currentId == null && lastKnownId != null && currentEquipped != null) {
             String lastItemId = LAST_KNOWN_EQUIPPED_ITEM_ID.get(playerUuid);
@@ -243,9 +245,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
                 if (equipContainer != null && equipSlot >= 0) {
                     ItemStack retagged = ensureInstanceId(currentEquipped, equipContainer, equipSlot);
                     String retaggedId = BackpackItemFactory.getInstanceId(retagged);
-                    if (lastKnownId.equals(retaggedId)) {
-                        return;
-                    }
+                    if (lastKnownId.equals(retaggedId)) return;
                 }
             }
         }
@@ -288,7 +288,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             }
         } finally {
             PROCESSING_EQUIP.remove(playerUuid);
-            REFRESH_UI = true;
+            REFRESH_UI.put(playerUuid, Boolean.TRUE);
         }
     }
 
@@ -379,7 +379,6 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
 
             if (newBonus > 0 && equipContainer != null) {
                 ItemContainer bp = backpackComp.getInventory();
-
                 String fuelItemId = resolveFuelItemId(equippedItem);
 
                 for (short slot = 0; slot < bp.getCapacity(); slot++) {
@@ -506,8 +505,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         ItemStack armor = armorContainer.getItemStack(CHEST_SLOT);
         if (!ItemStack.isEmpty(armor) && id.equals(BackpackItemFactory.getInstanceId(armor))) return armorContainer;
         ItemStack storage = storageContainer.getItemStack(STORAGE_SLOT);
-        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage)))
-            return storageContainer;
+        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage))) return storageContainer;
         return null;
     }
 
@@ -554,7 +552,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     @Nonnull
     private static ItemStack ensureInstanceId(@Nonnull ItemStack item, @Nonnull ItemContainer container, short slot) {
         boolean changed = false;
-        if (BackpackItemFactory.hasInstanceId(item)) {
+        if (!BackpackItemFactory.hasInstanceId(item)) {
             item = BackpackItemFactory.createBackpackInstance(item);
             changed = true;
         }

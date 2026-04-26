@@ -10,8 +10,8 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.RefSystem;
 import com.hypixel.hytale.math.util.ChunkUtil;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.math.vector.Rotation3f;
+import com.hypixel.hytale.math.vector.Rotation3fc;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.filter.FilterActionType;
 import com.hypixel.hytale.server.core.modules.block.BlockModule;
@@ -24,6 +24,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
+import org.joml.Vector3d;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -120,11 +121,13 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
                 ChunkUtil.worldCoordFromLocalCoord(blockChunk.getZ(), z) + 0.5
         );
 
+        Rotation3fc rotation = new Rotation3f(0f, 0f, 0f);
+
         Holder<EntityStore>[] holders = ItemComponent.generateItemDrops(
                 entityStore,
                 List.of(backpackItem),
                 dropPosition,
-                Vector3f.ZERO
+                rotation
         );
 
         if (holders.length > 0) {
