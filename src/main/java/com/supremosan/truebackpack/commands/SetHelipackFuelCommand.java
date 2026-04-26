@@ -1,6 +1,5 @@
 package com.supremosan.truebackpack.commands;
 
-import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
@@ -25,7 +24,7 @@ public class SetHelipackFuelCommand extends AbstractCommand {
 
     public SetHelipackFuelCommand() {
         super("sethelipackfuel", "Update helipack fuel type and consumption (admin only)");
-        this.setPermissionGroup(GameMode.Creative);
+        this.requirePermission("truebackpack.command.sethelipackfuel");
         this.itemIdArg = this.withRequiredArg("itemId", "helipack item ID", ArgTypes.STRING);
         this.fuelItemIdArg = this.withRequiredArg("fuelItemId", "fuel item ID", ArgTypes.STRING);
         this.consumeAmountArg = this.withRequiredArg("consumeAmount", "fuel units consumed per interval", ArgTypes.INTEGER);

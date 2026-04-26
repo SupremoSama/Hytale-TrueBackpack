@@ -1,6 +1,5 @@
 package com.supremosan.truebackpack.commands;
 
-import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.NameMatching;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
@@ -13,7 +12,6 @@ import com.hypixel.hytale.server.core.universe.Universe;
 import com.supremosan.truebackpack.cosmetic.BackpackVisualOverride;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.listener.CosmeticListener;
-import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,7 +31,7 @@ public class SetBackpackModelCommand extends AbstractCommand {
 
     public SetBackpackModelCommand() {
         super("setbackpackmodel", "Override the backpack model shown for a specific player (admin only)");
-        this.setPermissionGroup(GameMode.Creative);
+        this.requirePermission("truebackpack.command.setbackpackmodel");
         this.playerArg = this.withRequiredArg("player", "target player UUID or username", ArgTypes.STRING);
         this.modelArg = this.withRequiredArg("model", "model path", ArgTypes.STRING);
         this.textureArg = this.withRequiredArg("texture", "texture path", ArgTypes.STRING);
@@ -84,12 +82,12 @@ public class SetBackpackModelCommand extends AbstractCommand {
 
         private ClearSub() {
             super("clear", "Remove the backpack model override for a player");
-            this.setPermissionGroup(GameMode.Creative);
+            this.setPermissionGroups("");
             this.playerArg = this.withRequiredArg("player", "target player UUID or username", ArgTypes.STRING);
         }
 
         @Override
-        protected @NonNull CompletableFuture<Void> execute(@Nonnull CommandContext context) {
+        protected @Nonnull CompletableFuture<Void> execute(@Nonnull CommandContext context) {
             String playerInput = playerArg.get(context);
 
             PlayerRef target = resolvePlayer(playerInput);

@@ -19,9 +19,8 @@ public class ReloadBackpackCommand extends AbstractCommand {
 
     public ReloadBackpackCommand() {
         super("reloadbackpack", "Reload the backpack configuration from file");
-        this.setPermissionGroup(GameMode.Creative);
+        this.requirePermission("truebackpack.command.reloadbackpack");
     }
-
 
     @Nullable
     @Override

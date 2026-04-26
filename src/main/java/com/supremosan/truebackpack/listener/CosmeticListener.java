@@ -131,7 +131,7 @@ public class CosmeticListener {
             if (!ref.isValid()) return;
             PROCESSING.set(true);
             try {
-                rebuildModel(store, ref, player, playerUuid);
+                rebuildModel(store, ref, playerUuid);
             } finally {
                 PROCESSING.set(false);
             }
@@ -241,7 +241,6 @@ public class CosmeticListener {
 
     private static void rebuildModel(@Nonnull Store<EntityStore> store,
                                      @Nonnull Ref<EntityStore> ref,
-                                     @Nonnull Player player,
                                      @Nonnull String playerUuid) {
 
         ModelComponent modelComp = store.getComponent(ref, ModelComponent.getComponentType());
@@ -283,7 +282,7 @@ public class CosmeticListener {
         if (extras != null) attachments.addAll(extras.values());
 
         Model newModel = new Model(
-                player.getDisplayName() + "_CustomModel",
+                playerUuid + "_CustomModel",
                 current.getScale(),
                 current.getRandomAttachmentIds(),
                 attachments.toArray(new ModelAttachment[0]),

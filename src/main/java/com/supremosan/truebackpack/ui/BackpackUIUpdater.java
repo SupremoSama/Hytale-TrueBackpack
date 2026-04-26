@@ -10,6 +10,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
+import java.util.UUID;
 
 public class BackpackUIUpdater {
 
@@ -20,15 +21,16 @@ public class BackpackUIUpdater {
             return;
         }
 
-        try {
-            PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
-            if (playerRef == null) {
-                return;
-            }
+        PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
+        if (playerRef == null) {
+            return;
+        }
 
+        UUID uuid = playerRef.getUuid();
+        try {
             playerRef.getPacketHandler().writeNoCache(new SetGameMode(player.getGameMode()));
         } catch (Exception e) {
-            LOGGER.atWarning().log("Failed to update backpack UI for player %s: %s", player.getDisplayName(), e.getMessage());
+            LOGGER.atWarning().log("Failed to update backpack UI for player %s: %s", uuid, e.getMessage());
         }
     }
 }
