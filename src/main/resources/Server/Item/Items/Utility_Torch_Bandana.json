@@ -1,0 +1,58 @@
+{
+  "Model": "Items/Hats/TorchBandana.blockymodel",
+  "Texture": "Items/Hats/Torch_Bandana_Texture.png",
+  "Icon": "Icons/ItemsGenerated/Utility_Torch_Bandana.png",
+  "IconProperties": {
+    "Scale": 0.7,
+    "Rotation": [
+      0,
+      11,
+      20
+    ],
+    "Translation": [
+      23,
+      -107
+    ]
+  },
+  "ItemLevel": 5,
+  "MaxStack": 1,
+  "Quality": "Common",
+  "Scale": 0.5,
+  "Recipe": {
+    "TimeSeconds": 0,
+    "Input": [
+      {
+        "ItemId": "Ingredient_Fibre",
+        "Quantity": 32
+      },
+      {
+        "Quantity": 1,
+        "ItemId": "Furniture_Crude_Torch"
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Id": "Workbench",
+        "Type": "Crafting",
+        "Categories": [
+          "Workbench_Tinkering"
+        ],
+        "RequiredTierLevel": 0
+      },
+      {
+        "Id": "Fieldcraft",
+        "Categories": [
+          "Tools"
+        ]
+      }
+    ]
+  },
+  "MaxDurability": 100,
+  "Light": {
+    "Color": "#fff",
+    "Radius": 8
+  },
+  "TranslationProperties": {
+    "Name": "server.truebackpack.items.Utility_Torch_Bandana.name"
+  }
+}

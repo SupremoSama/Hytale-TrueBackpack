@@ -4,6 +4,7 @@ truebackpack.items.Utility_Leather_Backpack.name=Mochila Pequena
 truebackpack.items.Utility_Leather_Medium_Backpack.name=Mochila Mediana
 truebackpack.items.Utility_Leather_Big_Backpack.name=Mochila Grande
 truebackpack.items.Utility_Leather_Extra_Big_Backpack.name=Mochila Gigantesca
+truebackpack.items.Utility_Torch_Bandana.name=Bandana com tocha
 truebackpack.tooltip.title=Mochila
 truebackpack.tooltip.empty=Vazio
 truebackpack.tooltip.equipped=Equipado

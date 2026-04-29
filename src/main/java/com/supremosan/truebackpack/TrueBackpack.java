@@ -15,10 +15,12 @@ import com.supremosan.truebackpack.commands.SetBackpackModelCommand;
 import com.supremosan.truebackpack.commands.SetHelipackFuelCommand;
 import com.supremosan.truebackpack.commands.ToggleCosmeticCommand;
 import com.supremosan.truebackpack.config.BackpackConfigService;
+import com.supremosan.truebackpack.config.HatConfigService;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.events.BackpackDeathEvent;
 import com.supremosan.truebackpack.system.BackpackContainerSystem;
+import com.supremosan.truebackpack.system.HatDurabilitySystem;
 import com.supremosan.truebackpack.system.HelipackFlySystem;
 import com.supremosan.truebackpack.interactions.BackpackInteraction;
 import com.supremosan.truebackpack.listener.*;
@@ -40,6 +42,7 @@ public class TrueBackpack extends JavaPlugin {
     protected void setup() {
         try {
             BackpackConfigService.reloadAndRegister(JUL);
+            HatConfigService.reloadAndRegister(JUL);
         } catch (Exception e) {
             JUL.log(Level.SEVERE, "[TrueBackpack] Failed to load backpack config", e);
         }
@@ -76,6 +79,8 @@ public class TrueBackpack extends JavaPlugin {
             BackpackTooltipListener.onPlayerLeave(uuid);
             BackpackArmorListener.onPlayerRemove(uuidStr, null, null, null, null);
             CosmeticListener.onPlayerLeave(uuidStr);
+            HatArmorListener.onPlayerRemove(uuidStr);
+            HatDurabilitySystem.onPlayerRemove(uuidStr);
         });
 
         LOGGER.atInfo().log("[TrueBackpack] Setup complete");
@@ -87,13 +92,15 @@ public class TrueBackpack extends JavaPlugin {
                 Player.getComponentType(),
                 MovementStatesComponent.getComponentType()
         ));
+        this.getEntityStoreRegistry().registerSystem(new HatDurabilitySystem());
+        this.getEntityStoreRegistry().registerSystem(new BackpackDeathEvent());
+
         this.getChunkStoreRegistry().registerSystem(new BackpackContainerSystem());
 
         BackpackArmorListener.register(this);
         QuiverListener.register(this);
         BackpackNestingListener.register(this);
-
-        this.getEntityStoreRegistry().registerSystem(new BackpackDeathEvent());
+        HatArmorListener.register(this);
 
         LOGGER.atInfo().log("[TrueBackpack] Ready");
     }
