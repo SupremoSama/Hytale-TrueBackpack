@@ -70,10 +70,18 @@
       ]
     },
     "Primary": {
-      "Interactions": [{ "Type": "TrueBackpack_BackpackInteraction" }]
+      "Interactions": [
+        {
+          "Type": "TrueBackpack_BackpackInteraction"
+        }
+      ]
     },
     "Secondary": {
-      "Interactions": [{ "Type": "TrueBackpack_BackpackInteraction" }]
+      "Interactions": [
+        {
+          "Type": "TrueBackpack_BackpackInteraction"
+        }
+      ]
     }
   },
   "Scale": 0.5

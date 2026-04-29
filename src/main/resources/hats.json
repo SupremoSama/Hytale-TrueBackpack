@@ -1,0 +1,17 @@
+{
+  "hats": [
+    {
+      "itemId": "Utility_Torch_Bandana",
+      "maxDurability": 100,
+      "drainIntervalTicks": 1600,
+      "model": "Items/Hats/TorchBandana.blockymodel",
+      "texture": "Items/Hats/Torch_Bandana_Texture.png",
+      "dynamicLight": {
+        "radius": 8,
+        "red": 10,
+        "green": 10,
+        "blue": 10
+      }
+    }
+  ]
+}
