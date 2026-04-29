@@ -505,7 +505,8 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         ItemStack armor = armorContainer.getItemStack(CHEST_SLOT);
         if (!ItemStack.isEmpty(armor) && id.equals(BackpackItemFactory.getInstanceId(armor))) return armorContainer;
         ItemStack storage = storageContainer.getItemStack(STORAGE_SLOT);
-        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage))) return storageContainer;
+        if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage)))
+            return storageContainer;
         return null;
     }
 
