@@ -26,17 +26,24 @@ public final class CosmeticPreference implements Component<com.hypixel.hytale.se
                             (p, v) -> p.showQuiver = v,
                             (p) -> p.showQuiver
                     ).add()
+                    .append(
+                            new KeyedCodec<>("ShowHat", Codec.BOOLEAN),
+                            (p, v) -> p.showHat = v,
+                            (p) -> p.showHat
+                    ).add()
                     .build();
 
     private boolean showBackpack = true;
     private boolean showQuiver = true;
+    private boolean showHat = true;
 
     public CosmeticPreference() {
     }
 
-    private CosmeticPreference(boolean showBackpack, boolean showQuiver) {
+    private CosmeticPreference(boolean showBackpack, boolean showQuiver, boolean showHat) {
         this.showBackpack = showBackpack;
         this.showQuiver = showQuiver;
+        this.showHat = showHat;
     }
 
     public boolean isShowBackpack() {
@@ -47,6 +54,10 @@ public final class CosmeticPreference implements Component<com.hypixel.hytale.se
         return showQuiver;
     }
 
+    public boolean isShowHat() {
+        return showHat;
+    }
+
     public void setShowBackpack(boolean showBackpack) {
         this.showBackpack = showBackpack;
     }
@@ -55,9 +66,13 @@ public final class CosmeticPreference implements Component<com.hypixel.hytale.se
         this.showQuiver = showQuiver;
     }
 
+    public void setShowHat(boolean showHat) {
+        this.showHat = showHat;
+    }
+
     @Override
     public @NonNull Component<com.hypixel.hytale.server.core.universe.world.storage.EntityStore> clone() {
-        return new CosmeticPreference(showBackpack, showQuiver);
+        return new CosmeticPreference(showBackpack, showQuiver, showHat);
     }
 
     public static void register(@Nonnull TrueBackpack plugin) {
