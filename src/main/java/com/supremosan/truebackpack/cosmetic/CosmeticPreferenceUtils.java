@@ -34,6 +34,12 @@ public final class CosmeticPreferenceUtils {
         return pref == null || pref.isShowQuiver();
     }
 
+    public static boolean isHatVisible(@Nonnull Store<EntityStore> store,
+                                       @Nonnull Ref<EntityStore> ref) {
+        CosmeticPreference pref = store.getComponent(ref, CosmeticPreference.TYPE);
+        return pref == null || pref.isShowHat();
+    }
+
     public static void setBackpackVisible(@Nonnull Store<EntityStore> store,
                                           @Nonnull Ref<EntityStore> ref,
                                           boolean visible) {
@@ -50,6 +56,14 @@ public final class CosmeticPreferenceUtils {
         store.replaceComponent(ref, CosmeticPreference.TYPE, pref);
     }
 
+    public static void setHatVisible(@Nonnull Store<EntityStore> store,
+                                     @Nonnull Ref<EntityStore> ref,
+                                     boolean visible) {
+        CosmeticPreference pref = getOrCreate(store, ref);
+        pref.setShowHat(visible);
+        store.replaceComponent(ref, CosmeticPreference.TYPE, pref);
+    }
+
     public static boolean toggleBackpack(@Nonnull Store<EntityStore> store,
                                          @Nonnull Ref<EntityStore> ref) {
         boolean next = !isBackpackVisible(store, ref);
@@ -61,6 +75,13 @@ public final class CosmeticPreferenceUtils {
                                        @Nonnull Ref<EntityStore> ref) {
         boolean next = !isQuiverVisible(store, ref);
         setQuiverVisible(store, ref, next);
+        return next;
+    }
+
+    public static boolean toggleHat(@Nonnull Store<EntityStore> store,
+                                    @Nonnull Ref<EntityStore> ref) {
+        boolean next = !isHatVisible(store, ref);
+        setHatVisible(store, ref, next);
         return next;
     }
 }

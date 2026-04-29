@@ -17,6 +17,7 @@ import com.hypixel.hytale.server.core.modules.entity.component.DynamicLight;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.TrueBackpack;
+import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 import com.supremosan.truebackpack.factory.HatItemFactory;
 import com.supremosan.truebackpack.registries.HatRegistry;
 import com.supremosan.truebackpack.registries.HatRegistry.HatEntry;
@@ -162,7 +163,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
             @Nonnull Ref<EntityStore> ref,
             @Nonnull String playerUuid,
             @Nullable ItemStack equippedItem) {
-        if (equippedItem != null) {
+        if (equippedItem != null && CosmeticPreferenceUtils.isHatVisible(store, ref)) {
             ModelAttachment visual = resolveVisual(equippedItem.getItemId());
             LOGGER.atInfo().log(equippedItem.getItemId());
             if (visual != null) {
@@ -215,6 +216,25 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
         DynamicLightUpdate update = new DynamicLightUpdate(light);
         for (EntityTrackerSystems.EntityViewer viewer : visible.visibleTo.values()) {
             viewer.queueUpdate(ref, update);
+        }
+    }
+
+    public static void syncHatAttachment(
+            @Nonnull String playerUuid,
+            @Nonnull Store<EntityStore> store,
+            @Nonnull Ref<EntityStore> ref) {
+        if (!LAST_KNOWN_EQUIPPED.containsKey(playerUuid)) return;
+        if (!CosmeticPreferenceUtils.isHatVisible(store, ref)) return;
+
+        InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        if (storageComp == null) return;
+
+        ItemStack hat = storageComp.getInventory().getItemStack(HEAD_SLOT);
+        if (hat == null || hat.isEmpty() || !HatRegistry.isHat(hat.getItemId())) return;
+
+        ModelAttachment visual = resolveVisual(hat.getItemId());
+        if (visual != null) {
+            CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);
         }
     }
 
