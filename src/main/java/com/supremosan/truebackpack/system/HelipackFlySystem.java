@@ -23,6 +23,7 @@ import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
+import com.supremosan.truebackpack.listener.CosmeticListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.BackpackEntry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.HelipackConfig;
@@ -123,6 +124,8 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
         tickAnimationSequence(dt, jumpState, archetypeChunk.getReferenceTo(index), commandBuffer, config);
 
+        restoreAnimationAfterRebuild(uuid, jumpState, archetypeChunk.getReferenceTo(index), commandBuffer, config);
+
         jumpState.timeSinceLastTrigger += dt;
 
         if (current.flying) {
@@ -182,6 +185,26 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             } else {
                 jumpState.timeSinceLastTrigger = 0f;
             }
+        }
+    }
+
+    private void restoreAnimationAfterRebuild(
+            @Nonnull UUID uuid,
+            @Nonnull JumpState jumpState,
+            @Nonnull Ref<EntityStore> ref,
+            @Nonnull CommandBuffer<EntityStore> commandBuffer,
+            @Nonnull HelipackConfig config) {
+        if (!CosmeticListener.wasRebuiltSinceLastTick(uuid.toString())) return;
+
+        String animId = switch (jumpState.animState) {
+            case DEPLOYING -> ANIM_DEPLOY;
+            case ACTIVE -> ANIM_ACTIVE;
+            case RETRACTING -> ANIM_RETRACT;
+            case IDLE -> null;
+        };
+
+        if (animId != null) {
+            playAnimation(ref, commandBuffer, config, animId);
         }
     }
 

@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 import java.util.Map;
 
 public final class CosmeticUtils {
+
     private static final double DEFAULT_SCALE = 1.0D;
 
     private CosmeticUtils() {
@@ -17,12 +18,11 @@ public final class CosmeticUtils {
     @Nonnull
     public static ModelAttachment fromPlayerSkinPart(@Nonnull PlayerSkinPart part,
                                                      @Nonnull String gradientId) {
-        return new ModelAttachment(
+        return attachment(
                 part.getModel(),
                 part.getGreyscaleTexture(),
                 part.getGradientSet(),
-                gradientId,
-                DEFAULT_SCALE
+                gradientId
         );
     }
 
@@ -31,50 +31,19 @@ public final class CosmeticUtils {
                                                     @Nullable String textureId,
                                                     @Nullable String variantId,
                                                     @Nonnull String bodyGradientId) {
-        if (part.getVariants() != null && !part.getVariants().isEmpty()) {
-            PlayerSkinPart.Variant variant = get(part.getVariants(), variantId);
+        String fallbackGradientId = fallback(textureId, bodyGradientId);
+        Map<String, PlayerSkinPart.Variant> variants = part.getVariants();
+
+        if (hasEntries(variants)) {
+            PlayerSkinPart.Variant variant = get(variants, variantId);
             if (variant == null) {
-                return fromPlayerSkinPart(part, textureId != null ? textureId : bodyGradientId);
+                return fromPlayerSkinPart(part, fallbackGradientId);
             }
 
-            String model = variant.getModel();
-            String texture;
-            String gradientSet = null;
-            String gradientId = null;
-
-            if (variant.getTextures() != null) {
-                PlayerSkinPartTexture tex = get(variant.getTextures(), textureId);
-                if (tex == null) {
-                    return fromPlayerSkinPart(part, textureId != null ? textureId : bodyGradientId);
-                }
-                texture = tex.getTexture();
-            } else {
-                texture = variant.getGreyscaleTexture();
-                gradientSet = part.getGradientSet();
-                gradientId = textureId;
-            }
-
-            return new ModelAttachment(model, texture, gradientSet, gradientId, DEFAULT_SCALE);
+            return resolveVariantAttachment(part, variant, textureId, fallbackGradientId);
         }
 
-        String model = part.getModel();
-        String texture;
-        String gradientSet = null;
-        String gradientId = null;
-
-        if (part.getTextures() != null) {
-            PlayerSkinPartTexture tex = get(part.getTextures(), textureId);
-            if (tex == null) {
-                return fromPlayerSkinPart(part, textureId != null ? textureId : bodyGradientId);
-            }
-            texture = tex.getTexture();
-        } else {
-            texture = part.getGreyscaleTexture();
-            gradientSet = part.getGradientSet();
-            gradientId = textureId != null ? textureId : bodyGradientId;
-        }
-
-        return new ModelAttachment(model, texture, gradientSet, gradientId, DEFAULT_SCALE);
+        return resolvePartAttachment(part, textureId, fallbackGradientId);
     }
 
     @Nonnull
@@ -84,11 +53,95 @@ public final class CosmeticUtils {
 
     @Nullable
     public static String part(@Nonnull String[] parts, int index) {
-        return (index < parts.length && !parts[index].isEmpty()) ? parts[index] : null;
+        if (index < 0 || index >= parts.length) {
+            return null;
+        }
+
+        String value = parts[index];
+        return value == null || value.isEmpty() ? null : value;
+    }
+
+    @Nullable
+    public static String assetId(@Nonnull String rawId) {
+        return part(splitId(rawId), 0);
+    }
+
+    @Nullable
+    public static String textureId(@Nonnull String rawId) {
+        return part(splitId(rawId), 1);
+    }
+
+    @Nullable
+    public static String variantId(@Nonnull String rawId) {
+        return part(splitId(rawId), 2);
+    }
+
+    @Nonnull
+    public static String fallback(@Nullable String value, @Nonnull String fallback) {
+        return value == null || value.isEmpty() ? fallback : value;
+    }
+
+    @Nonnull
+    private static ModelAttachment resolveVariantAttachment(@Nonnull PlayerSkinPart part,
+                                                            @Nonnull PlayerSkinPart.Variant variant,
+                                                            @Nullable String textureId,
+                                                            @Nonnull String fallbackGradientId) {
+        Map<String, PlayerSkinPartTexture> textures = variant.getTextures();
+
+        if (hasEntries(textures)) {
+            PlayerSkinPartTexture texture = get(textures, textureId);
+            if (texture == null) {
+                return fromPlayerSkinPart(part, fallbackGradientId);
+            }
+
+            return attachment(variant.getModel(), texture.getTexture(), null, null);
+        }
+
+        return attachment(
+                variant.getModel(),
+                variant.getGreyscaleTexture(),
+                part.getGradientSet(),
+                fallbackGradientId
+        );
+    }
+
+    @Nonnull
+    private static ModelAttachment resolvePartAttachment(@Nonnull PlayerSkinPart part,
+                                                         @Nullable String textureId,
+                                                         @Nonnull String fallbackGradientId) {
+        Map<String, PlayerSkinPartTexture> textures = part.getTextures();
+
+        if (hasEntries(textures)) {
+            PlayerSkinPartTexture texture = get(textures, textureId);
+            if (texture == null) {
+                return fromPlayerSkinPart(part, fallbackGradientId);
+            }
+
+            return attachment(part.getModel(), texture.getTexture(), null, null);
+        }
+
+        return attachment(
+                part.getModel(),
+                part.getGreyscaleTexture(),
+                part.getGradientSet(),
+                fallbackGradientId
+        );
+    }
+
+    @Nonnull
+    private static ModelAttachment attachment(@Nullable String model,
+                                              @Nullable String texture,
+                                              @Nullable String gradientSet,
+                                              @Nullable String gradientId) {
+        return new ModelAttachment(model, texture, gradientSet, gradientId, DEFAULT_SCALE);
+    }
+
+    private static <K, V> boolean hasEntries(@Nullable Map<K, V> map) {
+        return map != null && !map.isEmpty();
     }
 
     @Nullable
     private static <K, V> V get(@Nullable Map<K, V> map, @Nullable K key) {
-        return (map == null || key == null) ? null : map.get(key);
+        return map == null || key == null ? null : map.get(key);
     }
 }
