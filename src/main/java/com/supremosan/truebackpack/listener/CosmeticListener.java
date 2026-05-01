@@ -1,12 +1,16 @@
 package com.supremosan.truebackpack.listener;
 
-import com.hypixel.hytale.component.*;
-import com.hypixel.hytale.codec.Codec;
-import com.hypixel.hytale.codec.KeyedCodec;
-import com.hypixel.hytale.codec.builder.BuilderCodec;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Component;
+import com.hypixel.hytale.component.ComponentType;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.RefChangeSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.protocol.Cosmetic;
+import com.hypixel.hytale.protocol.ItemArmor;
+import com.hypixel.hytale.protocol.PlayerSkin;
 import com.hypixel.hytale.server.core.asset.type.model.config.Model;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.cosmetics.CosmeticRegistry;
@@ -25,76 +29,46 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.protocol.Cosmetic;
-import com.hypixel.hytale.protocol.PlayerSkin;
 import com.supremosan.truebackpack.TrueBackpack;
 import com.supremosan.truebackpack.cosmetic.CosmeticUtils;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CosmeticListener {
+public final class CosmeticListener {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final ThreadLocal<Boolean> PROCESSING = ThreadLocal.withInitial(() -> false);
-
     private static final Query<EntityStore> QUERY = Query.any();
 
     private static final Map<String, Map<String, ModelAttachment>> PLAYER_ATTACHMENTS =
             new ConcurrentHashMap<>();
 
-    public static class CosmeticData implements Component<EntityStore> {
+    private static final Map<String, List<ModelAttachment>> PREVIOUS_INJECTED =
+            new ConcurrentHashMap<>();
 
-        public static ComponentType<EntityStore, CosmeticData> TYPE;
-
-        public static final BuilderCodec<CosmeticData> CODEC =
-                BuilderCodec.builder(CosmeticData.class, CosmeticData::new)
-                        .append(
-                                new KeyedCodec<>("OriginalModelPath", Codec.STRING),
-                                (data, value) -> data.originalModelPath = value,
-                                (data) -> data.originalModelPath
-                        ).add()
-                        .build();
-
-        @Nullable
-        private String originalModelPath = null;
-
-        @NullableDecl
-        @Override
-        public Component<EntityStore> clone() {
-            CosmeticData copy = new CosmeticData();
-            copy.originalModelPath = this.originalModelPath;
-            return copy;
-        }
-
-        @Nullable
-        public String getOriginalModelPath() {
-            return originalModelPath;
-        }
-
-        public void captureOriginalModelPath(@Nonnull String path) {
-            if (this.originalModelPath != null) return;
-            if (isOurCustomModelName(path)) return;
-            this.originalModelPath = path;
-        }
-    }
+    private static final Set<String> REBUILT_THIS_TICK = ConcurrentHashMap.newKeySet();
 
     private CosmeticListener() {
     }
 
     public static void register(@Nonnull TrueBackpack plugin) {
-        CosmeticData.TYPE = plugin.getEntityStoreRegistry()
-                .registerComponent(CosmeticData.class, "TrueBackpack_CosmeticData", CosmeticData.CODEC);
+        plugin.getEventRegistry()
+                .registerGlobal(PlayerReadyEvent.class, CosmeticListener::onPlayerReady);
 
-        plugin.getEventRegistry().registerGlobal(
-                PlayerReadyEvent.class,
-                CosmeticListener::onPlayerReady);
-
-        plugin.getEntityStoreRegistry()
-                .registerSystem(new CosmeticListener.OnPlayerSettingsChange());
+        plugin.getEntityStoreRegistry().registerSystem(new OnPlayerSettingsChange());
+        plugin.getEntityStoreRegistry().registerSystem(new OnPlayerSkinChange());
+        plugin.getEntityStoreRegistry().registerSystem(new OnModelChange());
 
         LOGGER.atInfo().log("[TrueBackpack] CosmeticListener registered");
     }
@@ -103,22 +77,51 @@ public class CosmeticListener {
                                      @Nonnull String slotKey,
                                      @Nonnull ModelAttachment attachment) {
         PLAYER_ATTACHMENTS
-                .computeIfAbsent(playerUuid, _ -> new LinkedHashMap<>())
+                .computeIfAbsent(playerUuid, ignored -> new LinkedHashMap<>())
                 .put(slotKey, attachment);
     }
 
-    public static boolean hasAttachment(@Nonnull String playerUuid, @Nonnull String slotKey) {
+    public static boolean hasAttachment(@Nonnull String playerUuid,
+                                        @Nonnull String slotKey) {
         Map<String, ModelAttachment> slots = PLAYER_ATTACHMENTS.get(playerUuid);
         return slots != null && slots.containsKey(slotKey);
+    }
+
+    @Nullable
+    public static ModelAttachment getAttachment(@Nonnull String playerUuid,
+                                                @Nonnull String slotKey) {
+        Map<String, ModelAttachment> slots = PLAYER_ATTACHMENTS.get(playerUuid);
+        return slots == null ? null : slots.get(slotKey);
     }
 
     public static void removeAttachment(@Nonnull String playerUuid,
                                         @Nonnull String slotKey) {
         Map<String, ModelAttachment> slots = PLAYER_ATTACHMENTS.get(playerUuid);
-        if (slots != null) {
-            slots.remove(slotKey);
-            if (slots.isEmpty()) PLAYER_ATTACHMENTS.remove(playerUuid);
+        if (slots == null) {
+            return;
         }
+
+        slots.remove(slotKey);
+
+        if (slots.isEmpty()) {
+            PLAYER_ATTACHMENTS.remove(playerUuid);
+        }
+
+        scheduleRebuildForUuid(playerUuid);
+    }
+
+    public static void onPlayerLeave(@Nonnull String playerUuid) {
+        PLAYER_ATTACHMENTS.remove(playerUuid);
+        PREVIOUS_INJECTED.remove(playerUuid);
+        REBUILT_THIS_TICK.remove(playerUuid);
+    }
+
+    public static boolean isProcessing() {
+        return Boolean.TRUE.equals(PROCESSING.get());
+    }
+
+    public static boolean wasRebuiltSinceLastTick(@Nonnull String playerUuid) {
+        return REBUILT_THIS_TICK.remove(playerUuid);
     }
 
     public static void scheduleRebuild(@Nonnull Player player,
@@ -126,77 +129,103 @@ public class CosmeticListener {
                                        @Nonnull Ref<EntityStore> ref,
                                        @Nonnull String playerUuid) {
         World world = player.getWorld();
-        Runnable task = () -> {
-            if (!ref.isValid()) return;
-            PROCESSING.set(true);
-            try {
-                rebuildModel(store, ref, playerUuid);
-            } finally {
-                PROCESSING.set(false);
-            }
-        };
+        Runnable task = () -> runProtectedRebuild(store, ref, playerUuid);
 
-        if (world == null) task.run();
-        else world.execute(task);
+        if (world == null) {
+            task.run();
+            return;
+        }
+
+        world.execute(task);
     }
 
     public static void scheduleRebuildForUuid(@Nonnull String playerUuid) {
-        PlayerRef playerRef;
-        try {
-            playerRef = Universe.get().getPlayer(UUID.fromString(playerUuid));
-        } catch (IllegalArgumentException e) {
+        UUID uuid = parseUuid(playerUuid);
+        if (uuid == null) {
             return;
         }
-        if (playerRef == null) return;
+
+        PlayerRef playerRef = Universe.get().getPlayer(uuid);
+        if (playerRef == null) {
+            return;
+        }
 
         UUID worldUuid = playerRef.getWorldUuid();
-        if (worldUuid == null) return;
+        if (worldUuid == null) {
+            return;
+        }
 
         World world = Universe.get().getWorld(worldUuid);
-        if (world == null) return;
+        if (world == null) {
+            return;
+        }
 
         Ref<EntityStore> ref = playerRef.getReference();
-        if (ref == null || !ref.isValid()) return;
+        if (isInvalid(ref)) {
+            return;
+        }
 
         Store<EntityStore> store = ref.getStore();
 
         world.execute(() -> {
-            if (!ref.isValid()) return;
+            if (!ref.isValid()) {
+                return;
+            }
+
             Player player = store.getComponent(ref, Player.getComponentType());
-            if (player == null) return;
-            scheduleRebuild(player, store, ref, playerUuid);
+            if (player != null) {
+                scheduleRebuild(player, store, ref, playerUuid);
+            }
         });
     }
 
-    public static void onPlayerLeave(@Nonnull String playerUuid) {
-        PLAYER_ATTACHMENTS.remove(playerUuid);
-    }
-
-    public static boolean isProcessing() {
-        return Boolean.TRUE.equals(PROCESSING.get());
-    }
-
     private static void onPlayerReady(@Nonnull PlayerReadyEvent event) {
-        if (PROCESSING.get()) return;
+        if (isProcessing()) {
+            return;
+        }
 
         Player player = event.getPlayer();
         Ref<EntityStore> ref = player.getReference();
-        if (ref == null || !ref.isValid()) return;
+        if (isInvalid(ref)) {
+            return;
+        }
 
         Store<EntityStore> store = ref.getStore();
         String playerUuid = resolveUuid(store, ref);
-        if (playerUuid == null) return;
-
-        scheduleRebuild(player, store, ref, playerUuid);
+        if (playerUuid != null) {
+            scheduleRebuild(player, store, ref, playerUuid);
+        }
     }
 
-    public static class OnPlayerSettingsChange extends RefChangeSystem<EntityStore, PlayerSettings> {
+    public static final class OnPlayerSettingsChange extends RebuildOnChangeSystem<PlayerSettings> {
 
         @Nonnull
         @Override
         public ComponentType<EntityStore, PlayerSettings> componentType() {
             return PlayerSettings.getComponentType();
         }
+    }
+
+    public static final class OnPlayerSkinChange extends RebuildOnChangeSystem<PlayerSkinComponent> {
+
+        @Nonnull
+        @Override
+        public ComponentType<EntityStore, PlayerSkinComponent> componentType() {
+            return PlayerSkinComponent.getComponentType();
+        }
+    }
+
+    public static final class OnModelChange extends RebuildOnChangeSystem<ModelComponent> {
+
+        @Nonnull
+        @Override
+        public ComponentType<EntityStore, ModelComponent> componentType() {
+            return ModelComponent.getComponentType();
+        }
+    }
+
+    private abstract static class RebuildOnChangeSystem<T extends Component<EntityStore>>
+            extends RefChangeSystem<EntityStore, T> {
 
         @Override
         public @Nonnull Query<EntityStore> getQuery() {
@@ -204,94 +233,145 @@ public class CosmeticListener {
         }
 
         @Override
-        public void onComponentAdded(@Nonnull Ref<EntityStore> ref, @Nonnull PlayerSettings component,
+        public void onComponentAdded(@Nonnull Ref<EntityStore> ref,
+                                     @Nonnull T component,
                                      @Nonnull Store<EntityStore> store,
                                      @Nonnull CommandBuffer<EntityStore> commandBuffer) {
-            handleSettingsChange(ref, store, commandBuffer);
+            handleChange(ref, store, commandBuffer);
         }
 
         @Override
-        public void onComponentSet(@Nonnull Ref<EntityStore> ref, @Nullable PlayerSettings oldComponent,
-                                   @Nonnull PlayerSettings newComponent, @Nonnull Store<EntityStore> store,
+        public void onComponentSet(@Nonnull Ref<EntityStore> ref,
+                                   @Nullable T oldComponent,
+                                   @Nonnull T newComponent,
+                                   @Nonnull Store<EntityStore> store,
                                    @Nonnull CommandBuffer<EntityStore> commandBuffer) {
-            handleSettingsChange(ref, store, commandBuffer);
+            handleChange(ref, store, commandBuffer);
         }
 
         @Override
-        public void onComponentRemoved(@Nonnull Ref<EntityStore> ref, @Nonnull PlayerSettings component,
+        public void onComponentRemoved(@Nonnull Ref<EntityStore> ref,
+                                       @Nonnull T component,
                                        @Nonnull Store<EntityStore> store,
                                        @Nonnull CommandBuffer<EntityStore> commandBuffer) {
         }
 
-        private static void handleSettingsChange(@Nonnull Ref<EntityStore> ref,
-                                                 @Nonnull Store<EntityStore> store,
-                                                 @Nonnull CommandBuffer<EntityStore> commandBuffer) {
-            if (PROCESSING.get()) return;
+        private static void handleChange(@Nonnull Ref<EntityStore> ref,
+                                         @Nonnull Store<EntityStore> store,
+                                         @Nonnull CommandBuffer<EntityStore> commandBuffer) {
+            if (isProcessing()) {
+                return;
+            }
 
             Player player = commandBuffer.getComponent(ref, Player.getComponentType());
-            if (player == null) return;
+            if (player == null) {
+                return;
+            }
 
             String playerUuid = resolveUuid(store, ref);
-            if (playerUuid == null) return;
+            if (playerUuid != null) {
+                scheduleRebuild(player, store, ref, playerUuid);
+            }
+        }
+    }
 
-            scheduleRebuild(player, store, ref, playerUuid);
+    private static void runProtectedRebuild(@Nonnull Store<EntityStore> store,
+                                            @Nonnull Ref<EntityStore> ref,
+                                            @Nonnull String playerUuid) {
+        if (!ref.isValid()) {
+            return;
+        }
+
+        PROCESSING.set(true);
+
+        try {
+            rebuildModel(store, ref, playerUuid);
+            REBUILT_THIS_TICK.add(playerUuid);
+        } finally {
+            PROCESSING.set(false);
         }
     }
 
     private static void rebuildModel(@Nonnull Store<EntityStore> store,
                                      @Nonnull Ref<EntityStore> ref,
                                      @Nonnull String playerUuid) {
-
-        ModelComponent modelComp = store.getComponent(ref, ModelComponent.getComponentType());
-        if (modelComp == null) return;
-        Model current = modelComp.getModel();
-
-        PlayerSkinComponent skinComp = store.getComponent(ref, PlayerSkinComponent.getComponentType());
-        if (skinComp == null) return;
-        PlayerSkin skin = skinComp.getPlayerSkin();
-
-        CosmeticData data = getOrCreateCosmeticData(store, ref);
-        data.captureOriginalModelPath(current.getModel());
-        store.replaceComponent(ref, CosmeticData.TYPE, data);
-
-        String baseModelPath = data.getOriginalModelPath() != null
-                ? data.getOriginalModelPath()
-                : current.getModel();
-
-        String bodyGradientId = "";
-        String bodyGradientSet = null;
-        String bodyTexture = null;
-
-        if (skin.bodyCharacteristic != null) {
-            String[] bodyParts = CosmeticUtils.splitId(skin.bodyCharacteristic);
-            String parsed = CosmeticUtils.part(bodyParts, 1);
-            bodyGradientId = parsed != null ? parsed : "";
-            CosmeticRegistry registry = CosmeticsModule.get().getRegistry();
-            PlayerSkinPart bodyPart = registry.getBodyCharacteristics().get(bodyParts[0]);
-            if (bodyPart != null) {
-                bodyGradientSet = bodyPart.getGradientSet();
-                bodyTexture = bodyPart.getGreyscaleTexture();
-            }
+        ModelComponent modelComponent = store.getComponent(ref, ModelComponent.getComponentType());
+        if (modelComponent == null) {
+            return;
         }
 
-        Set<Cosmetic> hiddenCosmetics = resolveHiddenCosmetics(store, ref);
+        PlayerSkinComponent skinComponent = store.getComponent(ref, PlayerSkinComponent.getComponentType());
+        if (skinComponent == null) {
+            return;
+        }
 
-        List<ModelAttachment> attachments = new ArrayList<>();
-        restoreSkinAttachments(attachments, skin, hiddenCosmetics, bodyGradientId);
+        Model current = modelComponent.getModel();
+        PlayerSkin skin = skinComponent.getPlayerSkin();
+        List<ModelAttachment> attachments = current.getAttachments().length == 0
+                ? new ArrayList<>()
+                : new ArrayList<>(Arrays.asList(current.getAttachments()));
+
+        List<ModelAttachment> previous = PREVIOUS_INJECTED.remove(playerUuid);
+        if (previous != null) {
+            attachments.removeAll(previous);
+        }
+
+        BodySkinData body = resolveBodySkinData(skin, current);
+        List<ModelAttachment> injected = buildInjectedAttachments(store, ref, playerUuid, skin, body.gradientId, attachments);
+
+        attachments.addAll(injected);
+
+        if (!injected.isEmpty()) {
+            PREVIOUS_INJECTED.put(playerUuid, injected);
+        }
+
+        if (previous == null && injected.isEmpty()) {
+            return;
+        }
+
+        Model rebuilt = copyModelWithAttachments(current, attachments);
+        store.replaceComponent(ref, ModelComponent.getComponentType(), new ModelComponent(rebuilt));
+    }
+
+    @Nonnull
+    private static List<ModelAttachment> buildInjectedAttachments(@Nonnull Store<EntityStore> store,
+                                                                  @Nonnull Ref<EntityStore> ref,
+                                                                  @Nonnull String playerUuid,
+                                                                  @Nonnull PlayerSkin skin,
+                                                                  @Nonnull String bodyGradientId,
+                                                                  @Nonnull List<ModelAttachment> currentAttachments) {
+        PlayerSettings settings = store.getComponent(ref, PlayerSettings.getComponentType());
+        Set<Cosmetic> hiddenCosmetics = resolveHiddenCosmetics(store, ref, settings);
+        List<ModelAttachment> restored = new ArrayList<>();
+        List<ModelAttachment> injected = new ArrayList<>();
+
+        restoreSkinAttachments(restored, skin, hiddenCosmetics, bodyGradientId);
+
+        for (ModelAttachment attachment : restored) {
+            upsertAttachmentByModel(currentAttachments, attachment);
+        }
 
         Map<String, ModelAttachment> extras = PLAYER_ATTACHMENTS.get(playerUuid);
-        if (extras != null) attachments.addAll(extras.values());
+        if (extras != null && !extras.isEmpty()) {
+            injected.addAll(extras.values());
+        }
 
-        Model newModel = new Model(
-                playerUuid + "_CustomModel",
+        return injected;
+    }
+
+    @Nonnull
+    private static Model copyModelWithAttachments(@Nonnull Model current,
+                                                  @Nonnull List<ModelAttachment> attachments) {
+        return new Model(
+                current.getModelAssetId(),
                 current.getScale(),
                 current.getRandomAttachmentIds(),
                 attachments.toArray(new ModelAttachment[0]),
                 current.getBoundingBox(),
-                baseModelPath,
-                bodyTexture != null ? bodyTexture : current.getTexture(),
-                bodyGradientSet != null ? bodyGradientSet : current.getGradientSet(),
-                !bodyGradientId.isEmpty() ? bodyGradientId : current.getGradientId(),
+                current.getModel(),
+                current.getTexture(),
+                current.getGradientSet(),
+                current.getGradientId(),
                 current.getEyeHeight(),
                 current.getCrouchOffset(),
                 current.getSittingOffset(),
@@ -306,112 +386,154 @@ public class CosmeticListener {
                 current.getPhobia(),
                 current.getPhobiaModelAssetId()
         );
+    }
 
-        store.replaceComponent(ref, ModelComponent.getComponentType(), new ModelComponent(newModel));
+    @Nonnull
+    private static BodySkinData resolveBodySkinData(@Nonnull PlayerSkin skin,
+                                                    @Nonnull Model current) {
+        if (skin.bodyCharacteristic == null) {
+            return new BodySkinData("", null, null);
+        }
+
+        String[] parts = CosmeticUtils.splitId(skin.bodyCharacteristic);
+        String assetId = CosmeticUtils.part(parts, 0);
+        String gradientId = CosmeticUtils.fallback(CosmeticUtils.part(parts, 1), "");
+
+        if (assetId == null) {
+            return new BodySkinData(gradientId, null, null);
+        }
+
+        PlayerSkinPart bodyPart = CosmeticsModule.get().getRegistry().getBodyCharacteristics().get(assetId);
+        if (bodyPart == null) {
+            return new BodySkinData(gradientId, current.getGradientSet(), current.getTexture());
+        }
+
+        return new BodySkinData(
+                gradientId,
+                bodyPart.getGradientSet(),
+                bodyPart.getGreyscaleTexture()
+        );
     }
 
     @Nonnull
     private static Set<Cosmetic> resolveHiddenCosmetics(@Nonnull Store<EntityStore> store,
-                                                        @Nonnull Ref<EntityStore> ref) {
+                                                        @Nonnull Ref<EntityStore> ref,
+                                                        @Nullable PlayerSettings settings) {
         Set<Cosmetic> hidden = EnumSet.noneOf(Cosmetic.class);
+        InventoryComponent.Armor armorComponent = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
 
-        InventoryComponent.Armor armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
-        if (armorComp == null) return hidden;
+        if (armorComponent == null) {
+            return hidden;
+        }
 
-        ItemContainer armor = armorComp.getInventory();
-        PlayerSettings settings = store.getComponent(ref, PlayerSettings.getComponentType());
+        ItemContainer armor = armorComponent.getInventory();
 
         for (short slot = 0; slot < armor.getCapacity(); slot++) {
             ItemStack stack = armor.getItemStack(slot);
-            if (stack == null || stack.isEmpty()) continue;
-            if (stack.getItem().getArmor() == null) continue;
+            if (stack == null || stack.isEmpty() || stack.getItem().getArmor() == null) {
+                continue;
+            }
 
-            com.hypixel.hytale.protocol.ItemArmor protocolArmor = stack.getItem().getArmor().toPacket();
-            if (protocolArmor.cosmeticsToHide == null || protocolArmor.cosmeticsToHide.length == 0) continue;
+            ItemArmor itemArmor = stack.getItem().getArmor().toPacket();
+            if (isArmorHidden(itemArmor, settings)) {
+                continue;
+            }
 
-            boolean armorIsHidden = settings != null && switch (protocolArmor.armorSlot) {
-                case Head -> settings.hideHelmet();
-                case Chest -> settings.hideCuirass();
-                case Hands -> settings.hideGauntlets();
-                case Legs -> settings.hidePants();
-            };
-
-            if (!armorIsHidden) {
-                Collections.addAll(hidden, protocolArmor.cosmeticsToHide);
+            if (itemArmor.cosmeticsToHide != null) {
+                Collections.addAll(hidden, itemArmor.cosmeticsToHide);
             }
         }
 
         return hidden;
     }
 
-    @Nullable
-    public static ModelAttachment getAttachment(@Nonnull String playerUuid,
-                                                @Nonnull String slotKey) {
-        Map<String, ModelAttachment> slots = PLAYER_ATTACHMENTS.get(playerUuid);
-        if (slots == null) return null;
-        return slots.get(slotKey);
+    private static boolean isArmorHidden(@Nonnull ItemArmor itemArmor,
+                                         @Nullable PlayerSettings settings) {
+        if (settings == null) {
+            return false;
+        }
+
+        return switch (itemArmor.armorSlot) {
+            case Head -> settings.hideHelmet();
+            case Chest -> settings.hideCuirass();
+            case Hands -> settings.hideGauntlets();
+            case Legs -> settings.hidePants();
+        };
     }
 
     private static void restoreSkinAttachments(@Nonnull List<ModelAttachment> attachments,
                                                @Nonnull PlayerSkin skin,
                                                @Nonnull Set<Cosmetic> hiddenCosmetics,
                                                @Nonnull String bodyGradientId) {
-        if (skin.bodyCharacteristic == null) return;
+        if (skin.bodyCharacteristic == null) {
+            return;
+        }
 
         CosmeticRegistry registry = CosmeticsModule.get().getRegistry();
 
-        addSkinPart(attachments, skin.bodyCharacteristic, registry.getBodyCharacteristics(), bodyGradientId);
-        addHaircutPart(attachments, skin, registry, bodyGradientId);
-        addSkinPart(attachments, skin.eyebrows, registry.getEyebrows(), bodyGradientId);
-        addSkinPart(attachments, skin.eyes, registry.getEyes(), bodyGradientId);
-        addSkinPart(attachments, skin.underwear, registry.getUnderwear(), bodyGradientId);
         addSkinPart(attachments, skin.skinFeature, registry.getSkinFeatures(), bodyGradientId);
-
         addFacePart(attachments, skin.face, registry.getFaces(), bodyGradientId);
         addFacePart(attachments, skin.ears, registry.getEars(), bodyGradientId);
         addFacePart(attachments, skin.mouth, registry.getMouths(), bodyGradientId);
 
-        if (!hiddenCosmetics.contains(Cosmetic.FacialHair))
-            addSkinPart(attachments, skin.facialHair, registry.getFacialHairs(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.Cape))
-            addSkinPart(attachments, skin.cape, registry.getCapes(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.FaceAccessory))
-            addSkinPart(attachments, skin.faceAccessory, registry.getFaceAccessories(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.Gloves))
-            addSkinPart(attachments, skin.gloves, registry.getGloves(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.HeadAccessory))
-            addSkinPart(attachments, skin.headAccessory, registry.getHeadAccessories(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.Overpants))
-            addSkinPart(attachments, skin.overpants, registry.getOverpants(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.Overtop))
-            addSkinPart(attachments, skin.overtop, registry.getOvertops(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.Pants))
-            addSkinPart(attachments, skin.pants, registry.getPants(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.Shoes))
-            addSkinPart(attachments, skin.shoes, registry.getShoes(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.Undertop))
-            addSkinPart(attachments, skin.undertop, registry.getUndertops(), bodyGradientId);
-        if (!hiddenCosmetics.contains(Cosmetic.EarAccessory))
-            addSkinPart(attachments, skin.earAccessory, registry.getEarAccessories(), bodyGradientId);
+        // BodyCharacteristics does not allow first person render the armor
+//        addSkinPart(attachments, skin.bodyCharacteristic, registry.getBodyCharacteristics(), bodyGradientId);
+        addSkinPart(attachments, skin.eyebrows, registry.getEyebrows(), bodyGradientId);
+        addSkinPart(attachments, skin.eyes, registry.getEyes(), bodyGradientId);
+        addSkinPart(attachments, skin.underwear, registry.getUnderwear(), bodyGradientId);
+
+        addHaircutPart(attachments, skin, registry, bodyGradientId);
+
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.FacialHair, skin.facialHair, registry.getFacialHairs(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.Cape, skin.cape, registry.getCapes(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.FaceAccessory, skin.faceAccessory, registry.getFaceAccessories(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.Gloves, skin.gloves, registry.getGloves(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.HeadAccessory, skin.headAccessory, registry.getHeadAccessories(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.Overpants, skin.overpants, registry.getOverpants(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.Overtop, skin.overtop, registry.getOvertops(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.Pants, skin.pants, registry.getPants(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.Shoes, skin.shoes, registry.getShoes(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.Undertop, skin.undertop, registry.getUndertops(), bodyGradientId);
+        addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.EarAccessory, skin.earAccessory, registry.getEarAccessories(), bodyGradientId);
+    }
+
+    private static void addHiddenAwarePart(@Nonnull List<ModelAttachment> attachments,
+                                           @Nonnull Set<Cosmetic> hiddenCosmetics,
+                                           @Nonnull Cosmetic cosmetic,
+                                           @Nullable String rawId,
+                                           @Nonnull Map<String, PlayerSkinPart> registry,
+                                           @Nonnull String bodyGradientId) {
+        if (!hiddenCosmetics.contains(cosmetic)) {
+            addSkinPart(attachments, rawId, registry, bodyGradientId);
+        }
     }
 
     private static void addHaircutPart(@Nonnull List<ModelAttachment> attachments,
                                        @Nonnull PlayerSkin skin,
                                        @Nonnull CosmeticRegistry registry,
                                        @Nonnull String bodyGradientId) {
-        if (skin.haircut == null) return;
-        String[] parts = CosmeticUtils.splitId(skin.haircut);
-        PlayerSkinPart part = registry.getHaircuts().get(parts[0]);
-        if (part == null) return;
+        if (skin.haircut == null) {
+            return;
+        }
 
-        String textureId = CosmeticUtils.part(parts, 1);
-        String variantId = CosmeticUtils.part(parts, 2);
+        String[] parts = CosmeticUtils.splitId(skin.haircut);
+        String assetId = CosmeticUtils.part(parts, 0);
+        if (assetId == null) {
+            return;
+        }
+
+        PlayerSkinPart part = registry.getHaircuts().get(assetId);
+        if (part == null) {
+            return;
+        }
 
         PlayerSkinPart.HeadAccessoryType headAccessoryType = resolveHeadAccessoryType(skin, registry);
-
         if (headAccessoryType == PlayerSkinPart.HeadAccessoryType.FullyCovering) {
             return;
         }
+
+        String textureId = CosmeticUtils.part(parts, 1);
+        String variantId = CosmeticUtils.part(parts, 2);
 
         if (headAccessoryType == PlayerSkinPart.HeadAccessoryType.HalfCovering
                 && part.doesRequireGenericHaircut()
@@ -429,62 +551,106 @@ public class CosmeticListener {
     @Nonnull
     private static PlayerSkinPart.HeadAccessoryType resolveHeadAccessoryType(@Nonnull PlayerSkin skin,
                                                                              @Nonnull CosmeticRegistry registry) {
-        if (skin.headAccessory == null) return PlayerSkinPart.HeadAccessoryType.Simple;
-        String[] parts = CosmeticUtils.splitId(skin.headAccessory);
-        PlayerSkinPart headAcc = registry.getHeadAccessories().get(parts[0]);
-        if (headAcc == null) return PlayerSkinPart.HeadAccessoryType.Simple;
-        return headAcc.getHeadAccessoryType();
+        if (skin.headAccessory == null) {
+            return PlayerSkinPart.HeadAccessoryType.Simple;
+        }
+
+        String assetId = CosmeticUtils.assetId(skin.headAccessory);
+        if (assetId == null) {
+            return PlayerSkinPart.HeadAccessoryType.Simple;
+        }
+
+        PlayerSkinPart headAccessory = registry.getHeadAccessories().get(assetId);
+        return headAccessory == null ? PlayerSkinPart.HeadAccessoryType.Simple : headAccessory.getHeadAccessoryType();
     }
 
     private static void addSkinPart(@Nonnull List<ModelAttachment> attachments,
                                     @Nullable String rawId,
                                     @Nonnull Map<String, PlayerSkinPart> registry,
                                     @Nonnull String bodyGradientId) {
-        if (rawId == null) return;
-        String[] parts = CosmeticUtils.splitId(rawId);
-        PlayerSkinPart part = registry.get(parts[0]);
-        if (part == null) return;
-
-        String textureId = CosmeticUtils.part(parts, 1);
-        String variantId = CosmeticUtils.part(parts, 2);
-        attachments.add(CosmeticUtils.resolveAttachment(part, textureId, variantId, bodyGradientId));
+        addPart(attachments, rawId, registry, bodyGradientId, false);
     }
 
     private static void addFacePart(@Nonnull List<ModelAttachment> attachments,
                                     @Nullable String rawId,
                                     @Nonnull Map<String, PlayerSkinPart> registry,
                                     @Nonnull String bodyGradientId) {
-        if (rawId == null) return;
-        String[] parts = CosmeticUtils.splitId(rawId);
-        PlayerSkinPart part = registry.get(parts[0]);
-        if (part == null) return;
-
-        String textureId = CosmeticUtils.part(parts, 1) != null
-                ? CosmeticUtils.part(parts, 1)
-                : bodyGradientId;
-        String variantId = CosmeticUtils.part(parts, 2);
-        attachments.add(CosmeticUtils.resolveAttachment(part, textureId, variantId, bodyGradientId));
+        addPart(attachments, rawId, registry, bodyGradientId, true);
     }
 
-    @Nonnull
-    private static CosmeticData getOrCreateCosmeticData(@Nonnull Store<EntityStore> store,
-                                                        @Nonnull Ref<EntityStore> ref) {
-        CosmeticData data = store.getComponent(ref, CosmeticData.TYPE);
-        if (data == null) {
-            data = new CosmeticData();
-            store.addComponent(ref, CosmeticData.TYPE, data);
+    private static void addPart(@Nonnull List<ModelAttachment> attachments,
+                                @Nullable String rawId,
+                                @Nonnull Map<String, PlayerSkinPart> registry,
+                                @Nonnull String bodyGradientId,
+                                boolean useBodyGradientWhenMissingTexture) {
+        if (rawId == null) {
+            return;
         }
-        return data;
+
+        String[] parts = CosmeticUtils.splitId(rawId);
+        String assetId = CosmeticUtils.part(parts, 0);
+        if (assetId == null) {
+            return;
+        }
+
+        PlayerSkinPart part = registry.get(assetId);
+        if (part == null) {
+            return;
+        }
+
+        String textureId = CosmeticUtils.part(parts, 1);
+        if (textureId == null && useBodyGradientWhenMissingTexture) {
+            textureId = bodyGradientId;
+        }
+
+        attachments.add(CosmeticUtils.resolveAttachment(
+                part,
+                textureId,
+                CosmeticUtils.part(parts, 2),
+                bodyGradientId
+        ));
+    }
+
+    private static void upsertAttachmentByModel(@Nonnull List<ModelAttachment> attachments,
+                                                @Nonnull ModelAttachment updated) {
+        String updatedModel = updated.getModel();
+        if (updatedModel == null) {
+            return;
+        }
+
+        for (int i = 0; i < attachments.size(); i++) {
+            ModelAttachment existing = attachments.get(i);
+            if (updatedModel.equals(existing.getModel())) {
+                attachments.set(i, updated);
+                return;
+            }
+        }
+
+        attachments.add(updated);
     }
 
     @Nullable
     private static String resolveUuid(@Nonnull Store<EntityStore> store,
                                       @Nonnull Ref<EntityStore> ref) {
-        UUIDComponent c = store.getComponent(ref, UUIDComponent.getComponentType());
-        return c == null ? null : c.getUuid().toString();
+        UUIDComponent component = store.getComponent(ref, UUIDComponent.getComponentType());
+        return component == null ? null : component.getUuid().toString();
     }
 
-    private static boolean isOurCustomModelName(@Nonnull String name) {
-        return name.endsWith("_CustomModel");
+    @Nullable
+    private static UUID parseUuid(@Nonnull String value) {
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private static boolean isInvalid(@Nullable Ref<EntityStore> ref) {
+        return ref == null || !ref.isValid();
+    }
+
+    private record BodySkinData(@Nonnull String gradientId,
+                                @Nullable String gradientSet,
+                                @Nullable String texture) {
     }
 }
