@@ -52,7 +52,7 @@ public class BackpackItemFactory {
     }
 
     public static boolean hasInstanceId(@Nonnull ItemStack stack) {
-        return getInstanceId(stack) == null;
+        return getInstanceId(stack) != null;
     }
 
     public static float getRemainingFuelTime(@Nonnull ItemStack stack) {
