@@ -3,7 +3,6 @@ package com.supremosan.truebackpack.listener;
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
-import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.ColorLight;
 import com.hypixel.hytale.protocol.DynamicLightUpdate;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
@@ -29,8 +28,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryChangeEvent> {
-
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final String ATTACHMENT_SLOT_KEY = "truebackpack:hat";
     private static final short HEAD_SLOT = 1;
 
@@ -165,9 +162,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
             @Nullable ItemStack equippedItem) {
         if (equippedItem != null && CosmeticPreferenceUtils.isHatVisible(store, ref)) {
             ModelAttachment visual = resolveVisual(equippedItem.getItemId());
-            LOGGER.atInfo().log(equippedItem.getItemId());
             if (visual != null) {
-                LOGGER.atInfo().log("Equipped Visual " + visual);
                 CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);
             } else {
                 CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);

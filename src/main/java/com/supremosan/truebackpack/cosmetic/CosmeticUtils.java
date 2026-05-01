@@ -66,16 +66,6 @@ public final class CosmeticUtils {
         return part(splitId(rawId), 0);
     }
 
-    @Nullable
-    public static String textureId(@Nonnull String rawId) {
-        return part(splitId(rawId), 1);
-    }
-
-    @Nullable
-    public static String variantId(@Nonnull String rawId) {
-        return part(splitId(rawId), 2);
-    }
-
     @Nonnull
     public static String fallback(@Nullable String value, @Nonnull String fallback) {
         return value == null || value.isEmpty() ? fallback : value;
@@ -90,16 +80,21 @@ public final class CosmeticUtils {
 
         if (hasEntries(textures)) {
             PlayerSkinPartTexture texture = get(textures, textureId);
-            if (texture == null) {
-                return fromPlayerSkinPart(part, fallbackGradientId);
+            if (texture != null) {
+                if (texture.getBaseColor() == null) {
+                    return attachment(variant.getModel(), texture.getTexture(), part.getGradientSet(), fallbackGradientId);
+                }
+                return attachment(variant.getModel(), texture.getTexture(), null, null);
             }
-
-            return attachment(variant.getModel(), texture.getTexture(), null, null);
         }
 
+        String texture = variant.getGreyscaleTexture() != null
+                ? variant.getGreyscaleTexture()
+                : part.getGreyscaleTexture();
+
         return attachment(
-                variant.getModel(),
-                variant.getGreyscaleTexture(),
+                variant.getModel() != null ? variant.getModel() : part.getModel(),
+                texture,
                 part.getGradientSet(),
                 fallbackGradientId
         );
@@ -113,11 +108,12 @@ public final class CosmeticUtils {
 
         if (hasEntries(textures)) {
             PlayerSkinPartTexture texture = get(textures, textureId);
-            if (texture == null) {
-                return fromPlayerSkinPart(part, fallbackGradientId);
+            if (texture != null) {
+                if (texture.getBaseColor() == null) {
+                    return attachment(part.getModel(), texture.getTexture(), part.getGradientSet(), fallbackGradientId);
+                }
+                return attachment(part.getModel(), texture.getTexture(), null, null);
             }
-
-            return attachment(part.getModel(), texture.getTexture(), null, null);
         }
 
         return attachment(

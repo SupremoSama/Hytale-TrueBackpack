@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -317,7 +318,7 @@ public final class CosmeticListener {
         }
 
         BodySkinData body = resolveBodySkinData(skin, current);
-        List<ModelAttachment> injected = buildInjectedAttachments(store, ref, playerUuid, skin, body.gradientId, attachments);
+        List<ModelAttachment> injected = buildInjectedAttachments(store, ref, playerUuid, skin, body.gradientId(), attachments);
 
         attachments.addAll(injected);
 
@@ -325,11 +326,7 @@ public final class CosmeticListener {
             PREVIOUS_INJECTED.put(playerUuid, injected);
         }
 
-        if (previous == null && injected.isEmpty()) {
-            return;
-        }
-
-        Model rebuilt = copyModelWithAttachments(current, attachments);
+        Model rebuilt = copyModelWithAttachments(current, attachments, body);
         store.replaceComponent(ref, ModelComponent.getComponentType(), new ModelComponent(rebuilt));
     }
 
@@ -341,10 +338,12 @@ public final class CosmeticListener {
                                                                   @Nonnull String bodyGradientId,
                                                                   @Nonnull List<ModelAttachment> currentAttachments) {
         PlayerSettings settings = store.getComponent(ref, PlayerSettings.getComponentType());
+        CosmeticRegistry registry = CosmeticsModule.get().getRegistry();
         Set<Cosmetic> hiddenCosmetics = resolveHiddenCosmetics(store, ref, settings);
         List<ModelAttachment> restored = new ArrayList<>();
         List<ModelAttachment> injected = new ArrayList<>();
 
+        removeRegisteredSkinAttachments(currentAttachments, registry);
         restoreSkinAttachments(restored, skin, hiddenCosmetics, bodyGradientId);
 
         for (ModelAttachment attachment : restored) {
@@ -359,9 +358,60 @@ public final class CosmeticListener {
         return injected;
     }
 
+    private static void removeRegisteredSkinAttachments(@Nonnull List<ModelAttachment> attachments,
+                                                        @Nonnull CosmeticRegistry registry) {
+        Set<String> models = new HashSet<>();
+
+        collectModels(models, registry.getSkinFeatures());
+        collectModels(models, registry.getFaces());
+        collectModels(models, registry.getMouths());
+        collectModels(models, registry.getEars());
+        collectModels(models, registry.getEyebrows());
+        collectModels(models, registry.getEyes());
+        collectModels(models, registry.getUnderwear());
+        collectModels(models, registry.getHaircuts());
+        collectModels(models, registry.getFacialHairs());
+        collectModels(models, registry.getCapes());
+        collectModels(models, registry.getFaceAccessories());
+        collectModels(models, registry.getGloves());
+        collectModels(models, registry.getHeadAccessories());
+        collectModels(models, registry.getOverpants());
+        collectModels(models, registry.getOvertops());
+        collectModels(models, registry.getPants());
+        collectModels(models, registry.getShoes());
+        collectModels(models, registry.getUndertops());
+        collectModels(models, registry.getEarAccessories());
+
+        attachments.removeIf(attachment -> attachment.getModel() != null && models.contains(attachment.getModel()));
+    }
+
+    private static void collectModels(@Nonnull Set<String> models,
+                                      @Nonnull Map<String, PlayerSkinPart> registry) {
+        for (PlayerSkinPart part : registry.values()) {
+            if (part.getModel() != null) {
+                models.add(part.getModel());
+            }
+
+            if (part.getVariants() == null) {
+                continue;
+            }
+
+            for (PlayerSkinPart.Variant variant : part.getVariants().values()) {
+                if (variant.getModel() != null) {
+                    models.add(variant.getModel());
+                }
+            }
+        }
+    }
+
     @Nonnull
     private static Model copyModelWithAttachments(@Nonnull Model current,
-                                                  @Nonnull List<ModelAttachment> attachments) {
+                                                  @Nonnull List<ModelAttachment> attachments,
+                                                  @Nonnull BodySkinData body) {
+        String gradientSet = body.gradientSet() != null ? body.gradientSet() : current.getGradientSet();
+        String gradientId = !body.gradientId().isEmpty() ? body.gradientId() : current.getGradientId();
+        String texture = body.texture() != null ? body.texture() : current.getTexture();
+
         return new Model(
                 current.getModelAssetId(),
                 current.getScale(),
@@ -369,9 +419,9 @@ public final class CosmeticListener {
                 attachments.toArray(new ModelAttachment[0]),
                 current.getBoundingBox(),
                 current.getModel(),
-                current.getTexture(),
-                current.getGradientSet(),
-                current.getGradientId(),
+                texture,
+                gradientSet,
+                gradientId,
                 current.getEyeHeight(),
                 current.getCrouchOffset(),
                 current.getSittingOffset(),
@@ -473,16 +523,14 @@ public final class CosmeticListener {
 
         addSkinPart(attachments, skin.skinFeature, registry.getSkinFeatures(), bodyGradientId);
         addFacePart(attachments, skin.face, registry.getFaces(), bodyGradientId);
-        addFacePart(attachments, skin.ears, registry.getEars(), bodyGradientId);
         addFacePart(attachments, skin.mouth, registry.getMouths(), bodyGradientId);
 
-        // BodyCharacteristics does not allow first person render the armor
-//        addSkinPart(attachments, skin.bodyCharacteristic, registry.getBodyCharacteristics(), bodyGradientId);
+        addFacePart(attachments, skin.ears, registry.getEars(), bodyGradientId);
         addSkinPart(attachments, skin.eyebrows, registry.getEyebrows(), bodyGradientId);
         addSkinPart(attachments, skin.eyes, registry.getEyes(), bodyGradientId);
         addSkinPart(attachments, skin.underwear, registry.getUnderwear(), bodyGradientId);
 
-        addHaircutPart(attachments, skin, registry, bodyGradientId);
+        addHaircutPart(attachments, skin, registry, hiddenCosmetics, bodyGradientId);
 
         addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.FacialHair, skin.facialHair, registry.getFacialHairs(), bodyGradientId);
         addHiddenAwarePart(attachments, hiddenCosmetics, Cosmetic.Cape, skin.cape, registry.getCapes(), bodyGradientId);
@@ -511,6 +559,7 @@ public final class CosmeticListener {
     private static void addHaircutPart(@Nonnull List<ModelAttachment> attachments,
                                        @Nonnull PlayerSkin skin,
                                        @Nonnull CosmeticRegistry registry,
+                                       @Nonnull Set<Cosmetic> hiddenCosmetics,
                                        @Nonnull String bodyGradientId) {
         if (skin.haircut == null) {
             return;
@@ -518,6 +567,9 @@ public final class CosmeticListener {
 
         String[] parts = CosmeticUtils.splitId(skin.haircut);
         String assetId = CosmeticUtils.part(parts, 0);
+        String textureId = CosmeticUtils.part(parts, 1);
+        String variantId = CosmeticUtils.part(parts, 2);
+
         if (assetId == null) {
             return;
         }
@@ -528,24 +580,39 @@ public final class CosmeticListener {
         }
 
         PlayerSkinPart.HeadAccessoryType headAccessoryType = resolveHeadAccessoryType(skin, registry);
-        if (headAccessoryType == PlayerSkinPart.HeadAccessoryType.FullyCovering) {
+        boolean armorHidesHeadAccessory = hiddenCosmetics.contains(Cosmetic.HeadAccessory);
+        boolean useGeneric = armorHidesHeadAccessory
+                || headAccessoryType == PlayerSkinPart.HeadAccessoryType.HalfCovering;
+
+        if (headAccessoryType == PlayerSkinPart.HeadAccessoryType.FullyCovering && !armorHidesHeadAccessory) {
             return;
         }
 
-        String textureId = CosmeticUtils.part(parts, 1);
-        String variantId = CosmeticUtils.part(parts, 2);
+        if (useGeneric && part.doesRequireGenericHaircut() && part.getHairType() != null) {
+            String genericId = "Generic" + part.getHairType();
+            PlayerSkinPart generic = registry.getHaircuts().get(genericId);
 
-        if (headAccessoryType == PlayerSkinPart.HeadAccessoryType.HalfCovering
-                && part.doesRequireGenericHaircut()
-                && part.getHairType() != null) {
-            PlayerSkinPart generic = registry.getHaircuts().get("Generic" + part.getHairType());
             if (generic != null) {
-                attachments.add(CosmeticUtils.resolveAttachment(generic, textureId, variantId, bodyGradientId));
+                ModelAttachment attachment = CosmeticUtils.resolveAttachment(
+                        generic,
+                        textureId,
+                        variantId,
+                        bodyGradientId
+                );
+
+                attachments.add(attachment);
                 return;
             }
         }
 
-        attachments.add(CosmeticUtils.resolveAttachment(part, textureId, variantId, bodyGradientId));
+        ModelAttachment attachment = CosmeticUtils.resolveAttachment(
+                part,
+                textureId,
+                variantId,
+                bodyGradientId
+        );
+
+        attachments.add(attachment);
     }
 
     @Nonnull
@@ -589,6 +656,7 @@ public final class CosmeticListener {
 
         String[] parts = CosmeticUtils.splitId(rawId);
         String assetId = CosmeticUtils.part(parts, 0);
+
         if (assetId == null) {
             return;
         }
@@ -599,16 +667,21 @@ public final class CosmeticListener {
         }
 
         String textureId = CosmeticUtils.part(parts, 1);
+
         if (textureId == null && useBodyGradientWhenMissingTexture) {
             textureId = bodyGradientId;
         }
 
-        attachments.add(CosmeticUtils.resolveAttachment(
+        String variantId = CosmeticUtils.part(parts, 2);
+
+        ModelAttachment attachment = CosmeticUtils.resolveAttachment(
                 part,
                 textureId,
-                CosmeticUtils.part(parts, 2),
+                variantId,
                 bodyGradientId
-        ));
+        );
+
+        attachments.add(attachment);
     }
 
     private static void upsertAttachmentByModel(@Nonnull List<ModelAttachment> attachments,
