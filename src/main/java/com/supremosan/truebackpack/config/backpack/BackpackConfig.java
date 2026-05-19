@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.config;
+package com.supremosan.truebackpack.config.backpack;
 
 import java.util.ArrayList;
 import java.util.List;

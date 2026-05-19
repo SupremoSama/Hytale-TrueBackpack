@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.config;
+package com.supremosan.truebackpack.config.hat;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

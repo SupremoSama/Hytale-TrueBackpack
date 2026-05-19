@@ -1,11 +1,9 @@
 package com.supremosan.truebackpack.commands;
 
-import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
-import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.supremosan.truebackpack.config.BackpackConfigService;
+import com.supremosan.truebackpack.config.backpack.BackpackConfigService;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

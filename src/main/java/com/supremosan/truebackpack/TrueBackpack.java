@@ -14,8 +14,8 @@ import com.supremosan.truebackpack.commands.ReloadBackpackCommand;
 import com.supremosan.truebackpack.commands.SetBackpackModelCommand;
 import com.supremosan.truebackpack.commands.SetHelipackFuelCommand;
 import com.supremosan.truebackpack.commands.ToggleCosmeticCommand;
-import com.supremosan.truebackpack.config.BackpackConfigService;
-import com.supremosan.truebackpack.config.HatConfigService;
+import com.supremosan.truebackpack.config.backpack.BackpackConfigService;
+import com.supremosan.truebackpack.config.hat.HatConfigService;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.events.BackpackDeathEvent;
@@ -44,7 +44,7 @@ public class TrueBackpack extends JavaPlugin {
             BackpackConfigService.reloadAndRegister(JUL);
             HatConfigService.reloadAndRegister(JUL);
         } catch (Exception e) {
-            JUL.log(Level.SEVERE, "[TrueBackpack] Failed to load backpack config", e);
+            JUL.log(Level.SEVERE, "[TrueBackpack] Failed to load configs", e);
         }
 
         this.getCodecRegistry(Interaction.CODEC).register(
@@ -92,9 +92,9 @@ public class TrueBackpack extends JavaPlugin {
                 Player.getComponentType(),
                 MovementStatesComponent.getComponentType()
         ));
+
         this.getEntityStoreRegistry().registerSystem(new HatDurabilitySystem());
         this.getEntityStoreRegistry().registerSystem(new BackpackDeathEvent());
-
         this.getChunkStoreRegistry().registerSystem(new BackpackContainerSystem());
 
         BackpackArmorListener.register(this);

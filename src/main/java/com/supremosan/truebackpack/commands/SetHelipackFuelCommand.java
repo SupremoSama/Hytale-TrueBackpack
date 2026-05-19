@@ -5,7 +5,7 @@ import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.supremosan.truebackpack.config.BackpackConfigService;
+import com.supremosan.truebackpack.config.backpack.BackpackConfigService;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.config;
+package com.supremosan.truebackpack.config.backpack;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -9,7 +9,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,7 +56,7 @@ public final class BackpackConfigService {
         try (Reader r = Files.newBufferedReader(p)) {
             BackpackConfig cfg = GSON.fromJson(r, BackpackConfig.class);
             if (cfg == null) cfg = new BackpackConfig();
-            if (cfg.backpacks == null) cfg.backpacks = List.of();
+            if (cfg.backpacks == null) cfg.backpacks = new ArrayList<>();
             return cfg;
         }
     }
