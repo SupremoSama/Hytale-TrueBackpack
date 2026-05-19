@@ -1,4 +1,4 @@
-package com.supremosan.truebackpack.config;
+package com.supremosan.truebackpack.config.hat;
 
 import com.google.gson.Gson;
 import com.hypixel.hytale.protocol.ColorLight;
@@ -7,7 +7,7 @@ import com.supremosan.truebackpack.registries.HatRegistry;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,7 +31,7 @@ public final class HatConfigService {
         try (Reader r = Files.newBufferedReader(p)) {
             HatConfig cfg = GSON.fromJson(r, HatConfig.class);
             if (cfg == null) cfg = new HatConfig();
-            if (cfg.hats == null) cfg.hats = List.of();
+            if (cfg.hats == null) cfg.hats = new ArrayList<>();
             return cfg;
         }
     }
