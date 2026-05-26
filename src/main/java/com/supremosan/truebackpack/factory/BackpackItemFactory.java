@@ -3,12 +3,15 @@ package com.supremosan.truebackpack.factory;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.ExtraInfo;
 import com.hypixel.hytale.codec.KeyedCodec;
+import com.hypixel.hytale.codec.schema.SchemaContext;
+import com.hypixel.hytale.codec.schema.config.Schema;
+import com.hypixel.hytale.codec.schema.config.StringSchema;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import org.bson.BsonArray;
-import org.bson.BsonDocument;
 import org.bson.BsonNull;
 import org.bson.BsonValue;
+import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -27,6 +30,26 @@ public class BackpackItemFactory {
             new KeyedCodec<>("Backpack_remaining_fuel_time", Codec.FLOAT);
 
     private static final String CONTENTS_KEY = "Backpack_contents";
+
+    private static final Codec<BsonArray> BSON_ARRAY_CODEC = new Codec<>() {
+
+        @Override
+        public BsonArray decode(BsonValue bsonValue, ExtraInfo extraInfo) {
+            return bsonValue != null && bsonValue.isArray()
+                    ? bsonValue.asArray()
+                    : new BsonArray();
+        }
+
+        @Override
+        public BsonValue encode(BsonArray value, ExtraInfo extraInfo) {
+            return value != null ? value : BsonNull.VALUE;
+        }
+
+        @Override
+        public @NonNull Schema toSchema(@Nonnull SchemaContext context) {
+            return new StringSchema();
+        }
+    };
 
     private BackpackItemFactory() {
     }
@@ -81,18 +104,28 @@ public class BackpackItemFactory {
 
     @Nonnull
     public static List<ItemStack> loadContents(@Nonnull ItemStack backpack) {
-        BsonDocument meta = backpack.getMetadata();
-        if (meta == null || !meta.containsKey(CONTENTS_KEY)) return new ArrayList<>();
+        BsonArray array = backpack.getFromMetadataOrNull(
+                CONTENTS_KEY,
+                BSON_ARRAY_CODEC
+        );
 
-        BsonArray array = meta.getArray(CONTENTS_KEY, new BsonArray());
+        if (array == null || array.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         List<ItemStack> result = new ArrayList<>();
+
         for (BsonValue val : array) {
             if (val == null || val.isNull()) {
                 result.add(null);
             } else {
-                result.add(ItemStack.CODEC.decode(val, ExtraInfo.THREAD_LOCAL.get()));
+                result.add(ItemStack.CODEC.decode(
+                        val,
+                        ExtraInfo.THREAD_LOCAL.get()
+                ));
             }
         }
+
         return result;
     }
 
