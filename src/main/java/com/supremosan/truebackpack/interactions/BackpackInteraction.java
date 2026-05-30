@@ -8,6 +8,7 @@ import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionState;
 import com.hypixel.hytale.protocol.InteractionType;
+import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFace;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFaceSupport;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -244,7 +245,8 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         Rotation yaw = Rotation.None;
         TransformComponent transform = store.getComponent(owningEntity, TransformComponent.getComponentType());
         if (transform != null) {
-            float radians = transform.getRotation().yaw();
+            Rotation3f rotation = transform.getRotation();
+            float radians = rotation.yaw();
             float degrees = (float) Math.toDegrees(radians);
             float normalized = ((degrees % 360f) + 360f) % 360f;
             yaw = Rotation.closestOfDegrees(normalized);

@@ -21,6 +21,8 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.protocol.packets.connection.PongType;
+import com.hypixel.hytale.server.core.io.PacketHandler;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.listener.CosmeticListener;
@@ -36,6 +38,8 @@ import java.util.UUID;
 
 public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
     private static final float DOUBLE_JUMP_WINDOW = 0.65f;
+    private static final float MAX_PING_COMPENSATION = 0.6f;
+    private static final float PING_COMPENSATION_FACTOR = 2.0f;
 
     private static final String ANIM_IDLE = "Idle";
     private static final String ANIM_DEPLOY = "Deploy";
@@ -95,18 +99,14 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         boolean hadState = jumpState != null;
 
         if (equippedItemId == null) {
-            if (hadState) {
-                jumpStates.remove(uuid);
-            }
+            if (hadState) jumpStates.remove(uuid);
             return;
         }
 
         BackpackEntry entry = BackpackRegistry.getByItem(equippedItemId);
 
         if (entry == null || entry.isHelipack()) {
-            if (hadState) {
-                jumpStates.remove(uuid);
-            }
+            if (hadState) jumpStates.remove(uuid);
             return;
         }
 
@@ -123,8 +123,10 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         jumpState = jumpStates.computeIfAbsent(uuid, _ -> new JumpState());
 
         tickAnimationSequence(dt, jumpState, archetypeChunk.getReferenceTo(index), commandBuffer, config);
-
         restoreAnimationAfterRebuild(uuid, jumpState, archetypeChunk.getReferenceTo(index), commandBuffer, config);
+
+        float pingSeconds = resolvePingSeconds(uuid);
+        float effectiveWindow = DOUBLE_JUMP_WINDOW + Math.min(pingSeconds * PING_COMPENSATION_FACTOR, MAX_PING_COMPENSATION);
 
         jumpState.timeSinceLastTrigger += dt;
 
@@ -154,7 +156,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
                 if (!hasFuelItem && savedTime <= 0f) return;
             }
 
-            boolean withinWindow = jumpState.timeSinceLastTrigger <= DOUBLE_JUMP_WINDOW;
+            boolean withinWindow = jumpState.timeSinceLastTrigger <= effectiveWindow;
             if (jumpState.windowOpen && withinWindow) {
                 enableFlight(uuid, store, archetypeChunk.getReferenceTo(index), jumpState, armorComp, storageComp, backpackComp, commandBuffer, config);
                 jumpState.windowOpen = false;
@@ -172,20 +174,31 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
                 return;
             }
 
-            if (jumpState.timeSinceLastTrigger > DOUBLE_JUMP_WINDOW) {
+            if (jumpState.timeSinceLastTrigger > effectiveWindow) {
                 jumpState.windowOpen = false;
                 jumpState.timeSinceLastTrigger = Float.MAX_VALUE;
             }
         }
 
         if (justStartedJump && current.flying) {
-            boolean withinWindow = jumpState.timeSinceLastTrigger <= DOUBLE_JUMP_WINDOW;
+            boolean withinWindow = jumpState.timeSinceLastTrigger <= effectiveWindow;
             if (withinWindow) {
                 disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, armorComp, storageComp, commandBuffer, config);
             } else {
                 jumpState.timeSinceLastTrigger = 0f;
             }
         }
+    }
+
+    private float resolvePingSeconds(@Nonnull UUID uuid) {
+        PlayerRef playerRef = Universe.get().getPlayer(uuid);
+        if (playerRef == null) return 0f;
+        double pingMicros = playerRef.getPacketHandler()
+                .getPingInfo(PongType.Tick)
+                .getPingMetricSet()
+                .getAverage(PacketHandler.PingInfo.ONE_SECOND_INDEX);
+        if (pingMicros <= 0) return 0f;
+        return (float) (pingMicros / 1_000_000.0);
     }
 
     private void restoreAnimationAfterRebuild(
