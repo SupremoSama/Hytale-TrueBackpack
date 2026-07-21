@@ -105,7 +105,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
         BackpackEntry entry = BackpackRegistry.getByItem(equippedItemId);
 
-        if (entry == null || entry.isHelipack()) {
+        if (entry == null || !entry.isHelipack()) {
             if (hadState) jumpStates.remove(uuid);
             return;
         }
@@ -169,7 +169,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         }
 
         if (justLanded) {
-            if (isFlying(uuid)) {
+            if (isFlying(uuid) && !current.flying) {
                 disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, armorComp, storageComp, commandBuffer, config);
                 return;
             }
@@ -178,6 +178,11 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
                 jumpState.windowOpen = false;
                 jumpState.timeSinceLastTrigger = Float.MAX_VALUE;
             }
+        }
+
+        if (jumpState.isFlying && !current.flying && !justLanded) {
+            disableFlight(uuid, store, archetypeChunk.getReferenceTo(index), movementStatesComponent, jumpState, armorComp, storageComp, commandBuffer, config);
+            return;
         }
 
         if (justStartedJump && current.flying) {

@@ -443,7 +443,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     private static String resolveFuelItemId(@Nullable ItemStack equippedItem) {
         if (equippedItem == null) return null;
         BackpackEntry entry = BackpackRegistry.getByItem(equippedItem.getItemId());
-        if (entry == null || entry.isHelipack()) return null;
+        if (entry == null || !entry.isHelipack()) return null;
         HelipackConfig config = entry.helipackConfig();
         if (config == null || !config.requiresFuel()) return null;
         return config.fuelItemId();
