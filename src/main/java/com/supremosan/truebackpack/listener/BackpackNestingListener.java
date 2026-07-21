@@ -96,7 +96,7 @@ public class BackpackNestingListener extends RefSystem<EntityStore> {
 
     private String getFuelItemId(@Nonnull String itemId) {
         BackpackEntry entry = BackpackRegistry.getByItem(itemId);
-        if (entry == null || entry.isHelipack()) return null;
+        if (entry == null || !entry.isHelipack()) return null;
         HelipackConfig config = entry.helipackConfig();
         if (config == null || !config.requiresFuel()) return null;
         return config.fuelItemId();

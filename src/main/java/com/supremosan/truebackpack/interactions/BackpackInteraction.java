@@ -60,6 +60,9 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         }
 
         Ref<EntityStore> owningEntity = context.getOwningEntity();
+        if (owningEntity == null)
+            return;
+
         Store<EntityStore> store = owningEntity.getStore();
 
         Player player = store.getComponent(owningEntity, Player.getComponentType());
@@ -294,7 +297,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             @Nonnull BlockPosition targetBlock,
             boolean matchOnly) {
 
-        if (BackpackItemFactory.hasInstanceId(heldItem)) {
+        if (!BackpackItemFactory.hasInstanceId(heldItem)) {
             context.getState().state = InteractionState.Failed;
             return;
         }

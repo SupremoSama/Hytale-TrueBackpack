@@ -22,7 +22,7 @@ public class BackpackRegistry {
     public record BackpackEntry(String itemId, String blockId, short capacity, String model, String texture,
                                 @Nullable HelipackConfig helipackConfig) {
         public boolean isHelipack() {
-            return helipackConfig == null;
+            return helipackConfig != null;
         }
     }
 
