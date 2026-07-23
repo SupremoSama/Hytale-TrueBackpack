@@ -1,6 +1,8 @@
 package com.supremosan.truebackpack.events;
 
+import com.hypixel.hytale.component.AddReason;
 import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.dependency.Dependency;
@@ -27,10 +29,14 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.math.vector.Rotation3f;
+import com.hypixel.hytale.math.vector.Rotation3fc;
+import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.joml.Vector3d;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -87,6 +93,11 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
                 armorComp, storageComp, hotbarComp, backpackComp, playerUuid);
 
         if (backpacks.isEmpty()) return;
+
+        if (!world.getWorldConfig().isBlockTicking()) {
+            dropBackpackItems(backpacks, store, ref, commandBuffer);
+            return;
+        }
 
         int originX = (int) Math.floor(transform.getPosition().x);
         int originY = (int) Math.floor(transform.getPosition().y);
@@ -177,6 +188,39 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
             if (content != null && !content.isEmpty()) {
                 containerBlock.getItemContainer().setItemStackForSlot((short) i, content);
             }
+        }
+    }
+
+    private void dropBackpackItems(
+            @Nonnull List<BackpackEntry> backpacks,
+            @Nonnull Store<EntityStore> store,
+            @Nonnull Ref<EntityStore> ref,
+            @Nonnull CommandBuffer<EntityStore> commandBuffer) {
+
+        TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
+        if (transform == null) return;
+
+        World world = store.getExternalData().getWorld();
+
+        List<ItemStack> items = new ArrayList<>();
+        for (BackpackEntry entry : backpacks) {
+            ItemStack item = BackpackItemFactory.createFromContainer(entry.blockId, entry.contents);
+            if (item != null) {
+                items.add(item);
+            }
+        }
+
+        if (items.isEmpty()) return;
+
+        Vector3d position = transform.getPosition();
+        Vector3d dropPos = new Vector3d(position.x, position.y + 1, position.z);
+        Rotation3fc rotation = new Rotation3f(0f, 0f, 0f);
+
+        Holder<EntityStore>[] holders = ItemComponent.generateItemDrops(
+                store, items, dropPos, rotation);
+
+        if (holders.length > 0) {
+            commandBuffer.addEntities(holders, AddReason.SPAWN);
         }
     }
 
