@@ -56,22 +56,12 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
 
     private final Map<UUID, JumpState> jumpStates = new HashMap<>();
 
-    private static HelipackFlySystem INSTANCE;
-
     public HelipackFlySystem(
             ComponentType<EntityStore, Player> playerComponentType,
             ComponentType<EntityStore, MovementStatesComponent> movementStatesComponentType
     ) {
         this.playerComponentType = playerComponentType;
         this.movementStatesComponentType = movementStatesComponentType;
-        INSTANCE = this;
-    }
-
-    public static boolean isAnimating(UUID uuid) {
-        HelipackFlySystem instance = INSTANCE;
-        if (instance == null) return true;
-        JumpState jumpState = instance.jumpStates.get(uuid);
-        return jumpState == null || jumpState.animState == AnimState.IDLE;
     }
 
     @Nonnull

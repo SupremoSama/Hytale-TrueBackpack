@@ -148,10 +148,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         boolean isOtherArmorSlotModified = isArmorEvent && !isChestSlotModified;
 
         if (isOtherArmorSlotModified) {
-            if (HelipackFlySystem.isAnimating(UUID.fromString(playerUuid))) {
-                CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);
-            }
-
+            CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);
             return;
         }
 
@@ -160,12 +157,9 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         handleEquipContainerChange(entity, ref, store, armorComp, storageComp, backpackComp, hotbarComp, playerUuid);
 
         if (Boolean.TRUE.equals(REFRESH_UI.get(playerUuid))) {
-            int times = REFRESH_TIMES.merge(playerUuid, 1, Integer::sum);
-            if (times > 5) {
-                BackpackUIUpdater.updateBackpackUI(entity, ref, store);
-                REFRESH_UI.remove(playerUuid);
-                REFRESH_TIMES.remove(playerUuid);
-            }
+            BackpackUIUpdater.updateBackpackUI(entity, ref, store);
+            REFRESH_UI.remove(playerUuid);
+            REFRESH_TIMES.remove(playerUuid);
         }
     }
 
@@ -479,9 +473,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
         }
 
-        if (HelipackFlySystem.isAnimating(UUID.fromString(playerUuid))) {
-            CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);
-        }
+        CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);
     }
 
     private static void persistContainerToEquippedItem(
