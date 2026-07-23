@@ -217,6 +217,11 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             return;
         }
 
+        if (!world.getGameplayConfig().getWorldConfig().isBlockPlacementAllowed()) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
         BlockType supportBlockType = world.getBlockType(targetBlock.x, targetBlock.y, targetBlock.z);
         if (supportBlockType == null) {
             context.getState().state = InteractionState.Failed;
