@@ -13,6 +13,7 @@ import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.math.vector.Rotation3fc;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.filter.FilterActionType;
 import com.hypixel.hytale.server.core.modules.block.BlockModule;
 import com.hypixel.hytale.server.core.modules.block.components.ItemContainerBlock;
@@ -59,15 +60,33 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
         BackpackRegistry.BackpackEntry entry = BackpackRegistry.getByBlock(blockId);
         if (entry == null) return;
 
-        short capacity = entry.capacity();
+        short newCapacity = entry.capacity();
+        SimpleItemContainer oldContainer = itemContainerBlock.getItemContainer();
+        short oldCapacity = oldContainer.getCapacity();
+
+        if (oldCapacity == newCapacity) return;
+
+        SimpleItemContainer newContainer = new SimpleItemContainer(newCapacity);
+        short copyLimit = (short) Math.min(oldCapacity, newCapacity);
+
+        for (short slot = 0; slot < copyLimit; slot++) {
+            ItemStack stack = oldContainer.getItemStack(slot);
+            if (stack != null) {
+                newContainer.addItemStackToSlot(slot, stack);
+            }
+        }
+
+        itemContainerBlock.setItemContainer(newContainer);
+
+        short capacity = newContainer.getCapacity();
         for (short slot = 0; slot < capacity; slot++) {
-            itemContainerBlock.getItemContainer().setSlotFilter(FilterActionType.ADD, slot,
+            newContainer.setSlotFilter(FilterActionType.ADD, slot,
                     (_, _, _, item) ->
                             item == null
                                     || item.isEmpty()
                                     || BackpackRegistry.getByItem(item.getItem().getId()) == null);
 
-            itemContainerBlock.getItemContainer().setSlotFilter(FilterActionType.DROP, slot,
+            newContainer.setSlotFilter(FilterActionType.DROP, slot,
                     (_, _, _, _) -> false);
         }
     }

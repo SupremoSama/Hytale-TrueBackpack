@@ -94,7 +94,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
 
         if (backpacks.isEmpty()) return;
 
-        if (!world.getWorldConfig().isBlockTicking()) {
+        if (!world.getGameplayConfig().getWorldConfig().isBlockPlacementAllowed()) {
             dropBackpackItems(backpacks, store, ref, commandBuffer);
             return;
         }
