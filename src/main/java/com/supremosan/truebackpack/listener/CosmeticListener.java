@@ -12,6 +12,7 @@ import com.hypixel.hytale.protocol.Cosmetic;
 import com.hypixel.hytale.protocol.ItemArmor;
 import com.hypixel.hytale.protocol.PlayerSkin;
 import com.hypixel.hytale.server.core.asset.type.model.config.Model;
+import com.hypixel.hytale.server.core.asset.type.model.config.ModelAsset;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.cosmetics.CosmeticRegistry;
 import com.hypixel.hytale.server.core.cosmetics.CosmeticsModule;
@@ -59,6 +60,9 @@ public final class CosmeticListener {
             new ConcurrentHashMap<>();
 
     private static final Set<String> REBUILT_THIS_TICK = ConcurrentHashMap.newKeySet();
+
+    private static final Map<String, ModelAsset.AnimationSet> EXTRA_ANIMATION_ENTRIES =
+            new ConcurrentHashMap<>();
 
     private CosmeticListener() {
     }
@@ -115,6 +119,11 @@ public final class CosmeticListener {
         PLAYER_ATTACHMENTS.remove(playerUuid);
         PREVIOUS_INJECTED.remove(playerUuid);
         REBUILT_THIS_TICK.remove(playerUuid);
+    }
+
+    public static void registerExtraAnimations(@Nonnull String animationId,
+                                               @Nonnull ModelAsset.AnimationSet animationSet) {
+        EXTRA_ANIMATION_ENTRIES.put(animationId, animationSet);
     }
 
     public static boolean isProcessing() {
@@ -412,6 +421,12 @@ public final class CosmeticListener {
         String gradientId = !body.gradientId().isEmpty() ? body.gradientId() : current.getGradientId();
         String texture = body.texture() != null ? body.texture() : current.getTexture();
 
+        Map<String, ModelAsset.AnimationSet> animationSetMap = current.getAnimationSetMap();
+        if (!EXTRA_ANIMATION_ENTRIES.isEmpty()) {
+            animationSetMap = new LinkedHashMap<>(animationSetMap);
+            animationSetMap.putAll(EXTRA_ANIMATION_ENTRIES);
+        }
+
         return new Model(
                 current.getModelAssetId(),
                 current.getScale(),
@@ -426,7 +441,7 @@ public final class CosmeticListener {
                 current.getCrouchOffset(),
                 current.getSittingOffset(),
                 current.getSleepingOffset(),
-                current.getAnimationSetMap(),
+                animationSetMap,
                 current.getCamera(),
                 current.getLight(),
                 current.getParticles(),
