@@ -7,9 +7,12 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
+import com.hypixel.hytale.protocol.AnimationSlot;
+import com.hypixel.hytale.protocol.Rangef;
 import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.protocol.packets.player.SetMovementStates;
 import com.hypixel.hytale.server.core.asset.type.itemanimation.config.ItemPlayerAnimations;
+import com.hypixel.hytale.server.core.asset.type.model.config.ModelAsset;
 import com.hypixel.hytale.server.core.entity.*;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
@@ -41,10 +44,11 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
     private static final float MAX_PING_COMPENSATION = 0.6f;
     private static final float PING_COMPENSATION_FACTOR = 2.0f;
 
+    private static final String ANIM_IDLE = "Idle";
     private static final String ANIM_DEPLOY = "Deploy";
     private static final String ANIM_ACTIVE = "Active";
     private static final String ANIM_RETRACT = "Retract";
-    private static final AnimationSlot ANIM_SLOT = AnimationSlot.Action;
+    private static final AnimationSlot ANIM_SLOT = AnimationSlot.ServerAction;
     private static final float FALLBACK_ANIM_DURATION = 0.5f;
 
     private static final short CHEST_SLOT = 1;
@@ -62,6 +66,32 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
     ) {
         this.playerComponentType = playerComponentType;
         this.movementStatesComponentType = movementStatesComponentType;
+        registerHelipackAnimations();
+    }
+
+    private static void registerHelipackAnimations() {
+        ModelAsset.Animation idle = new ModelAsset.Animation(
+                ANIM_IDLE, "Characters/Animations/Helipack/helipack_idle.blockyanim",
+                1f, 0.2f, true, 1f, new int[0], null);
+        ModelAsset.Animation deploy = new ModelAsset.Animation(
+                ANIM_DEPLOY, "Characters/Animations/Helipack/helipack_deploy.blockyanim",
+                2f, 0.2f, false, 1f, new int[0], null);
+        ModelAsset.Animation active = new ModelAsset.Animation(
+                ANIM_ACTIVE, "Characters/Animations/Helipack/helipack_working.blockyanim",
+                2f, 0.2f, true, 1f, new int[0], null);
+        ModelAsset.Animation retract = new ModelAsset.Animation(
+                ANIM_RETRACT, "Characters/Animations/Helipack/helipack_deploy.blockyanim",
+                -2f, 0.2f, false, 1f, new int[0], null);
+
+        Rangef delay = new Rangef(0, 0);
+        CosmeticListener.registerExtraAnimations(ANIM_IDLE,
+                new ModelAsset.AnimationSet(new ModelAsset.Animation[]{idle}, delay));
+        CosmeticListener.registerExtraAnimations(ANIM_DEPLOY,
+                new ModelAsset.AnimationSet(new ModelAsset.Animation[]{deploy}, delay));
+        CosmeticListener.registerExtraAnimations(ANIM_ACTIVE,
+                new ModelAsset.AnimationSet(new ModelAsset.Animation[]{active}, delay));
+        CosmeticListener.registerExtraAnimations(ANIM_RETRACT,
+                new ModelAsset.AnimationSet(new ModelAsset.Animation[]{retract}, delay));
     }
 
     @Nonnull
