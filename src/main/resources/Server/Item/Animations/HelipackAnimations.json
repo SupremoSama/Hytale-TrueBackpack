@@ -14,19 +14,23 @@
   "Animations": {
     "Idle": {
       "ThirdPerson": "Characters/Animations/Helipack/helipack_idle.blockyanim",
+      "ThirdPersonMoving": "Characters/Animations/Helipack/helipack_idle.blockyanim",
       "Speed": 1,
       "Looping": true
     },
     "Deploy": {
       "ThirdPerson": "Characters/Animations/Helipack/helipack_deploy.blockyanim",
+      "ThirdPersonMoving": "Characters/Animations/Helipack/helipack_deploy.blockyanim",
       "Speed": 2
     },
     "Retract": {
       "ThirdPerson": "Characters/Animations/Helipack/helipack_deploy.blockyanim",
+      "ThirdPersonMoving": "Characters/Animations/Helipack/helipack_deploy.blockyanim",
       "Speed": -2
     },
     "Active": {
       "ThirdPerson": "Characters/Animations/Helipack/helipack_working.blockyanim",
+      "ThirdPersonMoving": "Characters/Animations/Helipack/helipack_working.blockyanim",
       "Looping": true,
       "Speed": 2
     }

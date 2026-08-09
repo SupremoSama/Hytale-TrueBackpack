@@ -9,7 +9,6 @@ import com.hypixel.hytale.component.RemoveReason;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.RefSystem;
-import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.math.vector.Rotation3fc;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
@@ -19,13 +18,13 @@ import com.hypixel.hytale.server.core.modules.block.BlockModule;
 import com.hypixel.hytale.server.core.modules.block.components.ItemContainerBlock;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.BlockChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import org.joml.Vector3d;
+import org.joml.Vector3i;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -64,29 +63,30 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
         SimpleItemContainer oldContainer = itemContainerBlock.getItemContainer();
         short oldCapacity = oldContainer.getCapacity();
 
-        if (oldCapacity == newCapacity) return;
+        if (oldCapacity != newCapacity) {
+            SimpleItemContainer newContainer = new SimpleItemContainer(newCapacity);
+            short copyLimit = (short) Math.min(oldCapacity, newCapacity);
 
-        SimpleItemContainer newContainer = new SimpleItemContainer(newCapacity);
-        short copyLimit = (short) Math.min(oldCapacity, newCapacity);
-
-        for (short slot = 0; slot < copyLimit; slot++) {
-            ItemStack stack = oldContainer.getItemStack(slot);
-            if (stack != null) {
-                newContainer.addItemStackToSlot(slot, stack);
+            for (short slot = 0; slot < copyLimit; slot++) {
+                ItemStack stack = oldContainer.getItemStack(slot);
+                if (stack != null) {
+                    newContainer.addItemStackToSlot(slot, stack);
+                }
             }
+
+            itemContainerBlock.setItemContainer(newContainer);
         }
 
-        itemContainerBlock.setItemContainer(newContainer);
-
-        short capacity = newContainer.getCapacity();
+        SimpleItemContainer container = itemContainerBlock.getItemContainer();
+        short capacity = container.getCapacity();
         for (short slot = 0; slot < capacity; slot++) {
-            newContainer.setSlotFilter(FilterActionType.ADD, slot,
+            container.setSlotFilter(FilterActionType.ADD, slot,
                     (_, _, _, item) ->
                             item == null
                                     || item.isEmpty()
                                     || BackpackRegistry.getByItem(item.getItem().getId()) == null);
 
-            newContainer.setSlotFilter(FilterActionType.DROP, slot,
+            container.setSlotFilter(FilterActionType.DROP, slot,
                     (_, _, _, _) -> false);
         }
     }
@@ -120,24 +120,16 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
         ItemStack backpackItem = BackpackItemFactory.createFromContainer(blockId, contents);
         if (backpackItem == null) return;
 
-        Ref<ChunkStore> chunkRef = blockStateInfo.getChunkRef();
-        if (!chunkRef.isValid()) return;
-
-        BlockChunk blockChunk = commandBuffer.getComponent(chunkRef, BlockChunk.getComponentType());
-        if (blockChunk == null) return;
-
-        int index = blockStateInfo.getIndex();
-        int x = ChunkUtil.xFromBlockInColumn(index);
-        int y = ChunkUtil.yFromBlockInColumn(index);
-        int z = ChunkUtil.zFromBlockInColumn(index);
+        Vector3i worldPos = new Vector3i();
+        if (!blockStateInfo.fillWorldPos(commandBuffer, worldPos)) return;
 
         World world = store.getExternalData().getWorld();
         Store<EntityStore> entityStore = world.getEntityStore().getStore();
 
         Vector3d dropPosition = new Vector3d(
-                ChunkUtil.worldCoordFromLocalCoord(blockChunk.getX(), x) + 0.5,
-                y,
-                ChunkUtil.worldCoordFromLocalCoord(blockChunk.getZ(), z) + 0.5
+                worldPos.x() + 0.5,
+                worldPos.y(),
+                worldPos.z() + 0.5
         );
 
         Rotation3fc rotation = new Rotation3f(0f, 0f, 0f);
