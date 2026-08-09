@@ -154,7 +154,6 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         InventoryComponent.Backpack backpackComp = archetypeChunk.getComponent(index, InventoryComponent.Backpack.getComponentType());
 
         MovementStates current = movementStatesComponent.getMovementStates();
-        MovementStates sent = movementStatesComponent.getSentMovementStates();
 
         jumpState = jumpStates.computeIfAbsent(uuid, _ -> new JumpState());
 
@@ -177,13 +176,16 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
             }
         }
 
-        boolean wasJumping = sent.jumping;
+        boolean wasJumping = jumpState.previousJumping;
         boolean isJumping = current.jumping;
         boolean justStartedJump = !wasJumping && isJumping;
 
-        boolean wasOnGround = sent.onGround;
+        boolean wasOnGround = jumpState.previousOnGround;
         boolean isOnGround = current.onGround;
         boolean justLanded = !wasOnGround && isOnGround;
+
+        jumpState.previousJumping = isJumping;
+        jumpState.previousOnGround = isOnGround;
 
         if (justStartedJump && !current.flying && !jumpState.isFlying) {
             if (config.requiresFuel()) {
@@ -506,6 +508,8 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         float animTimer = 0f;
         float deployDuration = FALLBACK_ANIM_DURATION;
         float retractDuration = FALLBACK_ANIM_DURATION;
+        boolean previousJumping = false;
+        boolean previousOnGround = true;
     }
 
     private record EquipLocation(ItemContainer container, short slot, ItemStack stack) {
