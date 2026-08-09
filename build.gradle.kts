@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.supremosan"
-version = "0.3.4"
+version = "0.3.5"
 val javaVersion = 25
 
 repositories {
@@ -27,7 +27,7 @@ hytale {
 
     // uncomment if you want to develop your mod against the pre-release version of the game.
     //
-    updateChannel = "release"
+    updateChannel = "pre-release"
 }
 
 java {

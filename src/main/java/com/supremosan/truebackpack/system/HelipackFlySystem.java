@@ -390,7 +390,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         MovementManager movementManager = store.getComponent(ref, MovementManager.getComponentType());
         if (movementManager == null) return;
 
-        movementManager.getSettings().canFly = true;
+        movementManager.getSettings().fly = FlyMode.Allowed;
         movementManager.getSettings().verticalFlySpeed = config.verticalFlySpeed();
         movementManager.getSettings().horizontalFlySpeed = config.horizontalFlySpeed();
         movementManager.update(playerRef.getPacketHandler());
@@ -428,7 +428,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> {
         float defaultVertical = movementManager.getDefaultSettings().verticalFlySpeed;
         float defaultHorizontal = movementManager.getDefaultSettings().horizontalFlySpeed;
 
-        movementManager.getSettings().canFly = false;
+        movementManager.getSettings().fly = FlyMode.Disabled;
         movementManager.getSettings().verticalFlySpeed = defaultVertical;
         movementManager.getSettings().horizontalFlySpeed = defaultHorizontal;
         movementManager.update(playerRef.getPacketHandler());

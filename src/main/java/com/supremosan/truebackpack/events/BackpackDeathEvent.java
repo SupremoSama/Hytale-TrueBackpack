@@ -172,7 +172,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         WorldChunk chunk = world.getChunk(ChunkUtil.indexChunkFromBlock(x, z));
         if (chunk == null) return;
 
-        chunk.placeBlock(x, y, z, entry.blockId, Rotation.None, Rotation.None, Rotation.None);
+        chunk.placeBlock(x, y, z, entry.blockId, Rotation.None, Rotation.None, Rotation.None, 0);
 
         Ref<ChunkStore> blockEntityRef = BlockModule.getBlockEntity(world, x, y, z);
         if (blockEntityRef == null || !blockEntityRef.isValid()) return;
@@ -199,8 +199,6 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
 
         TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
         if (transform == null) return;
-
-        World world = store.getExternalData().getWorld();
 
         List<ItemStack> items = new ArrayList<>();
         for (BackpackEntry entry : backpacks) {

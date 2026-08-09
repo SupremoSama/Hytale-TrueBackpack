@@ -266,7 +266,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        chunk.placeBlock(placeX, placeY, placeZ, entry.blockId(), yaw, Rotation.None, Rotation.None);
+        chunk.placeBlock(placeX, placeY, placeZ, entry.blockId(), yaw, Rotation.None, Rotation.None, 0);
 
         Ref<ChunkStore> blockEntityRef = BlockModule.getBlockEntity(world, placeX, placeY, placeZ);
         if (blockEntityRef == null || !blockEntityRef.isValid()) {
