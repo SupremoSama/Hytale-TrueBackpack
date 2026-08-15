@@ -3,7 +3,6 @@ package com.supremosan.truebackpack.interactions;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionState;
@@ -25,11 +24,11 @@ import com.hypixel.hytale.server.core.modules.entity.component.TransformComponen
 import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHandler;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInstantInteraction;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
+import com.supremosan.truebackpack.util.BlockPlacementUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -228,7 +227,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        int rotationIndex = world.getBlockRotationIndex(targetBlock.x, targetBlock.y, targetBlock.z);
+        int rotationIndex = BlockPlacementUtil.getRotationIndex(world, targetBlock.x, targetBlock.y, targetBlock.z);
         Map<BlockFace, BlockFaceSupport[]> supporting = supportBlockType.getSupporting(rotationIndex);
         if (supporting == null || !supporting.containsKey(BlockFace.UP)) {
             context.getState().state = InteractionState.Failed;
@@ -260,13 +259,10 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             yaw = Rotation.closestOfDegrees(normalized);
         }
 
-        WorldChunk chunk = world.getChunk(ChunkUtil.indexChunkFromBlock(placeX, placeZ));
-        if (chunk == null) {
+        if (!BlockPlacementUtil.placeBlock(world, placeX, placeY, placeZ, entry.blockId(), yaw, Rotation.None, Rotation.None)) {
             context.getState().state = InteractionState.Failed;
             return;
         }
-
-        chunk.placeBlock(placeX, placeY, placeZ, entry.blockId(), yaw, Rotation.None, Rotation.None, 0);
 
         Ref<ChunkStore> blockEntityRef = BlockModule.getBlockEntity(world, placeX, placeY, placeZ);
         if (blockEntityRef == null || !blockEntityRef.isValid()) {
