@@ -7,7 +7,6 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.dependency.Dependency;
 import com.hypixel.hytale.component.query.Query;
-import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFace;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFaceSupport;
@@ -26,7 +25,6 @@ import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathSystems;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.math.vector.Rotation3f;
@@ -35,6 +33,7 @@ import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
+import com.supremosan.truebackpack.util.BlockPlacementUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.joml.Vector3d;
 
@@ -125,7 +124,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
     }
 
     private static boolean hasUpSupport(@Nonnull World world, int x, int y, int z, @Nonnull BlockType blockType) {
-        int rotationIndex = world.getBlockRotationIndex(x, y, z);
+        int rotationIndex = BlockPlacementUtil.getRotationIndex(world, x, y, z);
         Map<BlockFace, BlockFaceSupport[]> supporting = blockType.getSupporting(rotationIndex);
         return supporting != null && supporting.containsKey(BlockFace.UP);
     }
@@ -169,10 +168,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
             @Nonnull BackpackEntry entry,
             int x, int y, int z) {
 
-        WorldChunk chunk = world.getChunk(ChunkUtil.indexChunkFromBlock(x, z));
-        if (chunk == null) return;
-
-        chunk.placeBlock(x, y, z, entry.blockId, Rotation.None, Rotation.None, Rotation.None, 0);
+        if (!BlockPlacementUtil.placeBlock(world, x, y, z, entry.blockId, Rotation.None, Rotation.None, Rotation.None)) return;
 
         Ref<ChunkStore> blockEntityRef = BlockModule.getBlockEntity(world, x, y, z);
         if (blockEntityRef == null || !blockEntityRef.isValid()) return;
