@@ -129,7 +129,17 @@ public final class CosmeticUtils {
                                               @Nullable String texture,
                                               @Nullable String gradientSet,
                                               @Nullable String gradientId) {
-        return new ModelAttachment(model, texture, gradientSet, gradientId, DEFAULT_SCALE);
+        return new ModelAttachment(
+                model,
+                texture,
+                emptyToNull(gradientSet),
+                emptyToNull(gradientId),
+                DEFAULT_SCALE);
+    }
+
+    @Nullable
+    private static String emptyToNull(@Nullable String value) {
+        return value == null || value.isEmpty() ? null : value;
     }
 
     private static <K, V> boolean hasEntries(@Nullable Map<K, V> map) {

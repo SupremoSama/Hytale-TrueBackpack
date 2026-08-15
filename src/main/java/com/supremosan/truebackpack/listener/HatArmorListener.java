@@ -238,7 +238,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
         if (itemId == null) return null;
         HatEntry entry = HatRegistry.getByItem(itemId);
         if (entry == null) return null;
-        return new ModelAttachment(entry.modelPath(), entry.texturePath(), "", "", 1.0);
+        return new ModelAttachment(entry.modelPath(), entry.texturePath(), null, null, 1.0);
     }
 
     @Nullable
