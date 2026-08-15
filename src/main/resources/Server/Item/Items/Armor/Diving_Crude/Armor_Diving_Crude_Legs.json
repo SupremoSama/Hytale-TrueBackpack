@@ -1,0 +1,67 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Armor_Diving_Crude_Legs.name"
+  },
+  "Parent": "Armor_Iron_Legs",
+  "ItemLevel": 30,
+  "Icon": "Icons/ItemsGenerated/Armor_Diving_Crude_Legs.png",
+  "IconProperties": {
+    "Rotation": [
+      22.5,
+      45,
+      22.5
+    ],
+    "Scale": 0.465,
+    "Translation": [
+      -6.61,
+      -1.81
+    ]
+  },
+  "Model": "Items/Armors/Diving_Crude/Legs.blockymodel",
+  "Texture": "Items/Armors/Diving_Crude/Legs_Texture.png",
+  "Armor": {
+    "ArmorSlot": "Legs",
+    "BaseDamageResistance": 0,
+    "DamageResistance": {
+      "Physical": [
+        {
+          "Amount": 0.07,
+          "CalculationType": "Percent"
+        }
+      ],
+      "Projectile": [
+        {
+          "Amount": 0.07,
+          "CalculationType": "Percent"
+        }
+      ]
+    },
+    "StatModifiers": {
+      "Oxygen": [
+        {
+          "Amount": 100,
+          "CalculationType": "Additive"
+        }
+      ],
+      "Health": [
+        {
+          "Amount": 13,
+          "CalculationType": "Additive"
+        }
+      ]
+    },
+    "CosmeticsToHide": [
+      "Shoes"
+    ]
+  },
+  "Tags": {
+    "Type": [
+      "Armor"
+    ],
+    "Family": [
+      "Diving"
+    ]
+  },
+  "MaxDurability": 120,
+  "Quality": "Uncommon"
+}
