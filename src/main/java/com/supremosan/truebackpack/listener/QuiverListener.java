@@ -34,10 +34,10 @@ public class QuiverListener {
     private static final String ARROW_ID_FRAGMENT = "Weapon_Arrow";
 
     private static final ModelAttachment QUIVER_ATTACHMENT =
-            new ModelAttachment("Items/Back/Quiver.blockymodel", "Items/Back/Quiver_Texture.png", "", "", 1.0);
+            new ModelAttachment("Items/Back/Quiver.blockymodel", "Items/Back/Quiver_Texture.png", null, null, 1.0);
 
     private static final ModelAttachment QUIVER_BACKPACK_ATTACHMENT =
-            new ModelAttachment("Items/Quivers/Horizontal_Quiver.blockymodel", "Items/Quivers/Horizontal_Quiver_Texture.png", "", "", 1.0);
+            new ModelAttachment("Items/Quivers/Horizontal_Quiver.blockymodel", "Items/Quivers/Horizontal_Quiver_Texture.png", null, null, 1.0);
 
     private static final Map<String, Boolean> PLAYER_HAS_ARROW = new ConcurrentHashMap<>();
 

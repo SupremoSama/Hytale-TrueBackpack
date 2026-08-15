@@ -64,7 +64,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
 
     public static void registerBackpack(@Nonnull String baseItemId, short sizeBonus, @Nonnull String modelPath, @Nonnull String texturePath) {
         BACKPACK_SIZES.put(baseItemId, sizeBonus);
-        BACKPACK_VISUALS.put(baseItemId, new String[]{modelPath, texturePath, "", ""});
+        BACKPACK_VISUALS.put(baseItemId, new String[]{modelPath, texturePath, null, null});
     }
 
     public static void addEquipChangeListener(@Nonnull EquipChangeListener listener) {
@@ -461,7 +461,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         if (equippedItem != null && backpackVisible) {
             BackpackVisualOverride.Override override = BackpackVisualOverride.get(UUID.fromString(playerUuid));
             if (override != null) {
-                visual = new ModelAttachment(override.model(), override.texture(), "", "", 1.0);
+                visual = new ModelAttachment(override.model(), override.texture(), null, null, 1.0);
             } else {
                 visual = resolveVisual(equippedItem.getItemId());
             }

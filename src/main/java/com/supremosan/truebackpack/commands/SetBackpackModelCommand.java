@@ -57,7 +57,7 @@ public class SetBackpackModelCommand extends AbstractCommand {
         BackpackVisualOverride.set(uuid, model, texture);
 
         if (BackpackArmorListener.hasEquippedBackpack(uuidStr)) {
-            ModelAttachment attachment = new ModelAttachment(model, texture, "", "", 1.0);
+            ModelAttachment attachment = new ModelAttachment(model, texture, null, null, 1.0);
             CosmeticListener.putAttachment(uuidStr, ATTACHMENT_SLOT_KEY, attachment);
             CosmeticListener.scheduleRebuildForUuid(uuidStr);
         }

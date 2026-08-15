@@ -7,6 +7,8 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.RefChangeSystem;
+import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.Cosmetic;
 import com.hypixel.hytale.protocol.ItemArmor;
@@ -19,6 +21,7 @@ import com.hypixel.hytale.server.core.cosmetics.CosmeticsModule;
 import com.hypixel.hytale.server.core.cosmetics.PlayerSkinPart;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.event.events.ecs.InventoryChangeEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
@@ -74,6 +77,7 @@ public final class CosmeticListener {
         plugin.getEntityStoreRegistry().registerSystem(new OnPlayerSettingsChange());
         plugin.getEntityStoreRegistry().registerSystem(new OnPlayerSkinChange());
         plugin.getEntityStoreRegistry().registerSystem(new OnModelChange());
+        plugin.getEntityStoreRegistry().registerSystem(new OnArmorChange());
 
         LOGGER.atInfo().log("[TrueBackpack] CosmeticListener registered");
     }
@@ -234,6 +238,46 @@ public final class CosmeticListener {
         }
     }
 
+    public static final class OnArmorChange extends EntityEventSystem<EntityStore, InventoryChangeEvent> {
+
+        public OnArmorChange() {
+            super(InventoryChangeEvent.class);
+        }
+
+        @Override
+        public void handle(
+                int index,
+                @Nonnull ArchetypeChunk<EntityStore> archetypeChunk,
+                @Nonnull Store<EntityStore> store,
+                @Nonnull CommandBuffer<EntityStore> commandBuffer,
+                @Nonnull InventoryChangeEvent event) {
+            if (isProcessing()) {
+                return;
+            }
+
+            if (event.getComponentType() != InventoryComponent.Armor.getComponentType()) {
+                return;
+            }
+
+            Player player = archetypeChunk.getComponent(index, Player.getComponentType());
+            if (player == null) {
+                return;
+            }
+
+            Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
+            String playerUuid = resolveUuid(store, ref);
+            if (playerUuid != null) {
+                scheduleRebuild(player, store, ref, playerUuid);
+            }
+        }
+
+        @Nonnull
+        @Override
+        public Query<EntityStore> getQuery() {
+            return InventoryComponent.Armor.getComponentType();
+        }
+    }
+
     private abstract static class RebuildOnChangeSystem<T extends Component<EntityStore>>
             extends RefChangeSystem<EntityStore, T> {
 
@@ -391,7 +435,11 @@ public final class CosmeticListener {
         collectModels(models, registry.getUndertops());
         collectModels(models, registry.getEarAccessories());
 
-        attachments.removeIf(attachment -> attachment.getModel() != null && models.contains(attachment.getModel()));
+        attachments.removeIf(attachment -> {
+            String model = attachment.getModel();
+            return model != null
+                    && (models.contains(model) || model.startsWith("Items/Hats/InnerHair_"));
+        });
     }
 
     private static void collectModels(@Nonnull Set<String> models,
@@ -505,7 +553,11 @@ public final class CosmeticListener {
             }
 
             if (itemArmor.cosmeticsToHide != null) {
-                Collections.addAll(hidden, itemArmor.cosmeticsToHide);
+                for (Cosmetic cosmetic : itemArmor.cosmeticsToHide) {
+                    if (cosmetic != Cosmetic.Ear) {
+                        hidden.add(cosmetic);
+                    }
+                }
             }
         }
 
@@ -594,30 +646,34 @@ public final class CosmeticListener {
             return;
         }
 
-        PlayerSkinPart.HeadAccessoryType headAccessoryType = resolveHeadAccessoryType(skin, registry);
-        boolean armorHidesHeadAccessory = hiddenCosmetics.contains(Cosmetic.HeadAccessory);
-        boolean useGeneric = armorHidesHeadAccessory
-                || headAccessoryType == PlayerSkinPart.HeadAccessoryType.HalfCovering;
+        if (variantId != null && textureId != null
+                && part.getVariants() != null
+                && !part.getVariants().containsKey(variantId)
+                && part.getVariants().containsKey(textureId)) {
+            String resolvedVariant = textureId;
+            textureId = variantId;
+            variantId = resolvedVariant;
+        }
 
-        if (headAccessoryType == PlayerSkinPart.HeadAccessoryType.FullyCovering && !armorHidesHeadAccessory) {
+        PlayerSkinPart.HeadAccessoryType headAccessoryType = resolveHeadAccessoryType(skin, registry);
+        boolean armorHidesHaircut = hiddenCosmetics.contains(Cosmetic.Haircut);
+
+        if (headAccessoryType == PlayerSkinPart.HeadAccessoryType.FullyCovering
+                && !hiddenCosmetics.contains(Cosmetic.HeadAccessory)) {
             return;
         }
 
-        if (useGeneric && part.doesRequireGenericHaircut() && part.getHairType() != null) {
-            String genericId = "Generic" + part.getHairType();
-            PlayerSkinPart generic = registry.getHaircuts().get(genericId);
-
-            if (generic != null) {
-                ModelAttachment attachment = CosmeticUtils.resolveAttachment(
-                        generic,
-                        textureId,
-                        variantId,
-                        bodyGradientId
-                );
-
-                attachments.add(attachment);
-                return;
-            }
+        if (armorHidesHaircut && part.getHairType() != null) {
+            String hairType = part.getHairType().name();
+            String gradientId = textureId != null ? textureId : "Black";
+            attachments.add(new ModelAttachment(
+                    "Items/Hats/InnerHair_" + hairType + ".blockymodel",
+                    "Items/Hats/InnerHair_" + hairType + "_Greyscale.png",
+                    "Hair",
+                    gradientId,
+                    1.0
+            ));
+            return;
         }
 
         ModelAttachment attachment = CosmeticUtils.resolveAttachment(
@@ -665,38 +721,50 @@ public final class CosmeticListener {
                                 @Nonnull Map<String, PlayerSkinPart> registry,
                                 @Nonnull String bodyGradientId,
                                 boolean useBodyGradientWhenMissingTexture) {
+        ModelAttachment attachment = resolveSkinPartAttachment(
+                rawId, registry, bodyGradientId, useBodyGradientWhenMissingTexture);
+        if (attachment != null) {
+            attachments.add(attachment);
+        }
+    }
+
+    @Nullable
+    private static ModelAttachment resolveSkinPartAttachment(
+            @Nullable String rawId,
+            @Nonnull Map<String, PlayerSkinPart> registry,
+            @Nonnull String bodyGradientId,
+            boolean useBodyGradientWhenMissingTexture) {
         if (rawId == null) {
-            return;
+            return null;
         }
 
         String[] parts = CosmeticUtils.splitId(rawId);
         String assetId = CosmeticUtils.part(parts, 0);
-
         if (assetId == null) {
-            return;
+            return null;
         }
 
         PlayerSkinPart part = registry.get(assetId);
         if (part == null) {
-            return;
+            return null;
         }
 
         String textureId = CosmeticUtils.part(parts, 1);
-
         if (textureId == null && useBodyGradientWhenMissingTexture) {
             textureId = bodyGradientId;
         }
 
         String variantId = CosmeticUtils.part(parts, 2);
+        if (variantId != null && textureId != null
+                && part.getVariants() != null
+                && !part.getVariants().containsKey(variantId)
+                && part.getVariants().containsKey(textureId)) {
+            String resolvedVariant = textureId;
+            textureId = variantId;
+            variantId = resolvedVariant;
+        }
 
-        ModelAttachment attachment = CosmeticUtils.resolveAttachment(
-                part,
-                textureId,
-                variantId,
-                bodyGradientId
-        );
-
-        attachments.add(attachment);
+        return CosmeticUtils.resolveAttachment(part, textureId, variantId, bodyGradientId);
     }
 
     private static void upsertAttachmentByModel(@Nonnull List<ModelAttachment> attachments,
