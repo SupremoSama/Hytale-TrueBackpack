@@ -14,6 +14,7 @@ import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.io.adapter.PacketFilter;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.supremosan.truebackpack.data.BackpackDataStorage;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.ui.BackpackTooltipProvider;
 import org.bson.BsonDocument;
 
@@ -38,7 +39,8 @@ public class BackpackTooltipListener {
     private static PacketFilter outboundFilter;
     private static PacketFilter inboundFilter;
 
-    private BackpackTooltipListener() {}
+    private BackpackTooltipListener() {
+    }
 
     public static void register() {
         outboundFilter = PacketAdapters.registerOutbound(BackpackTooltipListener::onOutbound);
@@ -54,7 +56,8 @@ public class BackpackTooltipListener {
         if (outboundFilter == null) return;
         try {
             PacketAdapters.deregisterOutbound(outboundFilter);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         outboundFilter = null;
     }
 
@@ -62,7 +65,8 @@ public class BackpackTooltipListener {
         if (inboundFilter == null) return;
         try {
             PacketAdapters.deregisterInbound(inboundFilter);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         inboundFilter = null;
     }
 
@@ -157,7 +161,7 @@ public class BackpackTooltipListener {
             if (item == null || item.itemId.isBlank()) continue;
             if (isVirtualId(item.itemId)) continue;
 
-            if (BackpackArmorListener.getBackpackSize(item.itemId) == 0) continue;
+            if (!BackpackRegistry.isBackpack(item.itemId)) continue;
 
             ItemStack stack = buildFakeStack(item);
             if (stack == null) continue;
@@ -193,7 +197,7 @@ public class BackpackTooltipListener {
         if (chest == null || chest.itemId.isBlank()) return;
         if (isVirtualId(chest.itemId)) return;
 
-        short size = BackpackArmorListener.getBackpackSize(chest.itemId);
+        short size = BackpackRegistry.getCapacity(chest.itemId);
         if (size == 0) return;
 
         List<ItemStack> contents = BackpackDataStorage.getLiveContents(uuid.toString());
@@ -250,6 +254,7 @@ public class BackpackTooltipListener {
 
         if (sent.size() > 500) {
             sent.clear();
+            last.clear();
         }
     }
 

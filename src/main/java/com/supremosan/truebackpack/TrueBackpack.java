@@ -19,11 +19,16 @@ import com.supremosan.truebackpack.config.hat.HatConfigService;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.events.BackpackDeathEvent;
+import com.supremosan.truebackpack.interactions.BackpackInteraction;
+import com.supremosan.truebackpack.listener.BackpackArmorListener;
+import com.supremosan.truebackpack.listener.BackpackNestingListener;
+import com.supremosan.truebackpack.listener.BackpackTooltipListener;
+import com.supremosan.truebackpack.listener.CosmeticListener;
+import com.supremosan.truebackpack.listener.HatArmorListener;
+import com.supremosan.truebackpack.listener.QuiverListener;
 import com.supremosan.truebackpack.system.BackpackContainerSystem;
 import com.supremosan.truebackpack.system.HatDurabilitySystem;
 import com.supremosan.truebackpack.system.HelipackFlySystem;
-import com.supremosan.truebackpack.interactions.BackpackInteraction;
-import com.supremosan.truebackpack.listener.*;
 
 import java.util.UUID;
 import java.util.logging.Level;
@@ -77,7 +82,7 @@ public class TrueBackpack extends JavaPlugin {
             String uuidStr = uuid.toString();
 
             BackpackTooltipListener.onPlayerLeave(uuid);
-            BackpackArmorListener.onPlayerRemove(uuidStr, null, null, null, null);
+            BackpackArmorListener.onPlayerRemove(uuidStr);
             CosmeticListener.onPlayerLeave(uuidStr);
             HatArmorListener.onPlayerRemove(uuidStr);
             HatDurabilitySystem.onPlayerRemove(uuidStr);

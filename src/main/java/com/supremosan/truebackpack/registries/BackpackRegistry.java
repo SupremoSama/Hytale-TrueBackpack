@@ -1,16 +1,29 @@
 package com.supremosan.truebackpack.registries;
 
-import com.supremosan.truebackpack.listener.BackpackArmorListener;
-
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class BackpackRegistry {
+public final class BackpackRegistry {
 
-    public record HelipackConfig(String fuelItemId, String itemAnimationsId, float verticalFlySpeed,
-                                 float horizontalFlySpeed, float fuelConsumeInterval, int fuelConsumeAmount) {
-        public static HelipackConfig of(String fuelItemId, String itemAnimationsId, float verticalFlySpeed, float horizontalFlySpeed, float fuelConsumeInterval, int fuelConsumeAmount) {
+    public record HelipackConfig(
+            String fuelItemId,
+            String itemAnimationsId,
+            float verticalFlySpeed,
+            float horizontalFlySpeed,
+            float fuelConsumeInterval,
+            int fuelConsumeAmount
+    ) {
+        public static HelipackConfig of(
+                String fuelItemId,
+                String itemAnimationsId,
+                float verticalFlySpeed,
+                float horizontalFlySpeed,
+                float fuelConsumeInterval,
+                int fuelConsumeAmount
+        ) {
             return new HelipackConfig(fuelItemId, itemAnimationsId, verticalFlySpeed, horizontalFlySpeed, fuelConsumeInterval, fuelConsumeAmount);
         }
 
@@ -19,23 +32,30 @@ public class BackpackRegistry {
         }
     }
 
-    public record BackpackEntry(String itemId, String blockId, short capacity, String model, String texture,
-                                @Nullable HelipackConfig helipackConfig) {
+    public record BackpackEntry(
+            String itemId,
+            String blockId,
+            short capacity,
+            String model,
+            String texture,
+            @Nullable HelipackConfig helipackConfig
+    ) {
         public boolean isHelipack() {
             return helipackConfig != null;
         }
     }
 
-    private static final Map<String, BackpackEntry> BY_ITEM = new HashMap<>();
-    private static final Map<String, BackpackEntry> BY_BLOCK = new HashMap<>();
+    private static final Map<String, BackpackEntry> REGISTRY = new LinkedHashMap<>();
+    private static final Map<String, BackpackEntry> BY_BLOCK = new LinkedHashMap<>();
+    private static final Map<String, BackpackEntry> LOOKUP_CACHE = new ConcurrentHashMap<>();
 
     private BackpackRegistry() {
     }
 
     public static void clear() {
-        BY_ITEM.clear();
+        REGISTRY.clear();
         BY_BLOCK.clear();
-        BackpackArmorListener.clear();
+        LOOKUP_CACHE.clear();
     }
 
     public static void register(String itemId, String blockId, short capacity, String model, String texture) {
@@ -48,23 +68,50 @@ public class BackpackRegistry {
 
     private static void register(String itemId, String blockId, short capacity, String model, String texture, @Nullable HelipackConfig helipackConfig) {
         BackpackEntry entry = new BackpackEntry(itemId, blockId, capacity, model, texture, helipackConfig);
-        BY_ITEM.put(itemId, entry);
-        if (blockId != null && !blockId.isEmpty()) BY_BLOCK.put(blockId, entry);
-        BackpackArmorListener.registerBackpack(itemId, capacity, model, texture);
+        REGISTRY.put(itemId, entry);
+        if (blockId != null && !blockId.isEmpty()) {
+            BY_BLOCK.put(blockId, entry);
+        }
+        LOOKUP_CACHE.clear();
     }
 
     @Nullable
-    public static BackpackEntry getByItem(String itemId) {
-        BackpackEntry exact = BY_ITEM.get(itemId);
-        if (exact != null) return exact;
-        for (Map.Entry<String, BackpackEntry> e : BY_ITEM.entrySet()) {
-            if (itemId.contains(e.getKey())) return e.getValue();
+    public static BackpackEntry getByItem(@Nullable String itemId) {
+        if (itemId == null || itemId.isEmpty()) return null;
+
+        String normalized = itemId.toLowerCase();
+        BackpackEntry cached = LOOKUP_CACHE.get(normalized);
+        if (cached != null) return cached;
+
+        BackpackEntry direct = REGISTRY.get(itemId);
+        if (direct != null) {
+            LOOKUP_CACHE.put(normalized, direct);
+            return direct;
         }
+
+        for (Map.Entry<String, BackpackEntry> e : REGISTRY.entrySet()) {
+            String key = e.getKey().toLowerCase();
+            if (key.equals(normalized) || key.endsWith(":" + normalized) || normalized.endsWith(":" + key)) {
+                LOOKUP_CACHE.put(normalized, e.getValue());
+                return e.getValue();
+            }
+        }
+
         return null;
     }
 
     @Nullable
-    public static BackpackEntry getByBlock(String blockId) {
+    public static BackpackEntry getByBlock(@Nullable String blockId) {
+        if (blockId == null || blockId.isEmpty()) return null;
         return BY_BLOCK.get(blockId);
+    }
+
+    public static boolean isBackpack(@Nullable String itemId) {
+        return getByItem(itemId) != null;
+    }
+
+    public static short getCapacity(@Nullable String itemId) {
+        BackpackEntry entry = getByItem(itemId);
+        return entry != null ? entry.capacity() : 0;
     }
 }

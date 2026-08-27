@@ -1,14 +1,14 @@
 package com.supremosan.truebackpack.listener;
 
+import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Component;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
-import com.hypixel.hytale.component.system.RefChangeSystem;
 import com.hypixel.hytale.component.system.EntityEventSystem;
-import com.hypixel.hytale.component.ArchetypeChunk;
+import com.hypixel.hytale.component.system.RefChangeSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.Cosmetic;
 import com.hypixel.hytale.protocol.ItemArmor;
@@ -38,16 +38,7 @@ import com.supremosan.truebackpack.cosmetic.CosmeticUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class CosmeticListener {
@@ -66,6 +57,8 @@ public final class CosmeticListener {
 
     private static final Map<String, ModelAsset.AnimationSet> EXTRA_ANIMATION_ENTRIES =
             new ConcurrentHashMap<>();
+
+    private static volatile Set<String> CACHED_SKIN_MODELS = null;
 
     private CosmeticListener() {
     }
@@ -86,7 +79,7 @@ public final class CosmeticListener {
                                      @Nonnull String slotKey,
                                      @Nonnull ModelAttachment attachment) {
         PLAYER_ATTACHMENTS
-                .computeIfAbsent(playerUuid, ignored -> new LinkedHashMap<>())
+                .computeIfAbsent(playerUuid, _ -> new LinkedHashMap<>())
                 .put(slotKey, attachment);
     }
 
@@ -411,29 +404,36 @@ public final class CosmeticListener {
         return injected;
     }
 
+    private static Set<String> getRegisteredSkinModels(@Nonnull CosmeticRegistry registry) {
+        if (CACHED_SKIN_MODELS == null) {
+            Set<String> models = new HashSet<>(128);
+            collectModels(models, registry.getSkinFeatures());
+            collectModels(models, registry.getFaces());
+            collectModels(models, registry.getMouths());
+            collectModels(models, registry.getEars());
+            collectModels(models, registry.getEyebrows());
+            collectModels(models, registry.getEyes());
+            collectModels(models, registry.getUnderwear());
+            collectModels(models, registry.getHaircuts());
+            collectModels(models, registry.getFacialHairs());
+            collectModels(models, registry.getCapes());
+            collectModels(models, registry.getFaceAccessories());
+            collectModels(models, registry.getGloves());
+            collectModels(models, registry.getHeadAccessories());
+            collectModels(models, registry.getOverpants());
+            collectModels(models, registry.getOvertops());
+            collectModels(models, registry.getPants());
+            collectModels(models, registry.getShoes());
+            collectModels(models, registry.getUndertops());
+            collectModels(models, registry.getEarAccessories());
+            CACHED_SKIN_MODELS = Collections.unmodifiableSet(models);
+        }
+        return CACHED_SKIN_MODELS;
+    }
+
     private static void removeRegisteredSkinAttachments(@Nonnull List<ModelAttachment> attachments,
                                                         @Nonnull CosmeticRegistry registry) {
-        Set<String> models = new HashSet<>();
-
-        collectModels(models, registry.getSkinFeatures());
-        collectModels(models, registry.getFaces());
-        collectModels(models, registry.getMouths());
-        collectModels(models, registry.getEars());
-        collectModels(models, registry.getEyebrows());
-        collectModels(models, registry.getEyes());
-        collectModels(models, registry.getUnderwear());
-        collectModels(models, registry.getHaircuts());
-        collectModels(models, registry.getFacialHairs());
-        collectModels(models, registry.getCapes());
-        collectModels(models, registry.getFaceAccessories());
-        collectModels(models, registry.getGloves());
-        collectModels(models, registry.getHeadAccessories());
-        collectModels(models, registry.getOverpants());
-        collectModels(models, registry.getOvertops());
-        collectModels(models, registry.getPants());
-        collectModels(models, registry.getShoes());
-        collectModels(models, registry.getUndertops());
-        collectModels(models, registry.getEarAccessories());
+        Set<String> models = getRegisteredSkinModels(registry);
 
         attachments.removeIf(attachment -> {
             String model = attachment.getModel();

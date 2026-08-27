@@ -1,36 +1,28 @@
 package com.supremosan.truebackpack.config.backpack;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.supremosan.truebackpack.config.ConfigHelper;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class BackpackConfigService {
 
-    private static final Gson GSON = new Gson();
-    private static final Gson PRETTY = new GsonBuilder().setPrettyPrinting().create();
+    private static final String CONFIG_FILE = "backpacks.json";
 
     private BackpackConfigService() {
     }
 
     public static void reloadAndRegister(Logger logger) throws Exception {
-        BackpackConfigAssets.ensureDefaultConfigCopied(logger);
-        BackpackConfig cfg = loadConfig();
+        BackpackConfig cfg = loadConfig(logger);
         BackpackRegistry.clear();
         int registered = registerAll(cfg, logger);
         logger.log(Level.INFO, "[TrueBackpack] Reload OK. Registered=" + registered);
     }
 
     public static boolean updateHelipackFuel(String itemId, String fuelItemId, int fuelConsumeAmount, float fuelConsumeInterval, Logger logger) throws Exception {
-        BackpackConfig cfg = loadConfig();
+        BackpackConfig cfg = loadConfig(logger);
 
         BackpackConfig.Entry target = cfg.backpacks.stream()
                 .filter(e -> e != null && itemId.equalsIgnoreCase(e.itemId) && e.isHelipack())
@@ -43,30 +35,19 @@ public final class BackpackConfigService {
         target.helipack.fuelConsumeAmount = fuelConsumeAmount;
         target.helipack.fuelConsumeInterval = fuelConsumeInterval;
 
-        saveConfig(cfg);
+        ConfigHelper.save(CONFIG_FILE, cfg);
         BackpackRegistry.clear();
         registerAll(cfg, logger);
         logger.log(Level.INFO, "[TrueBackpack] Updated helipack fuel for '" + itemId + "'");
         return true;
     }
 
-    private static BackpackConfig loadConfig() throws Exception {
-        Path p = BackpackConfigPaths.configPath();
-
-        try (Reader r = Files.newBufferedReader(p)) {
-            BackpackConfig cfg = GSON.fromJson(r, BackpackConfig.class);
-            if (cfg == null) cfg = new BackpackConfig();
-            if (cfg.backpacks == null) cfg.backpacks = new ArrayList<>();
-            return cfg;
+    private static BackpackConfig loadConfig(Logger logger) throws Exception {
+        BackpackConfig cfg = ConfigHelper.loadOrCreate(CONFIG_FILE, BackpackConfig.class, logger);
+        if (cfg.backpacks == null) {
+            cfg.backpacks = new ArrayList<>();
         }
-    }
-
-    private static void saveConfig(BackpackConfig cfg) throws Exception {
-        Path p = BackpackConfigPaths.configPath();
-
-        try (Writer w = Files.newBufferedWriter(p, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-            PRETTY.toJson(cfg, w);
-        }
+        return cfg;
     }
 
     private static int registerAll(BackpackConfig cfg, Logger logger) {

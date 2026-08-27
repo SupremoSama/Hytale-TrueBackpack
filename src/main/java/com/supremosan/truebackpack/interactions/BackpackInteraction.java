@@ -3,11 +3,11 @@ package com.supremosan.truebackpack.interactions;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionState;
 import com.hypixel.hytale.protocol.InteractionType;
-import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFace;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFaceSupport;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 public class BackpackInteraction extends SimpleInstantInteraction {
 
@@ -196,11 +198,6 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         return blockEntityRef.getStore().getComponent(blockEntityRef, ItemContainerBlock.getComponentType()) != null;
     }
 
-    private boolean isBackpack(@Nullable ItemStack stack) {
-        if (stack == null || stack.isEmpty()) return false;
-        return BackpackRegistry.getByItem(stack.getItem().getId()) != null;
-    }
-
     private void handlePlace(
             @Nonnull InteractionContext context,
             @Nonnull BackpackRegistry.BackpackEntry entry,
@@ -242,11 +239,6 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         if (occupying != null && occupying.getMaterial() != BlockMaterial.Empty) {
             context.getState().state = InteractionState.Failed;
             return;
-        }
-
-        if (BackpackItemFactory.hasInstanceId(heldItem)) {
-            heldItem = BackpackItemFactory.createBackpackInstance(heldItem);
-            hotbar.getInventory().setItemStackForSlot(context.getHeldItemSlot(), heldItem);
         }
 
         Rotation yaw = Rotation.None;
@@ -320,15 +312,19 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         List<ItemStack> backpackContents = BackpackItemFactory.loadContents(heldItem);
         int backpackCapacity = entry.capacity();
 
-        ItemStack updatedBackpackItem;
-
         List<ItemStack> updatedBackpack = new ArrayList<>(backpackContents);
         if (type == InteractionType.Primary) {
             for (int i = 0; i < updatedBackpack.size(); i++) {
                 ItemStack item = updatedBackpack.get(i);
                 if (item == null || item.isEmpty()) continue;
-                if (isBackpack(item)) continue;
-                updatedBackpack.set(i, insertIntoContainer(chestContainer, item, !matchOnly));
+                if (BackpackRegistry.isBackpack(item.getItemId())) continue;
+                updatedBackpack.set(i, insertStack(
+                        chestContainer.getCapacity(),
+                        s -> chestContainer.getItemStack((short) s),
+                        (s, val) -> chestContainer.setItemStackForSlot((short) s, val),
+                        item,
+                        !matchOnly
+                ));
             }
             while (updatedBackpack.size() < backpackCapacity) updatedBackpack.add(null);
         } else {
@@ -336,65 +332,58 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             for (short slot = 0; slot < chestContainer.getCapacity(); slot++) {
                 ItemStack item = chestContainer.getItemStack(slot);
                 if (item == null || item.isEmpty()) continue;
-                if (isBackpack(item)) continue;
-                chestContainer.setItemStackForSlot(slot, insertIntoList(updatedBackpack, item, backpackCapacity, !matchOnly));
+                if (BackpackRegistry.isBackpack(item.getItemId())) continue;
+                chestContainer.setItemStackForSlot(slot, insertStack(
+                        backpackCapacity,
+                        updatedBackpack::get,
+                        updatedBackpack::set,
+                        item,
+                        !matchOnly
+                ));
             }
         }
-        updatedBackpackItem = BackpackItemFactory.saveContents(heldItem, updatedBackpack);
+        ItemStack updatedBackpackItem = BackpackItemFactory.saveContents(heldItem, updatedBackpack);
 
         hotbar.getInventory().setItemStackForSlot(context.getHeldItemSlot(), updatedBackpackItem);
     }
 
-    private @Nullable ItemStack insertIntoContainer(@Nonnull ItemContainer container, @Nonnull ItemStack toInsert, boolean fillEmpty) {
-        int remaining = toInsert.getQuantity();
-        int maxStack = toInsert.getItem().getMaxStack();
-
-        for (short slot = 0; slot < container.getCapacity() && remaining > 0; slot++) {
-            ItemStack existing = container.getItemStack(slot);
-            if (existing != null && !existing.isEmpty() && existing.getItemId().equals(toInsert.getItemId())) {
-                int space = maxStack - existing.getQuantity();
-                if (space <= 0) continue;
-                int transfer = Math.min(space, remaining);
-                container.setItemStackForSlot(slot, existing.withQuantity(existing.getQuantity() + transfer));
-                remaining -= transfer;
-            }
-        }
-
-        if (fillEmpty) {
-            for (short slot = 0; slot < container.getCapacity() && remaining > 0; slot++) {
-                ItemStack existing = container.getItemStack(slot);
-                if (existing == null || existing.isEmpty()) {
-                    int transfer = Math.min(maxStack, remaining);
-                    container.setItemStackForSlot(slot, toInsert.withQuantity(transfer));
-                    remaining -= transfer;
-                }
-            }
-        }
-
-        return remaining <= 0 ? ItemStack.EMPTY : toInsert.withQuantity(remaining);
+    @FunctionalInterface
+    private interface SlotGetter {
+        @Nullable ItemStack get(int slot);
     }
 
-    private @Nullable ItemStack insertIntoList(@Nonnull List<ItemStack> list, @Nonnull ItemStack toInsert, int capacity, boolean fillEmpty) {
+    @FunctionalInterface
+    private interface SlotSetter {
+        void set(int slot, @Nullable ItemStack item);
+    }
+
+    private static @Nullable ItemStack insertStack(
+            int capacity,
+            @Nonnull SlotGetter getter,
+            @Nonnull SlotSetter setter,
+            @Nonnull ItemStack toInsert,
+            boolean fillEmpty) {
+
         int remaining = toInsert.getQuantity();
         int maxStack = toInsert.getItem().getMaxStack();
 
-        for (int i = 0; i < Math.min(list.size(), capacity) && remaining > 0; i++) {
-            ItemStack existing = list.get(i);
+        for (int slot = 0; slot < capacity && remaining > 0; slot++) {
+            ItemStack existing = getter.get(slot);
             if (existing != null && !existing.isEmpty() && existing.getItemId().equals(toInsert.getItemId())) {
                 int space = maxStack - existing.getQuantity();
                 if (space <= 0) continue;
                 int transfer = Math.min(space, remaining);
-                list.set(i, existing.withQuantity(existing.getQuantity() + transfer));
+                setter.set(slot, existing.withQuantity(existing.getQuantity() + transfer));
                 remaining -= transfer;
             }
         }
 
         if (fillEmpty) {
-            for (int i = 0; i < Math.min(list.size(), capacity) && remaining > 0; i++) {
-                ItemStack existing = list.get(i);
+            for (int slot = 0; slot < capacity && remaining > 0; slot++) {
+                ItemStack existing = getter.get(slot);
                 if (existing == null || existing.isEmpty()) {
                     int transfer = Math.min(maxStack, remaining);
-                    list.set(i, toInsert.withQuantity(transfer));
+                    setter.set(slot, toInsert.withQuantity(transfer));
                     remaining -= transfer;
                 }
             }
