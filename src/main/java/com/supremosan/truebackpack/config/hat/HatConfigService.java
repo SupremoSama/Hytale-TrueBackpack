@@ -1,39 +1,33 @@
 package com.supremosan.truebackpack.config.hat;
 
-import com.google.gson.Gson;
 import com.hypixel.hytale.protocol.ColorLight;
+import com.supremosan.truebackpack.config.ConfigHelper;
 import com.supremosan.truebackpack.registries.HatRegistry;
 
-import java.io.Reader;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class HatConfigService {
 
-    private static final Gson GSON = new Gson();
+    private static final String CONFIG_FILE = "hats.json";
 
-    private HatConfigService() {}
+    private HatConfigService() {
+    }
 
     public static void reloadAndRegister(Logger logger) throws Exception {
-        HatConfigAssets.ensureDefaultConfigCopied(logger);
-        HatConfig cfg = loadConfig();
+        HatConfig cfg = loadConfig(logger);
         HatRegistry.clear();
         int registered = registerAll(cfg, logger);
         logger.log(Level.INFO, "[TrueBackpack] Hat reload OK. Registered=" + registered);
     }
 
-    private static HatConfig loadConfig() throws Exception {
-        Path p = HatConfigPaths.configPath();
-
-        try (Reader r = Files.newBufferedReader(p)) {
-            HatConfig cfg = GSON.fromJson(r, HatConfig.class);
-            if (cfg == null) cfg = new HatConfig();
-            if (cfg.hats == null) cfg.hats = new ArrayList<>();
-            return cfg;
+    private static HatConfig loadConfig(Logger logger) throws Exception {
+        HatConfig cfg = ConfigHelper.loadOrCreate(CONFIG_FILE, HatConfig.class, logger);
+        if (cfg.hats == null) {
+            cfg.hats = new ArrayList<>();
         }
+        return cfg;
     }
 
     private static int registerAll(HatConfig cfg, Logger logger) {

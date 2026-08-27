@@ -30,38 +30,47 @@ public final class HatRegistry {
     }
 
     private static final Map<String, HatEntry> REGISTRY = new LinkedHashMap<>();
-    private static final Map<String, HatEntry> BY_ITEM_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, HatEntry> LOOKUP_CACHE = new ConcurrentHashMap<>();
 
-    private HatRegistry() {}
+    private HatRegistry() {
+    }
 
     public static void register(@Nonnull HatEntry entry) {
         REGISTRY.put(entry.baseItemId(), entry);
-        BY_ITEM_CACHE.clear();
+        LOOKUP_CACHE.clear();
     }
 
     @Nullable
-    public static HatEntry getByItem(@Nonnull String itemId) {
-        String normalized = itemId.toLowerCase();
+    public static HatEntry getByItem(@Nullable String itemId) {
+        if (itemId == null || itemId.isEmpty()) return null;
 
-        HatEntry cached = BY_ITEM_CACHE.get(normalized);
+        String normalized = itemId.toLowerCase();
+        HatEntry cached = LOOKUP_CACHE.get(normalized);
         if (cached != null) return cached;
+
+        HatEntry direct = REGISTRY.get(itemId);
+        if (direct != null) {
+            LOOKUP_CACHE.put(normalized, direct);
+            return direct;
+        }
 
         for (Map.Entry<String, HatEntry> e : REGISTRY.entrySet()) {
             String key = e.getKey().toLowerCase();
-            if (key.equals(normalized) || key.endsWith(":" + normalized)) {
-                BY_ITEM_CACHE.put(normalized, e.getValue());
+            if (key.equals(normalized) || key.endsWith(":" + normalized) || normalized.endsWith(":" + key)) {
+                LOOKUP_CACHE.put(normalized, e.getValue());
                 return e.getValue();
             }
         }
+
         return null;
     }
 
-    public static boolean isHat(@Nonnull String itemId) {
+    public static boolean isHat(@Nullable String itemId) {
         return getByItem(itemId) != null;
     }
 
     public static void clear() {
         REGISTRY.clear();
-        BY_ITEM_CACHE.clear();
+        LOOKUP_CACHE.clear();
     }
 }

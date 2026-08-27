@@ -4,7 +4,8 @@ import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.i18n.I18nModule;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
-import com.supremosan.truebackpack.listener.BackpackArmorListener;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
+import com.supremosan.truebackpack.util.I18nHelper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,12 +26,11 @@ public class BackpackTooltipProvider {
         if (stack.isEmpty()) return null;
 
         String itemId   = stack.getItemId();
-        short sizeBonus = BackpackArmorListener.getBackpackSize(itemId);
+        short sizeBonus = BackpackRegistry.getCapacity(itemId);
         if (sizeBonus == 0) return null;
 
         if (BackpackItemFactory.isEquipped(stack)) {
-            I18nModule i18n = I18nModule.get();
-            return resolve(i18n, language, KEY_EQUIPPED);
+            return I18nHelper.getOrFallback(language, KEY_EQUIPPED);
         }
 
         if (!BackpackItemFactory.hasContents(stack)) {
@@ -50,10 +50,9 @@ public class BackpackTooltipProvider {
 
     @Nonnull
     public static String buildEmptyTooltip(short sizeBonus, @Nullable String language) {
-        I18nModule i18n  = I18nModule.get();
-        String title     = resolve(i18n, language, KEY_TITLE);
-        String slotsWord = resolve(i18n, language, KEY_SLOTS);
-        String emptyWord = resolve(i18n, language, KEY_EMPTY);
+        String title     = I18nHelper.getOrFallback(language, KEY_TITLE);
+        String slotsWord = I18nHelper.getOrFallback(language, KEY_SLOTS);
+        String emptyWord = I18nHelper.getOrFallback(language, KEY_EMPTY);
 
         return title + " (" + sizeBonus + " " + slotsWord + ")\n" + emptyWord;
     }
@@ -62,11 +61,10 @@ public class BackpackTooltipProvider {
     private static String buildContentsTooltip(@Nonnull List<ItemStack> contents,
                                                short sizeBonus,
                                                @Nullable String language) {
-        I18nModule i18n  = I18nModule.get();
-        String title     = resolve(i18n, language, KEY_TITLE);
-        String slotsWord = resolve(i18n, language, KEY_SLOTS);
-        String itemsWord = resolve(i18n, language, KEY_ITEMS);
-        String emptyWord = resolve(i18n, language, KEY_EMPTY);
+        String title     = I18nHelper.getOrFallback(language, KEY_TITLE);
+        String slotsWord = I18nHelper.getOrFallback(language, KEY_SLOTS);
+        String itemsWord = I18nHelper.getOrFallback(language, KEY_ITEMS);
+        String emptyWord = I18nHelper.getOrFallback(language, KEY_EMPTY);
 
         int usedSlots  = 0;
         int totalItems = 0;
@@ -142,23 +140,5 @@ public class BackpackTooltipProvider {
             if (part.length() > 1) sb.append(part.substring(1).toLowerCase());
         }
         return !sb.isEmpty() ? sb.toString() : itemId;
-    }
-
-    @Nonnull
-    private static String resolve(@Nullable I18nModule i18n,
-                                  @Nullable String language,
-                                  @Nonnull String key) {
-        if (i18n != null) {
-            try {
-                String value = i18n.getMessage(language, key);
-                if (value != null && !value.isBlank() && !value.equals(key)) {
-                    return value;
-                }
-            } catch (Exception ignored) {}
-        }
-
-        String[] parts = key.split("\\.");
-        String last = parts[parts.length - 1];
-        return Character.toUpperCase(last.charAt(0)) + last.substring(1);
     }
 }

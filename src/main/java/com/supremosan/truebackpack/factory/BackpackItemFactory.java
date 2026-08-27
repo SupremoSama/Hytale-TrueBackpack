@@ -19,7 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class BackpackItemFactory {
+public final class BackpackItemFactory {
+
     public static final KeyedCodec<String> INSTANCE_ID_CODEC =
             new KeyedCodec<>("Backpack_instance_id", Codec.STRING);
 
@@ -32,7 +33,6 @@ public class BackpackItemFactory {
     private static final String CONTENTS_KEY = "Backpack_contents";
 
     private static final Codec<BsonArray> BSON_ARRAY_CODEC = new Codec<>() {
-
         @Override
         public BsonArray decode(BsonValue bsonValue, ExtraInfo extraInfo) {
             return bsonValue != null && bsonValue.isArray()
@@ -89,8 +89,7 @@ public class BackpackItemFactory {
     }
 
     @Nonnull
-    public static ItemStack saveContents(@Nonnull ItemStack backpack,
-                                         @Nonnull List<ItemStack> contents) {
+    public static ItemStack saveContents(@Nonnull ItemStack backpack, @Nonnull List<ItemStack> contents) {
         BsonArray array = new BsonArray();
         for (ItemStack item : contents) {
             if (item == null || item.isEmpty()) {
@@ -104,25 +103,19 @@ public class BackpackItemFactory {
 
     @Nonnull
     public static List<ItemStack> loadContents(@Nonnull ItemStack backpack) {
-        BsonArray array = backpack.getFromMetadataOrNull(
-                CONTENTS_KEY,
-                BSON_ARRAY_CODEC
-        );
+        BsonArray array = backpack.getFromMetadataOrNull(CONTENTS_KEY, BSON_ARRAY_CODEC);
 
         if (array == null || array.isEmpty()) {
             return new ArrayList<>();
         }
 
-        List<ItemStack> result = new ArrayList<>();
+        List<ItemStack> result = new ArrayList<>(array.size());
 
         for (BsonValue val : array) {
             if (val == null || val.isNull()) {
                 result.add(null);
             } else {
-                result.add(ItemStack.CODEC.decode(
-                        val,
-                        ExtraInfo.THREAD_LOCAL.get()
-                ));
+                result.add(ItemStack.CODEC.decode(val, ExtraInfo.THREAD_LOCAL.get()));
             }
         }
 
@@ -130,19 +123,30 @@ public class BackpackItemFactory {
     }
 
     public static boolean hasContents(@Nonnull ItemStack backpack) {
-        return loadContents(backpack).stream().anyMatch(i -> i != null && !i.isEmpty());
+        BsonArray array = backpack.getFromMetadataOrNull(CONTENTS_KEY, BSON_ARRAY_CODEC);
+        if (array == null || array.isEmpty()) {
+            return false;
+        }
+
+        for (BsonValue val : array) {
+            if (val != null && !val.isNull()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Nullable
-    public static ItemStack createFromContainer(@Nonnull String blockId,
-                                                @Nonnull List<ItemStack> contents) {
-        if (blockId.equalsIgnoreCase("Empty"))
+    public static ItemStack createFromContainer(@Nonnull String blockId, @Nonnull List<ItemStack> contents) {
+        if (blockId.equalsIgnoreCase("Empty")) {
             return null;
+        }
 
-        BackpackRegistry.BackpackEntry blockEntry =
-                BackpackRegistry.getByBlock(blockId);
-
-        if (blockEntry == null) return null;
+        BackpackRegistry.BackpackEntry blockEntry = BackpackRegistry.getByBlock(blockId);
+        if (blockEntry == null) {
+            return null;
+        }
 
         ItemStack itemBackpack = new ItemStack(blockEntry.itemId());
         itemBackpack = createBackpackInstance(itemBackpack);
