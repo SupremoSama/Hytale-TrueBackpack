@@ -81,7 +81,6 @@ public class TrueBackpack extends JavaPlugin {
             UUID uuid = playerRef.getUuid();
             String uuidStr = uuid.toString();
 
-            BackpackTooltipListener.onPlayerLeave(uuid);
             BackpackArmorListener.onPlayerRemove(uuidStr);
             CosmeticListener.onPlayerLeave(uuidStr);
             HatArmorListener.onPlayerRemove(uuidStr);
