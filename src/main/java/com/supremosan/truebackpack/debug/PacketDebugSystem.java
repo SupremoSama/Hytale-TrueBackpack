@@ -34,6 +34,8 @@ public class PacketDebugSystem implements PacketWatcher {
             logSection("hotbar", p.hotbar);
             logSection("storage", p.storage);
             logSection("backpack", p.backpack);
+            logSection("abilitySlots", p.abilitySlots);
+            logSection("runeBag", p.runeBag);
         }
 
         if (packet instanceof UpdateWindow p) {
