@@ -58,6 +58,8 @@ public class BackpackTooltipListener {
         processSection(packet.utility, lang);
         processSection(packet.tools, lang);
         processSection(packet.backpack, lang);
+        processSection(packet.abilitySlots, lang);
+        processSection(packet.runeBag, lang);
 
         processArmor(packet.armor, uuid, lang);
     }

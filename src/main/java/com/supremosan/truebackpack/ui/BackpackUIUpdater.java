@@ -34,6 +34,8 @@ public class BackpackUIUpdater {
         InventoryComponent.Utility utility = store.getComponent(ref, InventoryComponent.Utility.getComponentType());
         InventoryComponent.Tool tool = store.getComponent(ref, InventoryComponent.Tool.getComponentType());
         InventoryComponent.Backpack backpack = store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
+        InventoryComponent.AbilitySlots abilitySlots = store.getComponent(ref, InventoryComponent.AbilitySlots.getComponentType());
+        InventoryComponent.RuneBag runeBag = store.getComponent(ref, InventoryComponent.RuneBag.getComponentType());
 
         UUID uuid = playerRef.getUuid();
         try {
@@ -43,7 +45,9 @@ public class BackpackUIUpdater {
                 hotbar != null ? hotbar.getInventory().toPacket() : null,
                 utility != null ? utility.getInventory().toPacket() : null,
                 tool != null ? tool.getInventory().toPacket() : null,
-                backpack != null ? backpack.getInventory().toPacket() : null
+                backpack != null ? backpack.getInventory().toPacket() : null,
+                abilitySlots != null ? abilitySlots.getInventory().toPacket() : null,
+                runeBag != null ? runeBag.getInventory().toPacket() : null
             ));
             playerRef.getPacketHandler().writeNoCache(new SetGameMode(player.getGameMode()));
         } catch (Exception e) {
