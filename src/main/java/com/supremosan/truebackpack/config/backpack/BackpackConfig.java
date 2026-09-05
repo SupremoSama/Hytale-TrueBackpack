@@ -27,8 +27,8 @@ public final class BackpackConfig {
     }
 
     public static final class HelipackEntry {
-        public String fuelItemId = "";
-        public String itemAnimationsId = "";
+        public String fuelItemId = "Ingredient_Charcoal";
+        public String itemAnimationsId = "HelipackAnimations";
         public float verticalFlySpeed = 6.0f;
         public float horizontalFlySpeed = 7.0f;
         public float fuelConsumeInterval = 10.0f;

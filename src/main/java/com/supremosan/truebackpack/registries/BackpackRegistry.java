@@ -24,11 +24,12 @@ public final class BackpackRegistry {
                 float fuelConsumeInterval,
                 int fuelConsumeAmount
         ) {
-            return new HelipackConfig(fuelItemId, itemAnimationsId, verticalFlySpeed, horizontalFlySpeed, fuelConsumeInterval, fuelConsumeAmount);
+            String resolvedFuel = (fuelItemId == null || fuelItemId.isBlank()) ? "Ingredient_Charcoal" : fuelItemId;
+            return new HelipackConfig(resolvedFuel, itemAnimationsId, verticalFlySpeed, horizontalFlySpeed, fuelConsumeInterval, fuelConsumeAmount);
         }
 
         public boolean requiresFuel() {
-            return fuelItemId != null && !fuelItemId.isEmpty();
+            return fuelItemId != null && !fuelItemId.isEmpty() && !"none".equalsIgnoreCase(fuelItemId);
         }
     }
 
