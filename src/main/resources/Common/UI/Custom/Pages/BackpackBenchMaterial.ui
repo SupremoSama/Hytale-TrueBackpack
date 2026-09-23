@@ -1,0 +1,6 @@
+Group {
+  Anchor: (Width: 54, Height: 86, Right: 3);
+  LayoutMode: Top;
+  ItemSlot #BenchMaterial { Anchor: (Width: 54, Height: 54); ShowQualityBackground: true; ShowQuantity: false; }
+  Label #BenchCost { Anchor: (Height: 25, Top: 4); Style: (FontSize: 11, TextColor: #55efc4, HorizontalAlignment: Center, ShrinkTextToFit: true); }
+}

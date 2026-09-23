@@ -30,6 +30,15 @@ public final class BackpackItemFactory {
     public static final KeyedCodec<Float> REMAINING_FUEL_TIME_CODEC =
             new KeyedCodec<>("Backpack_remaining_fuel_time", Codec.FLOAT);
 
+    public static final KeyedCodec<String> TRANSMOG_SKIN_CODEC =
+            new KeyedCodec<>("Backpack_transmog_skin", Codec.STRING);
+
+    public static final KeyedCodec<Integer> UPGRADE_LEVEL_CODEC =
+            new KeyedCodec<>("Backpack_upgrade_level", Codec.INTEGER);
+
+    public static final int MAX_UPGRADE_LEVEL = 2;
+    public static final int SLOTS_PER_UPGRADE_LEVEL = 9;
+
     private static final String CONTENTS_KEY = "Backpack_contents";
 
     private static final Codec<BsonArray> BSON_ARRAY_CODEC = new Codec<>() {
@@ -139,6 +148,15 @@ public final class BackpackItemFactory {
 
     @Nullable
     public static ItemStack createFromContainer(@Nonnull String blockId, @Nonnull List<ItemStack> contents) {
+        return createFromContainer(blockId, contents, null, 0);
+    }
+
+    @Nullable
+    public static ItemStack createFromContainer(
+            @Nonnull String blockId,
+            @Nonnull List<ItemStack> contents,
+            @Nullable String transmogSkin,
+            int upgradeLevel) {
         if (blockId.equalsIgnoreCase("Empty")) {
             return null;
         }
@@ -151,6 +169,58 @@ public final class BackpackItemFactory {
         ItemStack itemBackpack = new ItemStack(blockEntry.itemId());
         itemBackpack = createBackpackInstance(itemBackpack);
 
+        if (transmogSkin != null && !transmogSkin.isBlank()) {
+            itemBackpack = setTransmogSkin(itemBackpack, transmogSkin);
+        }
+
+        if (upgradeLevel > 0) {
+            itemBackpack = setUpgradeLevel(itemBackpack, upgradeLevel);
+        }
+
         return saveContents(itemBackpack, contents);
+    }
+
+    @Nullable
+    public static String getTransmogSkin(@Nonnull ItemStack stack) {
+        return stack.getFromMetadataOrNull(TRANSMOG_SKIN_CODEC);
+    }
+
+    public static boolean hasTransmogSkin(@Nonnull ItemStack stack) {
+        String skin = getTransmogSkin(stack);
+        return skin != null && !skin.isBlank();
+    }
+
+    @Nonnull
+    public static ItemStack setTransmogSkin(@Nonnull ItemStack stack, @Nullable String skinItemId) {
+        if (skinItemId == null || skinItemId.isBlank()) {
+            return stack.withMetadata(TRANSMOG_SKIN_CODEC, (String) null);
+        }
+        return stack.withMetadata(TRANSMOG_SKIN_CODEC, skinItemId);
+    }
+
+    public static int getUpgradeLevel(@Nonnull ItemStack stack) {
+        Integer lvl = stack.getFromMetadataOrNull(UPGRADE_LEVEL_CODEC);
+        return lvl != null ? Math.max(0, Math.min(MAX_UPGRADE_LEVEL, lvl)) : 0;
+    }
+
+    @Nonnull
+    public static ItemStack setUpgradeLevel(@Nonnull ItemStack stack, int level) {
+        int clamped = Math.max(0, Math.min(MAX_UPGRADE_LEVEL, level));
+        if (clamped == 0) {
+            return stack.withMetadata(UPGRADE_LEVEL_CODEC, (Integer) null);
+        }
+        return stack.withMetadata(UPGRADE_LEVEL_CODEC, clamped);
+    }
+
+    public static short getTotalCapacity(@Nullable ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return 0;
+        short base = BackpackRegistry.getCapacity(stack.getItemId());
+        if (base <= 0) return 0;
+
+        if ("Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(stack.getItemId())) {
+            int level = getUpgradeLevel(stack);
+            return (short) (base + level * SLOTS_PER_UPGRADE_LEVEL);
+        }
+        return base;
     }
 }

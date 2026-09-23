@@ -1,0 +1,96 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Backpack_Workbench_Master.name",
+    "Description": "server.items.Backpack_Workbench_Master.description"
+  },
+  "Icon": "Icons/ItemsGenerated/Backpack_Workbench_Master.png",
+  "Categories": [
+    "Furniture.Benches"
+  ],
+  "BlockType": {
+    "Material": "Solid",
+    "DrawType": "Model",
+    "Opacity": "Transparent",
+    "CustomModel": "Items/Blocks/Backpack_Workbench_Master.blockymodel",
+    "CustomModelTexture": [
+      {
+        "Texture": "Items/Blocks/Backpack_Workbench_Master_Texture.png",
+        "Weight": 1
+      }
+    ],
+    "HitboxType": "TrueBackpack_Bench_Master",
+    "VariantRotation": "NESW",
+    "Bench": {
+      "Type": "Crafting",
+      "Categories": [
+        {
+          "Id": "Backpack",
+          "Icon": "Icons/CraftingCategories/Backpack.png",
+          "Name": "server.truebackpack.ui.workbench.title"
+        }
+      ],
+      "LocalOpenSoundEventId": "SFX_Workbench_Open",
+      "LocalCloseSoundEventId": "SFX_Workbench_Close",
+      "CompletedSoundEventId": "SFX_Workbench_Craft",
+      "Id": "Backpack_Workbench_Master",
+      "FailedSoundEventId": "SFX_Generic_Crafting_Failed",
+      "TierLevels": [
+        {
+          "CraftingTimeReductionModifier": 0.15
+        }
+      ]
+    },
+    "BlockEntity": {
+      "Components": {
+        "BenchBlock": {}
+      }
+    },
+    "Gathering": {
+      "Breaking": {
+        "GatherType": "Benches"
+      }
+    },
+    "BlockParticleSetId": "Wood",
+    "ParticleColor": "#6e4a2f",
+    "Support": {
+      "Down": [
+        {
+          "FaceType": "Full"
+        }
+      ]
+    },
+    "BlockSoundSetId": "Wood",
+    "PhysicalMaterialId": "Wood",
+    "TextureComputedColor": "#6C4C30",
+    "Interactions": {
+      "Use": {
+        "Interactions": [
+          {
+            "Type": "TrueBackpackWorkbench"
+          }
+        ]
+      }
+    }
+  },
+  "PlayerAnimationsId": "Block",
+  "Tags": {
+    "Type": [
+      "Bench"
+    ]
+  },
+  "MaxStack": 1,
+  "ItemLevel": 1,
+  "ItemSoundSetId": "ISS_Blocks_Wood",
+  "IconProperties": {
+    "Scale": 0.3,
+    "Rotation": [
+      22.5,
+      45,
+      22.5
+    ],
+    "Translation": [
+      0,
+      -30
+    ]
+  }
+}

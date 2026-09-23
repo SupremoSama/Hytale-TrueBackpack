@@ -1,4 +1,5 @@
 truebackpack.items.Utility_Fibre_Bag.name=Sac en fibres
+truebackpack.items.Utility_Fibre_Side_Bag.name=Sac en fibres
 truebackpack.items.Utility_Leather_Side_Backpack.name=Sac à dos latéral
 truebackpack.items.Utility_Leather_Backpack.name=Petit sac à dos
 truebackpack.items.Utility_Leather_Medium_Backpack.name=Sac à dos moyen
@@ -8,6 +9,10 @@ truebackpack.items.Utility_Torch_Bandana.name=Bandana torche
 truebackpack.tooltip.title=Sac à dos
 truebackpack.tooltip.empty=Vide
 truebackpack.tooltip.equipped=Équipé
+truebackpack.tooltip.slots=emplacements
+truebackpack.tooltip.items=objets
+truebackpack.tooltip.upgrade=Amélioration: Niveau {0}/2
+truebackpack.tooltip.appearance=Apparence: {0}
 truebackpack.toggle.backpack.visible=Votre sac à dos est maintenant visible
 truebackpack.toggle.backpack.hidden=Votre sac à dos est maintenant masqué
 truebackpack.toggle.quiver.visible=Votre carquois est maintenant visible
@@ -16,3 +21,104 @@ truebackpack.toggle.hat.visible=Votre chapeau est maintenant visible
 truebackpack.toggle.hat.hidden=Votre chapeau est maintenant masqué
 truebackpack.toggle.unknown=Option invalide, choisissez 'backpack', 'quiver' ou 'hat'
 truebackpack.item.Utility_Helipack.description=Alimentez ce sac à dos avec du charbon de bois pour planer dans les cieux. Effectuez un double saut pour activer le mode de vol et répétez l'action pour le désactiver.
+
+# Crafting Materials
+truebackpack.items.Ingredient_Fibre.name=Fibre végétale
+truebackpack.items.Wood_Trunk.name=Tronc de bois
+truebackpack.items.Ingredient_Bar_Iron.name=Lingot de fer
+truebackpack.items.Ingredient_Leather_Medium.name=Cuir moyen
+truebackpack.items.Ingredient_Fabric_Scrap_Cindercloth.name=Morceau de tissu de braise
+truebackpack.items.Ingredient_Bar_Cobalt.name=Lingot de cobalt
+truebackpack.items.Ingredient_Leather_Heavy.name=Cuir lourd
+truebackpack.items.Ingredient_Voidheart.name=Cœur du néant
+truebackpack.items.Ingredient_Bar_Adamantite.name=Lingot d'adamantite
+truebackpack.items.Ingredient_Leather_Storm.name=Cuir de tempête
+
+# Workbench General / UI
+truebackpack.workbench.title=Établi de Sac à Dos
+truebackpack.workbench.tab.transmog=Transmutation
+truebackpack.workbench.tab.upgrades=Améliorations
+truebackpack.workbench.tab.visibility=Visibilité
+truebackpack.workbench.no_backpack.title=Aucun sac à dos détecté
+truebackpack.workbench.no_backpack.desc=Équipez un sac à dos sur votre torse ou tenez-en un en main.
+truebackpack.workbench.no_backpack.status=Veuillez tenir ou équiper un sac à dos pour utiliser l'établi.
+truebackpack.workbench.slots=Emplacements
+truebackpack.workbench.skin=Apparence
+truebackpack.workbench.level=Niveau
+truebackpack.workbench.original=Original
+
+# Helipack Messages
+truebackpack.workbench.helipack.ineligible=Hélipack (Inéligible à la transmutation / aux améliorations)
+truebackpack.workbench.helipack.cannot_transmog=L'hélipack ne peut pas être transmuté.
+truebackpack.workbench.helipack.cannot_be_skin=L'hélipack ne peut pas être utilisé comme apparence !
+truebackpack.workbench.helipack.no_upgrades=L'hélipack ne prend pas en charge les améliorations.
+
+# Buttons
+truebackpack.workbench.btn.apply=Appliquer
+truebackpack.workbench.btn.active=Actif
+truebackpack.workbench.btn.upgrade=Améliorer
+truebackpack.workbench.btn.need_items=Objets requis
+truebackpack.workbench.btn.maxed=Maximum
+truebackpack.workbench.btn.visible=Visible
+truebackpack.workbench.btn.hidden=Masqué
+
+# Visibility Entries
+truebackpack.workbench.visibility.backpack.title=Modèle de sac à dos
+truebackpack.workbench.visibility.backpack.desc=Afficher ou masquer le modèle du sac à dos sur votre dos
+truebackpack.workbench.visibility.quiver.title=Carquois / Ceinture de flèches
+truebackpack.workbench.visibility.quiver.desc=Afficher ou masquer le carquois lorsque vous portez des flèches
+truebackpack.workbench.visibility.hat.title=Chapeau / Bandana
+truebackpack.workbench.visibility.hat.desc=Afficher ou masquer le chapeau cosmétique ou le bandana torche
+
+# Transmog Skins
+truebackpack.workbench.skin.default.name=Apparence par défaut
+truebackpack.workbench.skin.default.desc=Restaurer le modèle original du sac à dos
+truebackpack.workbench.skin.Utility_Fibre_Side_Bag.desc=Sacoche de voyage légère en tissu
+truebackpack.workbench.skin.Utility_Leather_Side_Backpack.desc=Sacoche robuste en cuir à bandoulière
+truebackpack.workbench.skin.Utility_Leather_Backpack.desc=Sac à dos d'aventure classique et compact
+truebackpack.workbench.skin.Utility_Leather_Medium_Backpack.desc=Sac à dos d'explorateur renforcé
+truebackpack.workbench.skin.Utility_Leather_Big_Backpack.desc=Grand sac d'expédition à multiples poches
+truebackpack.workbench.skin.Utility_Leather_Extra_Big_Backpack.desc=Sac de rangement robuste de grande capacité
+
+# Transmog Statuses
+truebackpack.workbench.status.skin_applied=Apparence appliquée: {0}
+truebackpack.workbench.status.skin_reverted=Apparence par défaut restaurée !
+
+# Upgrade Entries & Statuses
+truebackpack.workbench.tier.title=Amélioration de palier: {0}
+truebackpack.workbench.tier.benefit=Étend la capacité à {0} emplacements (conserve tous les objets !)
+truebackpack.workbench.level.title=Amélioration de capacité: Niveau {0}/2
+truebackpack.workbench.level.benefit=+{0} Emplacements (passe de {1} à {2} emplacements)
+truebackpack.workbench.level.max_title=Capacité: Niveau 2/2 (MAX)
+truebackpack.workbench.level.max_benefit=Capacité maximale atteinte (54 emplacements) !
+truebackpack.workbench.level.max_cost=Aucune autre amélioration possible.
+truebackpack.workbench.cost=Coût: {0}
+truebackpack.workbench.cost.none=Aucun
+truebackpack.workbench.status.tier_upgraded=Amélioré avec succès vers {0} !
+truebackpack.workbench.status.level_upgraded=Amélioration réussie ! Niveau {0}/2 ({1} emplacements)
+truebackpack.workbench.status.invalid_tier=Amélioration de palier invalide !
+truebackpack.workbench.status.missing_tier_materials=Matériaux requis manquants pour le palier !
+truebackpack.workbench.status.only_extra_big_level=Seul le très grand sac à dos peut recevoir des améliorations de niveau !
+truebackpack.workbench.status.already_max_level=Le sac à dos a déjà atteint le niveau maximum 2 !
+truebackpack.workbench.status.missing_level_materials=Matériaux requis manquants pour le niveau {0} !
+truebackpack.workbench.status.no_backpack=Aucun sac à dos détecté !
+
+items.Backpack_Workbench_Apprentice.name=Apprentice Backpack Workbench
+items.Backpack_Workbench_Apprentice.description=Use to open crafting, backpack upgrades and customization.
+
+items.Backpack_Workbench_Master.name=Master Backpack Workbench
+items.Backpack_Workbench_Master.description=Use to open crafting, backpack upgrades and customization.
+
+truebackpack.workbench.tab.crafting=Crafting
+
+truebackpack.workbench.bench.upgrade=Upgrade to Master
+truebackpack.workbench.bench.master=Master bench — maximum level
+truebackpack.workbench.bench.cost=Upgrade materials
+truebackpack.workbench.bench.upgrading=Upgrading
+truebackpack.workbench.craft.queue=Crafts queued:
+truebackpack.workbench.craft.action=Craft
+truebackpack.workbench.craft.memories=Memories level required:
+truebackpack.workbench.craft.unknown=Recipe not learned
+truebackpack.workbench.craft.materials=Missing materials
+truebackpack.workbench.bench.apprentice=Apprentice workbench
+truebackpack.workbench.bench.master_name=Master workbench

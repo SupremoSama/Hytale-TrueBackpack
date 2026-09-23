@@ -1,4 +1,5 @@
 truebackpack.items.Utility_Fibre_Bag.name=Fiber Bag
+truebackpack.items.Utility_Fibre_Side_Bag.name=Fiber Bag
 truebackpack.items.Utility_Leather_Side_Backpack.name=Side Backpack
 truebackpack.items.Utility_Leather_Backpack.name=Small Backpack
 truebackpack.items.Utility_Leather_Medium_Backpack.name=Medium Backpack
@@ -8,6 +9,10 @@ truebackpack.items.Utility_Torch_Bandana.name=Torch Bandana
 truebackpack.tooltip.title=Backpack
 truebackpack.tooltip.empty=Empty
 truebackpack.tooltip.equipped=Equipped
+truebackpack.tooltip.slots=slots
+truebackpack.tooltip.items=items
+truebackpack.tooltip.upgrade=Upgrade: Level {0}/2
+truebackpack.tooltip.appearance=Appearance: {0}
 truebackpack.toggle.backpack.visible=Your backpack is now visible
 truebackpack.toggle.backpack.hidden=Your backpack is now hidden
 truebackpack.toggle.quiver.visible=Your quiver is now visible
@@ -16,3 +21,103 @@ truebackpack.toggle.hat.visible=Your hat is now visible
 truebackpack.toggle.hat.hidden=Your hat is now hidden
 truebackpack.toggle.unknown=That is not a valid option, choose 'backpack','quiver' or 'hat'
 truebackpack.item.Utility_Helipack.description=Fuel this backpack with charcoal and soar through the skies. Double jump to activate flight mode and repeat the action to deactivate it.
+
+# Crafting Materials
+truebackpack.items.Ingredient_Fibre.name=Plant Fibre
+truebackpack.items.Wood_Trunk.name=Wood Trunk
+truebackpack.items.Ingredient_Bar_Iron.name=Iron Bar
+truebackpack.items.Ingredient_Leather_Medium.name=Medium Leather
+truebackpack.items.Ingredient_Fabric_Scrap_Cindercloth.name=Cindercloth Scrap
+truebackpack.items.Ingredient_Bar_Cobalt.name=Cobalt Bar
+truebackpack.items.Ingredient_Leather_Heavy.name=Heavy Leather
+truebackpack.items.Ingredient_Voidheart.name=Voidheart
+truebackpack.items.Ingredient_Bar_Adamantite.name=Adamantite Bar
+truebackpack.items.Ingredient_Leather_Storm.name=Storm Leather
+
+# Workbench General / UI
+truebackpack.workbench.title=Backpack Workbench
+truebackpack.workbench.tab.transmog=Transmog
+truebackpack.workbench.tab.upgrades=Upgrades
+truebackpack.workbench.tab.visibility=Visibility
+truebackpack.workbench.no_backpack.title=No Backpack Detected
+truebackpack.workbench.no_backpack.desc=Equip a backpack in your chest slot or hold one in hand.
+truebackpack.workbench.no_backpack.status=Please hold or equip a backpack to use the workbench.
+truebackpack.workbench.slots=Slots
+truebackpack.workbench.skin=Skin
+truebackpack.workbench.level=Level
+truebackpack.workbench.original=Original
+
+# Helipack Messages
+truebackpack.workbench.helipack.ineligible=Helipack (Ineligible for transmog / upgrades)
+truebackpack.workbench.helipack.cannot_transmog=Helipack cannot be transmogged.
+truebackpack.workbench.helipack.cannot_be_skin=Helipack cannot be used as a skin!
+truebackpack.workbench.helipack.no_upgrades=Helipack does not support upgrades.
+
+# Buttons
+truebackpack.workbench.btn.apply=Apply
+truebackpack.workbench.btn.active=Active
+truebackpack.workbench.btn.upgrade=Upgrade
+truebackpack.workbench.btn.need_items=Need Items
+truebackpack.workbench.btn.maxed=Maxed
+truebackpack.workbench.btn.visible=Visible
+truebackpack.workbench.btn.hidden=Hidden
+
+# Visibility Entries
+truebackpack.workbench.visibility.backpack.title=Backpack Model
+truebackpack.workbench.visibility.backpack.desc=Show or hide the backpack model on your character
+truebackpack.workbench.visibility.quiver.title=Arrow Belt / Quiver
+truebackpack.workbench.visibility.quiver.desc=Show or hide the quiver when carrying arrows
+truebackpack.workbench.visibility.hat.title=Hat / Bandana
+truebackpack.workbench.visibility.hat.desc=Show or hide the cosmetic hat or torch bandana
+
+# Transmog Skins
+truebackpack.workbench.skin.default.name=Default Appearance
+truebackpack.workbench.skin.default.desc=Restore original backpack model
+truebackpack.workbench.skin.Utility_Fibre_Side_Bag.desc=Lightweight woven travel pouch
+truebackpack.workbench.skin.Utility_Leather_Side_Backpack.desc=Sturdy single-strap satchel
+truebackpack.workbench.skin.Utility_Leather_Backpack.desc=Classic compact adventure pack
+truebackpack.workbench.skin.Utility_Leather_Medium_Backpack.desc=Reinforced explorer backpack
+truebackpack.workbench.skin.Utility_Leather_Big_Backpack.desc=Expedition multi-pocket pack
+truebackpack.workbench.skin.Utility_Leather_Extra_Big_Backpack.desc=Heavy-duty master storage pack
+
+# Transmog Statuses
+truebackpack.workbench.status.skin_applied=Applied skin: {0}
+truebackpack.workbench.status.skin_reverted=Reverted to default appearance!
+
+# Upgrade Entries & Statuses
+truebackpack.workbench.tier.title=Tier Upgrade: {0}
+truebackpack.workbench.tier.benefit=Expands capacity to {0} slots (keeps all items!)
+truebackpack.workbench.level.title=Capacity Upgrade: Level {0}/2
+truebackpack.workbench.level.benefit=+{0} Slots (Expands from {1} to {2} slots)
+truebackpack.workbench.level.max_title=Capacity: Level 2/2 (MAX)
+truebackpack.workbench.level.max_benefit=Maximum capacity reached (54 slots)!
+truebackpack.workbench.level.max_cost=No further upgrades possible.
+truebackpack.workbench.cost=Cost: {0}
+truebackpack.workbench.cost.none=None
+truebackpack.workbench.status.tier_upgraded=Successfully upgraded to {0}!
+truebackpack.workbench.status.level_upgraded=Upgrade successful! Level {0}/2 ({1} slots)
+truebackpack.workbench.status.invalid_tier=Invalid tier upgrade!
+truebackpack.workbench.status.missing_tier_materials=Missing required materials for tier upgrade!
+truebackpack.workbench.status.only_extra_big_level=Only Extra Big Backpack can receive level upgrades!
+truebackpack.workbench.status.already_max_level=Backpack has already reached maximum level 2!
+truebackpack.workbench.status.missing_level_materials=Missing required materials for level {0}!
+truebackpack.workbench.status.no_backpack=No backpack detected!
+items.Backpack_Workbench_Apprentice.name=Apprentice Backpack Workbench
+items.Backpack_Workbench_Apprentice.description=Use to open crafting, backpack upgrades and customization.
+
+items.Backpack_Workbench_Master.name=Master Backpack Workbench
+items.Backpack_Workbench_Master.description=Use to open crafting, backpack upgrades and customization.
+
+truebackpack.workbench.tab.crafting=Crafting
+
+truebackpack.workbench.bench.upgrade=Upgrade to Master
+truebackpack.workbench.bench.master=Master bench — maximum level
+truebackpack.workbench.bench.cost=Upgrade materials
+truebackpack.workbench.bench.upgrading=Upgrading
+truebackpack.workbench.craft.queue=Crafts queued:
+truebackpack.workbench.craft.action=Craft
+truebackpack.workbench.craft.memories=Memories level required:
+truebackpack.workbench.craft.unknown=Recipe not learned
+truebackpack.workbench.craft.materials=Missing materials
+truebackpack.workbench.bench.apprentice=Apprentice workbench
+truebackpack.workbench.bench.master_name=Master workbench

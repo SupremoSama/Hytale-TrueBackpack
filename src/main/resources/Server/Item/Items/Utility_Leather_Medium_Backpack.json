@@ -27,12 +27,20 @@
     ],
     "BenchRequirement": [
       {
-        "Id": "Workbench",
+        "Id": "Backpack_Workbench_Apprentice",
         "Type": "Crafting",
         "Categories": [
-          "Workbench_Tinkering"
+          "Backpack"
         ],
-        "RequiredTierLevel": 2
+        "RequiredTierLevel": 1
+      },
+      {
+        "Id": "Backpack_Workbench_Master",
+        "Type": "Crafting",
+        "Categories": [
+          "Backpack"
+        ],
+        "RequiredTierLevel": 1
       }
     ]
   },
@@ -69,10 +77,18 @@
       ]
     },
     "Primary": {
-      "Interactions": [{ "Type": "TrueBackpack_BackpackInteraction" }]
+      "Interactions": [
+        {
+          "Type": "TrueBackpack_BackpackInteraction"
+        }
+      ]
     },
     "Secondary": {
-      "Interactions": [{ "Type": "TrueBackpack_BackpackInteraction" }]
+      "Interactions": [
+        {
+          "Type": "TrueBackpack_BackpackInteraction"
+        }
+      ]
     }
   },
   "Scale": 0.5

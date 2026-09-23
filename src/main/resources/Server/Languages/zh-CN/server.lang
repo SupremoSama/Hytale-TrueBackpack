@@ -1,4 +1,5 @@
 truebackpack.items.Utility_Fibre_Bag.name=纤维布袋
+truebackpack.items.Utility_Fibre_Side_Bag.name=纤维布袋
 truebackpack.items.Utility_Leather_Side_Backpack.name=侧挎背包
 truebackpack.items.Utility_Leather_Backpack.name=小型背包
 truebackpack.items.Utility_Leather_Medium_Backpack.name=中型背包
@@ -8,6 +9,10 @@ truebackpack.items.Utility_Torch_Bandana.name=火把头巾
 truebackpack.tooltip.title=背包
 truebackpack.tooltip.empty=空
 truebackpack.tooltip.equipped=已装备
+truebackpack.tooltip.slots=格
+truebackpack.tooltip.items=物品
+truebackpack.tooltip.upgrade=升级: 等级 {0}/2
+truebackpack.tooltip.appearance=外观: {0}
 truebackpack.toggle.backpack.visible=背包现在已可见
 truebackpack.toggle.backpack.hidden=背包现在已隐藏
 truebackpack.toggle.quiver.visible=箭袋现在已可见
@@ -16,3 +21,104 @@ truebackpack.toggle.hat.visible=帽子现在已可见
 truebackpack.toggle.hat.hidden=帽子现在已隐藏
 truebackpack.toggle.unknown=无效选项，请选择 'backpack'、'quiver' 或 'hat'
 truebackpack.item.Utility_Helipack.description=使用木炭为此背包充能并在空中翱翔。双击跳跃可激活飞行模式，再次操作可退出飞行。
+
+# Crafting Materials
+truebackpack.items.Ingredient_Fibre.name=植物纤维
+truebackpack.items.Wood_Trunk.name=原木
+truebackpack.items.Ingredient_Bar_Iron.name=铁锭
+truebackpack.items.Ingredient_Leather_Medium.name=中型皮革
+truebackpack.items.Ingredient_Fabric_Scrap_Cindercloth.name=灰烬布碎片
+truebackpack.items.Ingredient_Bar_Cobalt.name=钴锭
+truebackpack.items.Ingredient_Leather_Heavy.name=重型皮革
+truebackpack.items.Ingredient_Voidheart.name=虚空之心
+truebackpack.items.Ingredient_Bar_Adamantite.name=精金锭
+truebackpack.items.Ingredient_Leather_Storm.name=风暴皮革
+
+# Workbench General / UI
+truebackpack.workbench.title=背包工作台
+truebackpack.workbench.tab.transmog=幻化
+truebackpack.workbench.tab.upgrades=升级
+truebackpack.workbench.tab.visibility=可见性
+truebackpack.workbench.no_backpack.title=未检测到背包
+truebackpack.workbench.no_backpack.desc=在胸部装备背包或手持背包。
+truebackpack.workbench.no_backpack.status=请手持或装备背包以使用工作台。
+truebackpack.workbench.slots=格
+truebackpack.workbench.skin=外观
+truebackpack.workbench.level=等级
+truebackpack.workbench.original=原版
+
+# Helipack Messages
+truebackpack.workbench.helipack.ineligible=飞行背包（不支持幻化 / 升级）
+truebackpack.workbench.helipack.cannot_transmog=飞行背包无法进行幻化。
+truebackpack.workbench.helipack.cannot_be_skin=飞行背包无法作为外观使用！
+truebackpack.workbench.helipack.no_upgrades=飞行背包不支持升级。
+
+# Buttons
+truebackpack.workbench.btn.apply=应用
+truebackpack.workbench.btn.active=生效中
+truebackpack.workbench.btn.upgrade=升级
+truebackpack.workbench.btn.need_items=材料不足
+truebackpack.workbench.btn.maxed=已满级
+truebackpack.workbench.btn.visible=显示
+truebackpack.workbench.btn.hidden=隐藏
+
+# Visibility Entries
+truebackpack.workbench.visibility.backpack.title=背包模型
+truebackpack.workbench.visibility.backpack.desc=显示或隐藏角色背部的背包3D模型
+truebackpack.workbench.visibility.quiver.title=箭袋 / 箭矢腰带
+truebackpack.workbench.visibility.quiver.desc=携带箭矢时显示或隐藏箭袋
+truebackpack.workbench.visibility.hat.title=帽子 / 头巾
+truebackpack.workbench.visibility.hat.desc=显示或隐藏装饰帽子或火把头巾
+
+# Transmog Skins
+truebackpack.workbench.skin.default.name=默认外观
+truebackpack.workbench.skin.default.desc=恢复背包初始模型
+truebackpack.workbench.skin.Utility_Fibre_Side_Bag.desc=轻便编织旅行收纳袋
+truebackpack.workbench.skin.Utility_Leather_Side_Backpack.desc=耐用单肩皮革挎包
+truebackpack.workbench.skin.Utility_Leather_Backpack.desc=经典便携探险背包
+truebackpack.workbench.skin.Utility_Leather_Medium_Backpack.desc=加固探险家背包
+truebackpack.workbench.skin.Utility_Leather_Big_Backpack.desc=多口袋远征背包
+truebackpack.workbench.skin.Utility_Leather_Extra_Big_Backpack.desc=重型大师级超大储物背包
+
+# Transmog Statuses
+truebackpack.workbench.status.skin_applied=已应用外观: {0}
+truebackpack.workbench.status.skin_reverted=已恢复为默认外观！
+
+# Upgrade Entries & Statuses
+truebackpack.workbench.tier.title=品级升级: {0}
+truebackpack.workbench.tier.benefit=容量提升至 {0} 格（保留所有物品！）
+truebackpack.workbench.level.title=容量升级: 等级 {0}/2
+truebackpack.workbench.level.benefit=+{0} 格（从 {1} 格扩展至 {2} 格）
+truebackpack.workbench.level.max_title=容量: 等级 2/2（最高）
+truebackpack.workbench.level.max_benefit=已达到最大容量（54 格）！
+truebackpack.workbench.level.max_cost=已无可用的升级。
+truebackpack.workbench.cost=花费: {0}
+truebackpack.workbench.cost.none=无
+truebackpack.workbench.status.tier_upgraded=成功升级为 {0}！
+truebackpack.workbench.status.level_upgraded=升级成功！等级 {0}/2（{1} 格）
+truebackpack.workbench.status.invalid_tier=无效的品级升级！
+truebackpack.workbench.status.missing_tier_materials=缺少品级升级所需的材料！
+truebackpack.workbench.status.only_extra_big_level=只有超大背包可以进行等级升级！
+truebackpack.workbench.status.already_max_level=背包已达到最高等级 2！
+truebackpack.workbench.status.missing_level_materials=缺少升至等级 {0} 所需的材料！
+truebackpack.workbench.status.no_backpack=未检测到背包！
+
+items.Backpack_Workbench_Apprentice.name=Apprentice Backpack Workbench
+items.Backpack_Workbench_Apprentice.description=Use to open crafting, backpack upgrades and customization.
+
+items.Backpack_Workbench_Master.name=Master Backpack Workbench
+items.Backpack_Workbench_Master.description=Use to open crafting, backpack upgrades and customization.
+
+truebackpack.workbench.tab.crafting=Crafting
+
+truebackpack.workbench.bench.upgrade=Upgrade to Master
+truebackpack.workbench.bench.master=Master bench — maximum level
+truebackpack.workbench.bench.cost=Upgrade materials
+truebackpack.workbench.bench.upgrading=Upgrading
+truebackpack.workbench.craft.queue=Crafts queued:
+truebackpack.workbench.craft.action=Craft
+truebackpack.workbench.craft.memories=Memories level required:
+truebackpack.workbench.craft.unknown=Recipe not learned
+truebackpack.workbench.craft.materials=Missing materials
+truebackpack.workbench.bench.apprentice=Apprentice workbench
+truebackpack.workbench.bench.master_name=Master workbench

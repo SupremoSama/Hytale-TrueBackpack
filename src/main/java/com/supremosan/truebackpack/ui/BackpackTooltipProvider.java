@@ -26,41 +26,84 @@ public class BackpackTooltipProvider {
         if (stack.isEmpty()) return null;
 
         String itemId   = stack.getItemId();
-        short sizeBonus = BackpackRegistry.getCapacity(itemId);
+        short sizeBonus = BackpackItemFactory.getTotalCapacity(stack);
         if (sizeBonus == 0) return null;
 
+        String extra = buildExtraInfo(stack, language);
+
         if (BackpackItemFactory.isEquipped(stack)) {
-            return I18nHelper.getOrFallback(language, KEY_EQUIPPED);
+            String equippedText = I18nHelper.getOrFallback(language, KEY_EQUIPPED);
+            return extra.isEmpty() ? equippedText : equippedText + "\n" + extra;
         }
 
         if (!BackpackItemFactory.hasContents(stack)) {
-            return buildEmptyTooltip(sizeBonus, language);
+            return buildEmptyTooltip(sizeBonus, language, extra);
         }
 
         List<ItemStack> contents = BackpackItemFactory.loadContents(stack);
-        return buildContentsTooltip(contents, sizeBonus, language);
+        return buildContentsTooltip(contents, sizeBonus, language, extra);
+    }
+
+    @Nonnull
+    public static String buildExtraInfo(@Nonnull ItemStack stack, @Nullable String language) {
+        StringBuilder sb = new StringBuilder();
+        if ("Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(stack.getItemId())) {
+            int level = BackpackItemFactory.getUpgradeLevel(stack);
+            if (level > 0) {
+                sb.append(I18nHelper.getOrFallback(language, "server.truebackpack.tooltip.upgrade", level));
+            }
+        }
+        if (BackpackItemFactory.hasTransmogSkin(stack)) {
+            String skin = BackpackItemFactory.getTransmogSkin(stack);
+            if (skin != null) {
+                if (!sb.isEmpty()) sb.append(" | ");
+                String skinDisplayName = I18nHelper.resolveItemName(skin, language);
+                sb.append(I18nHelper.getOrFallback(language, "server.truebackpack.tooltip.appearance", skinDisplayName));
+            }
+        }
+        return sb.toString();
     }
 
     @Nonnull
     public static String buildTooltipFromLiveContents(@Nonnull List<ItemStack> liveContents,
                                                       short sizeBonus,
                                                       @Nullable String language) {
-        return buildContentsTooltip(liveContents, sizeBonus, language);
+        return buildContentsTooltip(liveContents, sizeBonus, language, "");
+    }
+
+    @Nonnull
+    public static String buildTooltipFromLiveContents(@Nonnull List<ItemStack> liveContents,
+                                                      short sizeBonus,
+                                                      @Nullable String language,
+                                                      @Nonnull String extra) {
+        return buildContentsTooltip(liveContents, sizeBonus, language, extra);
     }
 
     @Nonnull
     public static String buildEmptyTooltip(short sizeBonus, @Nullable String language) {
+        return buildEmptyTooltip(sizeBonus, language, "");
+    }
+
+    @Nonnull
+    public static String buildEmptyTooltip(short sizeBonus, @Nullable String language, @Nonnull String extra) {
         String title     = I18nHelper.getOrFallback(language, KEY_TITLE);
         String slotsWord = I18nHelper.getOrFallback(language, KEY_SLOTS);
         String emptyWord = I18nHelper.getOrFallback(language, KEY_EMPTY);
 
-        return title + " (" + sizeBonus + " " + slotsWord + ")\n" + emptyWord;
+        StringBuilder sb = new StringBuilder();
+        sb.append(title).append(" (").append(sizeBonus).append(" ").append(slotsWord).append(")");
+        if (!extra.isEmpty()) {
+            sb.append("\n").append(extra);
+        }
+        sb.append("\n").append(emptyWord);
+        return sb.toString();
     }
 
     @Nonnull
     private static String buildContentsTooltip(@Nonnull List<ItemStack> contents,
                                                short sizeBonus,
-                                               @Nullable String language) {
+                                               @Nullable String language,
+                                               @Nonnull String extra) {
         String title     = I18nHelper.getOrFallback(language, KEY_TITLE);
         String slotsWord = I18nHelper.getOrFallback(language, KEY_SLOTS);
         String itemsWord = I18nHelper.getOrFallback(language, KEY_ITEMS);
@@ -91,6 +134,10 @@ public class BackpackTooltipProvider {
                 .append(totalItems).append(" ").append(itemsWord)
                 .append(")");
 
+        if (!extra.isEmpty()) {
+            tooltip.append("\n").append(extra);
+        }
+
         if (usedSlots == 0) {
             tooltip.append("\n").append(emptyWord);
         } else {
@@ -101,44 +148,7 @@ public class BackpackTooltipProvider {
     }
 
     @Nonnull
-    private static String resolveItemName(@Nullable String itemId, @Nullable String language) {
-        if (itemId == null || itemId.isBlank()) return "Unknown";
-
-        try {
-            Item asset = Item.getAssetMap().getAsset(itemId);
-            if (asset != null) {
-                String nameKey = asset.getTranslationKey();
-                I18nModule i18n = I18nModule.get();
-                if (i18n != null) {
-                    String translated = i18n.getMessage(language, nameKey);
-                    if (translated != null && !translated.isBlank()
-                            && !translated.equals(nameKey)) {
-                        return translated;
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
-
-        try {
-            I18nModule i18n = I18nModule.get();
-            if (i18n != null) {
-                String conventionKey = "server.items." + itemId + ".name";
-                String translated = i18n.getMessage(language, conventionKey);
-                if (translated != null && !translated.isBlank()
-                        && !translated.equals(conventionKey)) {
-                    return translated;
-                }
-            }
-        } catch (Exception ignored) {}
-
-        String[] parts = itemId.split("_");
-        StringBuilder sb = new StringBuilder();
-        for (String part : parts) {
-            if (part.isEmpty()) continue;
-            if (!sb.isEmpty()) sb.append(' ');
-            sb.append(Character.toUpperCase(part.charAt(0)));
-            if (part.length() > 1) sb.append(part.substring(1).toLowerCase());
-        }
-        return !sb.isEmpty() ? sb.toString() : itemId;
+    public static String resolveItemName(@Nullable String itemId, @Nullable String language) {
+        return I18nHelper.resolveItemName(itemId, language);
     }
 }

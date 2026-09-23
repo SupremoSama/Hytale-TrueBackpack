@@ -1,0 +1,41 @@
+$C = "../Common.ui";
+
+Group #VisibilityEntry {
+  Anchor: (Height: 56, Bottom: 8);
+  Padding: (Full: 8);
+  LayoutMode: Left;
+  Background: #141c24(0.85);
+
+  ItemSlot #CosmeticIcon {
+    Anchor: (Width: 40, Height: 40, Right: 10);
+    ShowQualityBackground: true;
+  }
+
+  Group #Details {
+    FlexWeight: 1;
+    LayoutMode: Top;
+    Padding: (Top: 2);
+
+    Label #CosmeticName {
+      Style: (RenderBold: true, FontSize: 14, TextColor: #ffffff);
+    }
+
+    Label #CosmeticDesc {
+      Anchor: (Top: 2);
+      Style: (FontSize: 11, TextColor: #8090a0);
+    }
+  }
+
+  TextButton #ToggleButton {
+    Anchor: (Width: 105, Height: 34, Left: 8, Top: 3);
+    Text: "Visible";
+    Style: $C.@SecondaryTextButtonStyle;
+  }
+
+  TextButton #ToggleHiddenButton {
+    Anchor: (Width: 105, Height: 34, Left: 8, Top: 3);
+    Text: "Hidden";
+    Visible: false;
+    Style: $C.@SecondaryTextButtonStyle;
+  }
+}

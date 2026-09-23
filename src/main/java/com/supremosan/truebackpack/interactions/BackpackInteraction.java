@@ -18,6 +18,7 @@ import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
 import com.hypixel.hytale.server.core.modules.block.BlockModule;
 import com.hypixel.hytale.server.core.modules.block.components.ItemContainerBlock;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
@@ -26,9 +27,13 @@ import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Sim
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
+import com.supremosan.truebackpack.ui.BackpackWorkbenchPage;
+import com.supremosan.truebackpack.util.BackpackWorkbenchUtils;
 import com.supremosan.truebackpack.util.BlockPlacementUtil;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -121,6 +126,12 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             boolean crouching,
             @Nonnull InteractionType type) {
 
+        if (targetBlock != null && (type == InteractionType.Use || type == InteractionType.Primary)) {
+            if (tryOpenWorkbench(context, store, owningEntity, world, targetBlock)) {
+                return;
+            }
+        }
+
         if (targetBlock != null && crouching) {
             Ref<ChunkStore> blockEntityRef = BlockModule.getBlockEntity(world, targetBlock.x, targetBlock.y, targetBlock.z);
             if (blockEntityRef != null && blockEntityRef.isValid() && hasItemContainer(blockEntityRef)) {
@@ -183,6 +194,10 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             return;
         }
 
+        if (tryOpenWorkbench(context, store, owningEntity, world, targetBlock)) {
+            return;
+        }
+
         if (crouching) {
             Ref<ChunkStore> blockEntityRef = BlockModule.getBlockEntity(world, targetBlock.x, targetBlock.y, targetBlock.z);
             if (blockEntityRef != null && blockEntityRef.isValid() && hasItemContainer(blockEntityRef)) {
@@ -192,6 +207,39 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         }
 
         handlePlace(context, entry, heldItem, hotbar, store, owningEntity, world, targetBlock);
+    }
+
+    private boolean tryOpenWorkbench(
+            @Nonnull InteractionContext context,
+            @Nonnull Store<EntityStore> store,
+            @Nonnull Ref<EntityStore> owningEntity,
+            @Nonnull World world,
+            @Nullable BlockPosition targetBlock) {
+        if (targetBlock == null) return false;
+        BlockType blockType = world.getBlockType(targetBlock.x, targetBlock.y, targetBlock.z);
+        if (!isWorkbenchBlock(blockType)) return false;
+
+        var benchRef = BlockModule.getBlockEntity(world, targetBlock.x, targetBlock.y, targetBlock.z);
+        if (benchRef == null || !benchRef.isValid()
+                || !com.hypixel.hytale.builtin.crafting.component.BenchBlock.tryOpen(
+                        owningEntity, context.getCommandBuffer(), benchRef,
+                        new org.joml.Vector3i(targetBlock.x, targetBlock.y, targetBlock.z))) {
+            context.getState().state = InteractionState.Failed;
+            return true;
+        }
+
+        Player player = store.getComponent(owningEntity, Player.getComponentType());
+        PlayerRef playerRef = store.getComponent(owningEntity, PlayerRef.getComponentType());
+        if (player != null && playerRef != null) {
+            BackpackWorkbenchPage.openAt(owningEntity, store, playerRef, new org.joml.Vector3i(targetBlock.x, targetBlock.y, targetBlock.z));
+            context.getState().state = InteractionState.Finished;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isWorkbenchBlock(@Nullable BlockType blockType) {
+        return BackpackWorkbenchUtils.isBackpackWorkbench(blockType);
     }
 
     private boolean hasItemContainer(@Nonnull Ref<ChunkStore> blockEntityRef) {
@@ -267,6 +315,21 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         if (containerBlock == null) {
             context.getState().state = InteractionState.Failed;
             return;
+        }
+
+        String transmogSkin = BackpackItemFactory.getTransmogSkin(heldItem);
+        int upgradeLevel = BackpackItemFactory.getUpgradeLevel(heldItem);
+
+        BackpackContainerState backpackState = chunkStore.getComponent(blockEntityRef, BackpackContainerState.getComponentType());
+        if (backpackState != null) {
+            backpackState.setTransmogSkin(transmogSkin);
+            backpackState.setUpgradeLevel(upgradeLevel);
+        }
+
+        short totalCapacity = (short) (entry.capacity() + upgradeLevel * BackpackItemFactory.SLOTS_PER_UPGRADE_LEVEL);
+        if (containerBlock.getItemContainer().getCapacity() != totalCapacity) {
+            SimpleItemContainer expanded = new SimpleItemContainer(totalCapacity);
+            containerBlock.setItemContainer(expanded);
         }
 
         List<ItemStack> contents = BackpackItemFactory.loadContents(heldItem);

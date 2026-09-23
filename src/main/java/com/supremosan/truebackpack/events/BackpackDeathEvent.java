@@ -18,6 +18,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
 import com.hypixel.hytale.server.core.modules.block.BlockModule;
 import com.hypixel.hytale.server.core.modules.block.components.ItemContainerBlock;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
@@ -30,6 +31,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.math.vector.Rotation3fc;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
+import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
@@ -177,6 +179,19 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         ItemContainerBlock containerBlock = chunkStore.getComponent(blockEntityRef, ItemContainerBlock.getComponentType());
         if (containerBlock == null) return;
 
+        BackpackContainerState backpackState = chunkStore.getComponent(blockEntityRef, BackpackContainerState.getComponentType());
+        if (backpackState != null) {
+            backpackState.setTransmogSkin(entry.transmogSkin());
+            backpackState.setUpgradeLevel(entry.upgradeLevel());
+        }
+
+        BackpackRegistry.BackpackEntry regEntry = BackpackRegistry.getByBlock(entry.blockId());
+        short baseCap = regEntry != null ? regEntry.capacity() : 20;
+        short totalCapacity = (short) (baseCap + entry.upgradeLevel() * BackpackItemFactory.SLOTS_PER_UPGRADE_LEVEL);
+        if (containerBlock.getItemContainer().getCapacity() != totalCapacity) {
+            containerBlock.setItemContainer(new SimpleItemContainer(totalCapacity));
+        }
+
         List<ItemStack> contents = entry.contents;
         int capacity = containerBlock.getItemContainer().getCapacity();
         for (int i = 0; i < contents.size() && i < capacity; i++) {
@@ -198,7 +213,12 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
 
         List<ItemStack> items = new ArrayList<>();
         for (BackpackEntry entry : backpacks) {
-            ItemStack item = BackpackItemFactory.createFromContainer(entry.blockId, entry.contents);
+            ItemStack item = BackpackItemFactory.createFromContainer(
+                    entry.blockId,
+                    entry.contents,
+                    entry.transmogSkin,
+                    entry.upgradeLevel
+            );
             if (item != null) {
                 items.add(item);
             }
@@ -263,8 +283,11 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
                     contents = List.of();
                 }
 
+                String transmogSkin = BackpackItemFactory.getTransmogSkin(item);
+                int upgradeLevel = BackpackItemFactory.getUpgradeLevel(item);
+
                 container.removeItemStackFromSlot(slot);
-                found.add(new BackpackEntry(registry.blockId(), contents));
+                found.add(new BackpackEntry(registry.blockId(), contents, transmogSkin, upgradeLevel));
             }
         }
 
@@ -277,10 +300,12 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         return PlayerRef.getComponentType();
     }
 
-    private record BackpackEntry(String blockId, List<ItemStack> contents) {
-        private BackpackEntry(@Nonnull String blockId, @Nonnull List<ItemStack> contents) {
+    private record BackpackEntry(String blockId, List<ItemStack> contents, @Nullable String transmogSkin, int upgradeLevel) {
+        private BackpackEntry(@Nonnull String blockId, @Nonnull List<ItemStack> contents, @Nullable String transmogSkin, int upgradeLevel) {
             this.blockId = blockId;
             this.contents = contents;
+            this.transmogSkin = transmogSkin;
+            this.upgradeLevel = upgradeLevel;
         }
     }
 }

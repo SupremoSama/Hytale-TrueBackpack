@@ -1,4 +1,5 @@
 truebackpack.items.Utility_Fibre_Bag.name=Волокниста сумка
+truebackpack.items.Utility_Fibre_Side_Bag.name=Волокниста сумка
 truebackpack.items.Utility_Leather_Side_Backpack.name=Бічний рюкзак
 truebackpack.items.Utility_Leather_Backpack.name=Малий рюкзак
 truebackpack.items.Utility_Leather_Medium_Backpack.name=Середній рюкзак
@@ -8,6 +9,10 @@ truebackpack.items.Utility_Torch_Bandana.name=Бандана зі смолоск
 truebackpack.tooltip.title=Рюкзак
 truebackpack.tooltip.empty=Порожньо
 truebackpack.tooltip.equipped=Екіпіровано
+truebackpack.tooltip.slots=слотів
+truebackpack.tooltip.items=предметів
+truebackpack.tooltip.upgrade=Поліпшення: Рівень {0}/2
+truebackpack.tooltip.appearance=Вигляд: {0}
 truebackpack.toggle.backpack.visible=Ваш рюкзак тепер видимий
 truebackpack.toggle.backpack.hidden=Ваш рюкзак тепер прихований
 truebackpack.toggle.quiver.visible=Ваш сагайдак тепер видимий
@@ -16,3 +21,104 @@ truebackpack.toggle.hat.visible=Ваш капелюх тепер видимий
 truebackpack.toggle.hat.hidden=Ваш капелюх тепер прихований
 truebackpack.toggle.unknown=Це недійсний варіант, виберіть 'backpack', 'quiver' або 'hat'
 truebackpack.item.Utility_Helipack.description=Заправте цей рюкзак деревним вугіллям і злітайте в небо. Зробіть подвійний стрибок, щоб активувати режим польоту, і повторіть дію, щоб його вимкнути.
+
+# Crafting Materials
+truebackpack.items.Ingredient_Fibre.name=Рослинне волокно
+truebackpack.items.Wood_Trunk.name=Дерев'яна колода
+truebackpack.items.Ingredient_Bar_Iron.name=Залізний зливок
+truebackpack.items.Ingredient_Leather_Medium.name=Середня шкіра
+truebackpack.items.Ingredient_Fabric_Scrap_Cindercloth.name=Клапоть попелястої тканини
+truebackpack.items.Ingredient_Bar_Cobalt.name=Кобальтовий зливок
+truebackpack.items.Ingredient_Leather_Heavy.name=Важка шкіра
+truebackpack.items.Ingredient_Voidheart.name=Серце порожнечі
+truebackpack.items.Ingredient_Bar_Adamantite.name=Адамантитовий зливок
+truebackpack.items.Ingredient_Leather_Storm.name=Грозова шкіра
+
+# Workbench General / UI
+truebackpack.workbench.title=Верстат рюкзаків
+truebackpack.workbench.tab.transmog=Трансмог
+truebackpack.workbench.tab.upgrades=Поліпшення
+truebackpack.workbench.tab.visibility=Видимість
+truebackpack.workbench.no_backpack.title=Рюкзак не виявлено
+truebackpack.workbench.no_backpack.desc=Екіпіруйте рюкзак у нагрудний слот або тримайте його в руці.
+truebackpack.workbench.no_backpack.status=Будь ласка, тримайте або екіпіруйте рюкзак для використання верстата.
+truebackpack.workbench.slots=Слотів
+truebackpack.workbench.skin=Вигляд
+truebackpack.workbench.level=Рівень
+truebackpack.workbench.original=Оригінал
+
+# Helipack Messages
+truebackpack.workbench.helipack.ineligible=Геліпак (Недоступний для трансмогу / поліпшень)
+truebackpack.workbench.helipack.cannot_transmog=Геліпак не підтримує трансмог.
+truebackpack.workbench.helipack.cannot_be_skin=Геліпак не можна використовувати як вигляд!
+truebackpack.workbench.helipack.no_upgrades=Геліпак не підтримує поліпшення.
+
+# Buttons
+truebackpack.workbench.btn.apply=Застосувати
+truebackpack.workbench.btn.active=Активно
+truebackpack.workbench.btn.upgrade=Поліпшити
+truebackpack.workbench.btn.need_items=Потрібні предмети
+truebackpack.workbench.btn.maxed=Максимум
+truebackpack.workbench.btn.visible=Видимий
+truebackpack.workbench.btn.hidden=Прихований
+
+# Visibility Entries
+truebackpack.workbench.visibility.backpack.title=Модель рюкзака
+truebackpack.workbench.visibility.backpack.desc=Показати або приховати 3D-модель рюкзака на персонажі
+truebackpack.workbench.visibility.quiver.title=Сагайдак / Пояс для стріл
+truebackpack.workbench.visibility.quiver.desc=Показати або приховати сагайдак при наявності стріл
+truebackpack.workbench.visibility.hat.title=Капелюх / Бандана
+truebackpack.workbench.visibility.hat.desc=Показати або приховати капелюх чи бандану зі смолоскипом
+
+# Transmog Skins
+truebackpack.workbench.skin.default.name=Стандартний вигляд
+truebackpack.workbench.skin.default.desc=Відновити початкову модель рюкзака
+truebackpack.workbench.skin.Utility_Fibre_Side_Bag.desc=Легка ткана дорожня сумка
+truebackpack.workbench.skin.Utility_Leather_Side_Backpack.desc=Міцна шкіряна сумка через плече
+truebackpack.workbench.skin.Utility_Leather_Backpack.desc=Класичний компактний пригодницький рюкзак
+truebackpack.workbench.skin.Utility_Leather_Medium_Backpack.desc=Посилений рюкзак дослідника
+truebackpack.workbench.skin.Utility_Leather_Big_Backpack.desc=Експедиційний рюкзак з багатьма кишенями
+truebackpack.workbench.skin.Utility_Leather_Extra_Big_Backpack.desc=Надважкий місткий рюкзак
+
+# Transmog Statuses
+truebackpack.workbench.status.skin_applied=Застосовано вигляд: {0}
+truebackpack.workbench.status.skin_reverted=Відновлено стандартний вигляд!
+
+# Upgrade Entries & Statuses
+truebackpack.workbench.tier.title=Поліпшення рангу: {0}
+truebackpack.workbench.tier.benefit=Розширює місткість до {0} слотів (зберігає всі предмети!)
+truebackpack.workbench.level.title=Збільшення місткості: Рівень {0}/2
+truebackpack.workbench.level.benefit=+{0} Слотів (розширює з {1} до {2} слотів)
+truebackpack.workbench.level.max_title=Місткість: Рівень 2/2 (МАКС)
+truebackpack.workbench.level.max_benefit=Досягнуто максимальної місткості (54 слоти)!
+truebackpack.workbench.level.max_cost=Подальші поліпшення неможливі.
+truebackpack.workbench.cost=Вартість: {0}
+truebackpack.workbench.cost.none=Немає
+truebackpack.workbench.status.tier_upgraded=Успішно поліпшено до {0}!
+truebackpack.workbench.status.level_upgraded=Поліпшення успішне! Рівень {0}/2 ({1} слотів)
+truebackpack.workbench.status.invalid_tier=Недійсне поліпшення рангу!
+truebackpack.workbench.status.missing_tier_materials=Не вистачає матеріалів для поліпшення рангу!
+truebackpack.workbench.status.only_extra_big_level=Тільки Величезний рюкзак може отримувати поліпшення рівня!
+truebackpack.workbench.status.already_max_level=Рюкзак уже досяг максимального рівня 2!
+truebackpack.workbench.status.missing_level_materials=Не вистачає матеріалів для рівня {0}!
+truebackpack.workbench.status.no_backpack=Рюкзак не виявлено!
+
+items.Backpack_Workbench_Apprentice.name=Apprentice Backpack Workbench
+items.Backpack_Workbench_Apprentice.description=Use to open crafting, backpack upgrades and customization.
+
+items.Backpack_Workbench_Master.name=Master Backpack Workbench
+items.Backpack_Workbench_Master.description=Use to open crafting, backpack upgrades and customization.
+
+truebackpack.workbench.tab.crafting=Crafting
+
+truebackpack.workbench.bench.upgrade=Upgrade to Master
+truebackpack.workbench.bench.master=Master bench — maximum level
+truebackpack.workbench.bench.cost=Upgrade materials
+truebackpack.workbench.bench.upgrading=Upgrading
+truebackpack.workbench.craft.queue=Crafts queued:
+truebackpack.workbench.craft.action=Craft
+truebackpack.workbench.craft.memories=Memories level required:
+truebackpack.workbench.craft.unknown=Recipe not learned
+truebackpack.workbench.craft.materials=Missing materials
+truebackpack.workbench.bench.apprentice=Apprentice workbench
+truebackpack.workbench.bench.master_name=Master workbench

@@ -2,6 +2,7 @@ package com.supremosan.truebackpack.registries;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,6 +110,11 @@ public final class BackpackRegistry {
 
     public static boolean isBackpack(@Nullable String itemId) {
         return getByItem(itemId) != null;
+    }
+
+    public static boolean isBackpack(@Nullable ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        return stack.getItem() != null && isBackpack(stack.getItem().getId());
     }
 
     public static short getCapacity(@Nullable String itemId) {

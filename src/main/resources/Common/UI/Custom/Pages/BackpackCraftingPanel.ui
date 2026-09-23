@@ -1,0 +1,50 @@
+$C = "../Common.ui";
+
+@IngredientRow = Group {
+  Anchor: (Height: 67);
+  LayoutMode: Left;
+};
+
+@IngredientLabelStyle = LabelStyle(FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center, ShrinkTextToFit: true);
+
+Group {
+  Anchor: (Height: 446);
+  LayoutMode: Left;
+  Group #RecipeGrid { Anchor: (Width: 204, Right: 14); LayoutMode: Top; }
+  $C.@SimpleContainer #RecipeDetails {
+    FlexWeight: 1;
+    LayoutMode: Top;
+    Padding: 0;
+    Label #RecipeName {
+      Anchor: (Height: 38);
+      Background: #0c151e(0.55);
+      Style: (FontSize: 15, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true, HorizontalAlignment: Center, VerticalAlignment: Center, ShrinkTextToFit: true);
+    }
+    Group #RecipeBody {
+      FlexWeight: 1;
+      LayoutMode: Left;
+      Padding: (Horizontal: 14, Vertical: 10);
+      Group #Ingredients {
+        FlexWeight: 1;
+        LayoutMode: Top;
+        @IngredientRow #MaterialRow0 { ItemSlot #MaterialIcon0 { Anchor: (Width: 62, Height: 62, Right: 10); ShowQualityBackground: true; } Label #Material0 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+        @IngredientRow #MaterialRow1 { ItemSlot #MaterialIcon1 { Anchor: (Width: 62, Height: 62, Right: 10); ShowQualityBackground: true; } Label #Material1 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+        @IngredientRow #MaterialRow2 { ItemSlot #MaterialIcon2 { Anchor: (Width: 62, Height: 62, Right: 10); ShowQualityBackground: true; } Label #Material2 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+        @IngredientRow #MaterialRow3 { ItemSlot #MaterialIcon3 { Anchor: (Width: 62, Height: 62, Right: 10); ShowQualityBackground: true; } Label #Material3 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+      }
+      Group #OutputPreview {
+        Anchor: (Width: 210);
+        LayoutMode: MiddleCenter;
+        ItemSlot #RecipePreview { Anchor: (Width: 152, Height: 152); ShowQualityBackground: false; ShowQuantity: false; }
+      }
+    }
+    Group #CraftFooter {
+      Anchor: (Height: 88);
+      Padding: (Horizontal: 14, Bottom: 10);
+      LayoutMode: Top;
+      $C.@PanelSeparatorFancy { @Anchor = (Height: 8); }
+      Label #RecipeStatus { Anchor: (Height: 22); Style: (FontSize: 11, TextColor: #e6be65, HorizontalAlignment: Center, ShrinkTextToFit: true); }
+      TextButton #CraftButton { Anchor: (Height: 44); Text: "Craft"; Style: $C.@DefaultTextButtonStyle; }
+    }
+  }
+}

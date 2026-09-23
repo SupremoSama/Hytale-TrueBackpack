@@ -1,0 +1,37 @@
+$C = "../Common.ui";
+
+@SelectionCorners = Group {
+  @Visible = false;
+  Anchor: (Full: 0); Visible: @Visible;
+  Group { Anchor: (Left: -2, Top: -2, Width: 12, Height: 3); Background: #f4c84f; }
+  Group { Anchor: (Left: -2, Top: -2, Width: 3, Height: 12); Background: #f4c84f; }
+  Group { Anchor: (Right: -2, Top: -2, Width: 12, Height: 3); Background: #f4c84f; }
+  Group { Anchor: (Right: -2, Top: -2, Width: 3, Height: 12); Background: #f4c84f; }
+  Group { Anchor: (Left: -2, Bottom: -2, Width: 12, Height: 3); Background: #f4c84f; }
+  Group { Anchor: (Left: -2, Bottom: -2, Width: 3, Height: 12); Background: #f4c84f; }
+  Group { Anchor: (Right: -2, Bottom: -2, Width: 12, Height: 3); Background: #f4c84f; }
+  Group { Anchor: (Right: -2, Bottom: -2, Width: 3, Height: 12); Background: #f4c84f; }
+};
+
+@RecipeButton = ItemSlotButton {
+  Anchor: (Width: 64, Height: 64, Right: 4);
+  Style: (Default: (), Hovered: (Background: #ffffff(0.06)), Pressed: (Background: #ffffff(0.11)), Sounds: $C.@ButtonSounds);
+};
+
+Group {
+  Anchor: (Height: 66);
+  LayoutMode: Left;
+  @RecipeButton #SelectRecipe0 {
+    ItemSlot #RecipeIcon0 { Anchor: (Full: 0); ShowQualityBackground: true; ShowQuantity: false; }
+    @SelectionCorners #Selected0 {}
+  }
+  @RecipeButton #SelectRecipe1 {
+    ItemSlot #RecipeIcon1 { Anchor: (Full: 0); ShowQualityBackground: true; ShowQuantity: false; }
+    @SelectionCorners #Selected1 {}
+  }
+  @RecipeButton #SelectRecipe2 {
+    Anchor: (Width: 64, Height: 64);
+    ItemSlot #RecipeIcon2 { Anchor: (Full: 0); ShowQualityBackground: true; ShowQuantity: false; }
+    @SelectionCorners #Selected2 {}
+  }
+}

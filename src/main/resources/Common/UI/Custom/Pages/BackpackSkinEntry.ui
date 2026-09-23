@@ -1,0 +1,52 @@
+$C = "../Common.ui";
+
+Group #Entry {
+  Anchor: (Height: 52, Bottom: 6);
+  Padding: (Full: 6);
+  LayoutMode: Left;
+  Background: #141c24(0.85);
+
+  ItemSlot #SkinIcon {
+    Anchor: (Width: 40, Height: 40, Right: 10);
+    ShowQualityBackground: true;
+  }
+
+  Group #Details {
+    FlexWeight: 1;
+    LayoutMode: Top;
+    Padding: (Top: 2);
+
+    Label #SkinName {
+      Style: (RenderBold: true, FontSize: 14, TextColor: #ffffff);
+    }
+
+    Label #SkinDesc {
+      Anchor: (Top: 2);
+      Style: (FontSize: 11, TextColor: #8090a0);
+    }
+  }
+
+  TextButton #ApplyButton {
+    Anchor: (Width: 96, Height: 32, Left: 8, Top: 4);
+    Text: "Apply";
+    Style: $C.@SecondaryTextButtonStyle;
+  }
+
+  Group #ActiveBadge {
+    Anchor: (Width: 96, Height: 32, Left: 8, Top: 4);
+    Background: #143522(0.95);
+    LayoutMode: Center;
+    Visible: false;
+
+    Label #ActiveLabel {
+      Text: "Active";
+      Style: (
+        FontSize: 12,
+        TextColor: #2ecc71,
+        RenderBold: true,
+        HorizontalAlignment: Center,
+        VerticalAlignment: Center
+      );
+    }
+  }
+}

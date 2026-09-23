@@ -1,0 +1,149 @@
+$C = "../Common.ui";
+
+$C.@DecoratedContainer {
+  @CloseButton = true;
+  Anchor: (Width: 1060, Height: 620);
+
+  #Title {
+    Label #PageTitle {
+      Style: (
+        FontSize: 20,
+        TextColor: #ffffff,
+        RenderBold: true,
+        HorizontalAlignment: Center,
+        VerticalAlignment: Center
+      );
+      Padding: (Horizontal: 19);
+      Text: "Backpack Workbench";
+    }
+  }
+
+  #Content {
+    LayoutMode: Left;
+    Padding: (Horizontal: 16, Vertical: 12);
+    Group #Main {
+      FlexWeight: 1;
+      LayoutMode: Top;
+
+    // Active Backpack Header Card
+    Group #BackpackHeader {
+      Anchor: (Height: 64, Bottom: 10);
+      Padding: (Full: 8);
+      LayoutMode: Left;
+      Background: #141c24(0.9);
+
+      ItemSlot #CurrentIcon {
+        Anchor: (Width: 48, Height: 48, Right: 10);
+        ShowQualityBackground: true;
+      }
+
+      Group #HeaderDetails {
+        FlexWeight: 1;
+        LayoutMode: Top;
+
+        Label #CurrentName {
+          Style: (RenderBold: true, FontSize: 15, TextColor: #e6be65);
+        }
+
+        Label #CurrentInfo {
+          Anchor: (Top: 2);
+          Style: (FontSize: 12, TextColor: #96a9be);
+        }
+
+        Label #StatusMessage {
+          Anchor: (Top: 2);
+          Style: (FontSize: 11, TextColor: #4cd137);
+        }
+      }
+    }
+
+    // Tab buttons (Transmog vs Upgrade vs Visibility) spanning the entire row
+    Group #TabButtons {
+      Anchor: (Height: 38, Bottom: 10);
+      LayoutMode: Left;
+
+    TextButton #CraftingButton {
+      FlexWeight: 1;
+      Anchor: (Height: 36, Right: 3);
+      Text: "Crafting";
+      Style: $C.@SecondaryTextButtonStyle;
+    }
+
+
+      TextButton #TabTransmogButton {
+        FlexWeight: 1;
+        Anchor: (Height: 36, Right: 3);
+        Text: "Transmog";
+        Style: $C.@SecondaryTextButtonStyle;
+      }
+
+      TextButton #TabUpgradeButton {
+        FlexWeight: 1;
+        Anchor: (Height: 36, Left: 3, Right: 3);
+        Text: "Upgrades";
+        Style: $C.@SecondaryTextButtonStyle;
+      }
+
+      TextButton #TabVisibilityButton {
+        FlexWeight: 1;
+        Anchor: (Height: 36, Left: 3);
+        Text: "Visibility";
+        Style: $C.@SecondaryTextButtonStyle;
+      }
+    }
+
+    // Scrollable content area for entries
+    Group #WorkbenchList {
+      FlexWeight: 1;
+      LayoutMode: TopScrolling;
+      ScrollbarStyle: $C.@DefaultScrollbarStyle;
+      Padding: (Full: 4);
+    }
+
+    // Centered loading state: only the text appears inside the UI
+    Group #LoadingContainer {
+      FlexWeight: 1;
+      LayoutMode: MiddleCenter;
+      Visible: false;
+
+      Label #LoadingText {
+        Style: (
+          FontSize: 20,
+          TextColor: #96a9be,
+          RenderBold: true,
+          HorizontalAlignment: Center,
+          VerticalAlignment: Center
+        );
+        Text: "Carregando...";
+      }
+    }
+    }
+    $C.@SimpleContainer #BenchPanel {
+      Anchor: (Width: 258, Left: 12);
+      LayoutMode: Top;
+      Padding: 0;
+
+      Label #BenchName {
+        Anchor: (Height: 42);
+        Background: #0c151e(0.55);
+        Style: (FontSize: 13, RenderBold: true, RenderUppercase: true, TextColor: #bdcbd3, HorizontalAlignment: Center, VerticalAlignment: Center, ShrinkTextToFit: true);
+      }
+      Label #BenchLevel { Anchor: (Height: 38, Top: 10); Style: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center); }
+      Group { Anchor: (Height: 130); LayoutMode: MiddleCenter;
+        ItemSlot #BenchPreview { Anchor: (Width: 126, Height: 126); ShowQualityBackground: false; ShowQuantity: false; }
+      }
+      Label #BenchMax {
+        Anchor: (Height: 38, Top: 4);
+        Background: #0c151e(0.55);
+        Style: (FontSize: 13, RenderBold: true, RenderUppercase: true, TextColor: #bdcbd3, HorizontalAlignment: Center, VerticalAlignment: Center, ShrinkTextToFit: true);
+      }
+      Group #BenchRequirements { Anchor: (Height: 92, Top: 10); LayoutMode: Left; Padding: (Horizontal: 8); }
+      TextButton #BenchUpgradeButton { Anchor: (Height: 44, Horizontal: 12, Top: 8); Text: "Upgrade"; Style: $C.@DefaultTextButtonStyle; }
+      Group { Anchor: (Height: 26, Horizontal: 12, Top: 12); LayoutMode: MiddleCenter;
+        $C.@ProgressBar #BenchProgressBar { Anchor: (Height: 10); }
+      }
+      Label #BenchProgress { Anchor: (Height: 20); Style: (FontSize: 11, TextColor: #55efc4, HorizontalAlignment: Center); }
+      Label #CraftingQueue { Anchor: (Height: 26, Top: 8); Style: (FontSize: 11, TextColor: #96a9be, HorizontalAlignment: Center); }
+    }
+  }
+}

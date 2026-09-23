@@ -59,7 +59,7 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
         BackpackRegistry.BackpackEntry entry = BackpackRegistry.getByBlock(blockId);
         if (entry == null) return;
 
-        short newCapacity = entry.capacity();
+        short newCapacity = (short) (entry.capacity() + backpackState.getUpgradeLevel() * BackpackItemFactory.SLOTS_PER_UPGRADE_LEVEL);
         SimpleItemContainer oldContainer = itemContainerBlock.getItemContainer();
         short oldCapacity = oldContainer.getCapacity();
 
@@ -117,7 +117,12 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
             contents.add((stack != null && !stack.isEmpty()) ? stack : null);
         }
 
-        ItemStack backpackItem = BackpackItemFactory.createFromContainer(blockId, contents);
+        ItemStack backpackItem = BackpackItemFactory.createFromContainer(
+                blockId,
+                contents,
+                backpackState.getTransmogSkin(),
+                backpackState.getUpgradeLevel()
+        );
         if (backpackItem == null) return;
 
         Vector3i worldPos = new Vector3i();

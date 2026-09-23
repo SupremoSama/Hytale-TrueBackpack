@@ -1,4 +1,5 @@
 truebackpack.items.Utility_Fibre_Bag.name=Saco de Fibras
+truebackpack.items.Utility_Fibre_Side_Bag.name=Saco de Fibras
 truebackpack.items.Utility_Leather_Side_Backpack.name=Mochila Lateral
 truebackpack.items.Utility_Leather_Backpack.name=Mochila Pequena
 truebackpack.items.Utility_Leather_Medium_Backpack.name=Mochila Mediana
@@ -8,6 +9,10 @@ truebackpack.items.Utility_Torch_Bandana.name=Bandana com tocha
 truebackpack.tooltip.title=Mochila
 truebackpack.tooltip.empty=Vazio
 truebackpack.tooltip.equipped=Equipado
+truebackpack.tooltip.slots=espaços
+truebackpack.tooltip.items=itens
+truebackpack.tooltip.upgrade=Melhoria: Nível {0}/2
+truebackpack.tooltip.appearance=Aparência: {0}
 truebackpack.toggle.backpack.visible=Sua mochila agora está visível
 truebackpack.toggle.backpack.hidden=Sua mochila agora está oculta
 truebackpack.toggle.quiver.visible=Sua aljava agora está visível
@@ -16,3 +21,103 @@ truebackpack.toggle.hat.visible=Seu chapéu agora está visível
 truebackpack.toggle.hat.hidden=Seu chapéu agora está oculto
 truebackpack.toggle.unknown=Essa não é uma opção válida, selecione 'backpack','quiver' ou 'hat'
 truebackpack.item.Utility_Helipack.description=Abasteça esta mochila com carvão vegetal e voe pelos céus. Dê um pulo duplo para ativar o modo de voo e repita o comando para desativá-lo.
+
+# Crafting Materials
+truebackpack.items.Ingredient_Fibre.name=Fibra Vegetal
+truebackpack.items.Wood_Trunk.name=Tronco de Madeira
+truebackpack.items.Ingredient_Bar_Iron.name=Barra de Ferro
+truebackpack.items.Ingredient_Leather_Medium.name=Couro Médio
+truebackpack.items.Ingredient_Fabric_Scrap_Cindercloth.name=Retalho de Tecido das Cinzas
+truebackpack.items.Ingredient_Bar_Cobalt.name=Barra de Cobalto
+truebackpack.items.Ingredient_Leather_Heavy.name=Couro Pesado
+truebackpack.items.Ingredient_Voidheart.name=Coração do Vazio
+truebackpack.items.Ingredient_Bar_Adamantite.name=Barra de Adamantita
+truebackpack.items.Ingredient_Leather_Storm.name=Couro da Tempestade
+
+# Workbench General / UI
+truebackpack.workbench.title=Bancada de Mochila
+truebackpack.workbench.tab.transmog=Transmog
+truebackpack.workbench.tab.upgrades=Melhorias
+truebackpack.workbench.tab.visibility=Visibilidade
+truebackpack.workbench.no_backpack.title=Nenhuma Mochila Detectada
+truebackpack.workbench.no_backpack.desc=Equipe uma mochila no peitoral ou segure uma na mão.
+truebackpack.workbench.no_backpack.status=Por favor, segure ou equipe uma mochila para usar a bancada.
+truebackpack.workbench.slots=Espaços
+truebackpack.workbench.skin=Visual
+truebackpack.workbench.level=Nível
+truebackpack.workbench.original=Original
+
+# Helipack Messages
+truebackpack.workbench.helipack.ineligible=Helipack (Inelegível para transmog / melhorias)
+truebackpack.workbench.helipack.cannot_transmog=Helipack não pode ser transmogrificado.
+truebackpack.workbench.helipack.cannot_be_skin=Helipack não pode ser usado como visual!
+truebackpack.workbench.helipack.no_upgrades=Helipack não suporta melhorias.
+
+# Buttons
+truebackpack.workbench.btn.apply=Aplicar
+truebackpack.workbench.btn.active=Ativo
+truebackpack.workbench.btn.upgrade=Melhorar
+truebackpack.workbench.btn.need_items=Faltam Itens
+truebackpack.workbench.btn.maxed=No Máximo
+truebackpack.workbench.btn.visible=Visível
+truebackpack.workbench.btn.hidden=Oculto
+
+# Visibility Entries
+truebackpack.workbench.visibility.backpack.title=Modelo da Mochila
+truebackpack.workbench.visibility.backpack.desc=Mostrar ou ocultar o modelo da mochila nas costas
+truebackpack.workbench.visibility.quiver.title=Aljava / Cinto de Flechas
+truebackpack.workbench.visibility.quiver.desc=Mostrar ou ocultar a aljava ao carregar flechas
+truebackpack.workbench.visibility.hat.title=Chapéu / Bandana
+truebackpack.workbench.visibility.hat.desc=Mostrar ou ocultar o chapéu cosmético ou bandana com tocha
+
+# Transmog Skins
+truebackpack.workbench.skin.default.name=Aparência Padrão
+truebackpack.workbench.skin.default.desc=Restaura o modelo original da mochila
+truebackpack.workbench.skin.Utility_Fibre_Side_Bag.desc=Bolsa leve trançada de viagem
+truebackpack.workbench.skin.Utility_Leather_Side_Backpack.desc=Bolsa transversal de couro resistente
+truebackpack.workbench.skin.Utility_Leather_Backpack.desc=Mochila clássica e compacta de aventura
+truebackpack.workbench.skin.Utility_Leather_Medium_Backpack.desc=Mochila reforçada de explorador
+truebackpack.workbench.skin.Utility_Leather_Big_Backpack.desc=Mochila de expedição com múltiplos bolsos
+truebackpack.workbench.skin.Utility_Leather_Extra_Big_Backpack.desc=Mochila de grande capacidade reforçada
+
+# Transmog Statuses
+truebackpack.workbench.status.skin_applied=Visual aplicado: {0}
+truebackpack.workbench.status.skin_reverted=Aparência padrão restaurada!
+
+# Upgrade Entries & Statuses
+truebackpack.workbench.tier.title=Melhoria de Nível: {0}
+truebackpack.workbench.tier.benefit=Expande a capacidade para {0} espaços (mantém todos os itens!)
+truebackpack.workbench.level.title=Aumento de Capacidade: Nível {0}/2
+truebackpack.workbench.level.benefit=+{0} Espaços (Expande de {1} para {2} espaços)
+truebackpack.workbench.level.max_title=Capacidade: Nível 2/2 (MÁX)
+truebackpack.workbench.level.max_benefit=Capacidade máxima atingida (54 espaços)!
+truebackpack.workbench.level.max_cost=Nenhuma outra melhoria disponível.
+truebackpack.workbench.cost=Custo: {0}
+truebackpack.workbench.cost.none=Nenhum
+truebackpack.workbench.status.tier_upgraded=Melhoria concluída com sucesso para {0}!
+truebackpack.workbench.status.level_upgraded=Melhoria concluída! Nível {0}/2 ({1} espaços)
+truebackpack.workbench.status.invalid_tier=Melhoria de nível inválida!
+truebackpack.workbench.status.missing_tier_materials=Materiais insuficientes para a melhoria de nível!
+truebackpack.workbench.status.only_extra_big_level=Apenas a Mochila Gigantesca pode receber melhorias de capacidade!
+truebackpack.workbench.status.already_max_level=A mochila já atingiu o nível máximo 2!
+truebackpack.workbench.status.missing_level_materials=Materiais insuficientes para o nível {0}!
+truebackpack.workbench.status.no_backpack=Nenhuma mochila detectada!
+items.Backpack_Workbench_Apprentice.name=Bancada de Mochilas do Aprendiz
+items.Backpack_Workbench_Apprentice.description=Interaja para acessar a fabricação, os aprimoramentos e a personalização de mochilas.
+
+items.Backpack_Workbench_Master.name=Bancada de Mochilas do Mestre
+items.Backpack_Workbench_Master.description=Interaja para acessar a fabricação, os aprimoramentos e a personalização de mochilas.
+
+truebackpack.workbench.tab.crafting=Fabricação
+
+truebackpack.workbench.bench.upgrade=Aprimorar para Mestre
+truebackpack.workbench.bench.master=Bancada Mestre — nível máximo
+truebackpack.workbench.bench.cost=Materiais para aprimorar
+truebackpack.workbench.bench.upgrading=Aprimorando
+truebackpack.workbench.craft.queue=Fabricações na fila:
+truebackpack.workbench.craft.action=Fabricar
+truebackpack.workbench.craft.memories=Nível de memórias necessário:
+truebackpack.workbench.craft.unknown=Receita não aprendida
+truebackpack.workbench.craft.materials=Faltam materiais
+truebackpack.workbench.bench.apprentice=Bancada do Aprendiz
+truebackpack.workbench.bench.master_name=Bancada do Mestre

@@ -16,15 +16,8 @@
     ],
     "BenchRequirement": [
       {
-        "Id": "Workbench",
-        "Type": "Crafting",
-        "Categories": [
-          "Workbench_Tinkering"
-        ],
-        "RequiredTierLevel": 0
-      },
-      {
         "Id": "Fieldcraft",
+        "Type": "Crafting",
         "Categories": [
           "Tools"
         ]

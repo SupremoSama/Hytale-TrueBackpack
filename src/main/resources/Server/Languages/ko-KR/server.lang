@@ -1,4 +1,5 @@
 truebackpack.items.Utility_Fibre_Bag.name=섬유 주머니
+truebackpack.items.Utility_Fibre_Side_Bag.name=섬유 주머니
 truebackpack.items.Utility_Leather_Side_Backpack.name=사이드 배낭
 truebackpack.items.Utility_Leather_Backpack.name=소형 배낭
 truebackpack.items.Utility_Leather_Medium_Backpack.name=중형 배낭
@@ -8,6 +9,10 @@ truebackpack.items.Utility_Torch_Bandana.name=횃불 두건
 truebackpack.tooltip.title=배낭
 truebackpack.tooltip.empty=비어 있음
 truebackpack.tooltip.equipped=장착됨
+truebackpack.tooltip.slots=슬롯
+truebackpack.tooltip.items=아이템
+truebackpack.tooltip.upgrade=업그레이드: 레벨 {0}/2
+truebackpack.tooltip.appearance=외형: {0}
 truebackpack.toggle.backpack.visible=이제 배낭이 표시됩니다
 truebackpack.toggle.backpack.hidden=이제 배낭이 숨겨집니다
 truebackpack.toggle.quiver.visible=이제 화살통이 표시됩니다
@@ -16,3 +21,104 @@ truebackpack.toggle.hat.visible=이제 모자가 표시됩니다
 truebackpack.toggle.hat.hidden=이제 모자가 숨겨집니다
 truebackpack.toggle.unknown=올바른 옵션이 아닙니다. 'backpack', 'quiver', 'hat' 중에서 선택하세요
 truebackpack.item.Utility_Helipack.description=이 배낭에 목탄을 채우고 하늘을 날아보세요. 2단 점프를 하여 비행 모드를 활성화하고, 다시 반복하여 비활성화할 수 있습니다.
+
+# Crafting Materials
+truebackpack.items.Ingredient_Fibre.name=식물 섬유
+truebackpack.items.Wood_Trunk.name=통나무
+truebackpack.items.Ingredient_Bar_Iron.name=철괴
+truebackpack.items.Ingredient_Leather_Medium.name=중형 가죽
+truebackpack.items.Ingredient_Fabric_Scrap_Cindercloth.name=잿빛 천 조각
+truebackpack.items.Ingredient_Bar_Cobalt.name=코발트괴
+truebackpack.items.Ingredient_Leather_Heavy.name=대형 가죽
+truebackpack.items.Ingredient_Voidheart.name=공허의 심장
+truebackpack.items.Ingredient_Bar_Adamantite.name=아다만타이트괴
+truebackpack.items.Ingredient_Leather_Storm.name=폭풍 가죽
+
+# Workbench General / UI
+truebackpack.workbench.title=배낭 작업대
+truebackpack.workbench.tab.transmog=형상변환
+truebackpack.workbench.tab.upgrades=업그레이드
+truebackpack.workbench.tab.visibility=가시성
+truebackpack.workbench.no_backpack.title=배낭이 감지되지 않음
+truebackpack.workbench.no_backpack.desc=가슴 슬롯에 배낭을 장착하거나 손에 들고 계세요.
+truebackpack.workbench.no_backpack.status=작업대를 사용하려면 배낭을 들거나 장착해 주세요.
+truebackpack.workbench.slots=슬롯
+truebackpack.workbench.skin=외형
+truebackpack.workbench.level=레벨
+truebackpack.workbench.original=기본
+
+# Helipack Messages
+truebackpack.workbench.helipack.ineligible=헬리팩 (형상변환 / 업그레이드 불가)
+truebackpack.workbench.helipack.cannot_transmog=헬리팩은 형상변환할 수 없습니다.
+truebackpack.workbench.helipack.cannot_be_skin=헬리팩은 외형으로 사용할 수 없습니다!
+truebackpack.workbench.helipack.no_upgrades=헬리팩은 업그레이드를 지원하지 않습니다.
+
+# Buttons
+truebackpack.workbench.btn.apply=적용
+truebackpack.workbench.btn.active=적용 중
+truebackpack.workbench.btn.upgrade=업그레이드
+truebackpack.workbench.btn.need_items=재료 부족
+truebackpack.workbench.btn.maxed=최대치
+truebackpack.workbench.btn.visible=표시
+truebackpack.workbench.btn.hidden=숨김
+
+# Visibility Entries
+truebackpack.workbench.visibility.backpack.title=배낭 외형 모델
+truebackpack.workbench.visibility.backpack.desc=캐릭터 등에 표시되는 배낭 모델 표시 또는 숨김
+truebackpack.workbench.visibility.quiver.title=화살통 / 화살 벨트
+truebackpack.workbench.visibility.quiver.desc=화살을 소지했을 때 화살통 표시 또는 숨김
+truebackpack.workbench.visibility.hat.title=모자 / 두건
+truebackpack.workbench.visibility.hat.desc=코스메틱 모자 또는 횃불 두건 표시 또는 숨김
+
+# Transmog Skins
+truebackpack.workbench.skin.default.name=기본 외형
+truebackpack.workbench.skin.default.desc=원래 배낭 모델로 복원
+truebackpack.workbench.skin.Utility_Fibre_Side_Bag.desc=가볍게 짠 여행용 파우치
+truebackpack.workbench.skin.Utility_Leather_Side_Backpack.desc=견고한 원 스트랩 숄더백
+truebackpack.workbench.skin.Utility_Leather_Backpack.desc=클래식하고 컴팩트한 모험용 배낭
+truebackpack.workbench.skin.Utility_Leather_Medium_Backpack.desc=강화된 탐험가 배낭
+truebackpack.workbench.skin.Utility_Leather_Big_Backpack.desc=포켓이 많은 원정대 배낭
+truebackpack.workbench.skin.Utility_Leather_Extra_Big_Backpack.desc=대용량 전문 보관 배낭
+
+# Transmog Statuses
+truebackpack.workbench.status.skin_applied=외형 적용 완료: {0}
+truebackpack.workbench.status.skin_reverted=기본 외형으로 복원되었습니다!
+
+# Upgrade Entries & Statuses
+truebackpack.workbench.tier.title=등급 업그레이드: {0}
+truebackpack.workbench.tier.benefit=용량을 {0}칸으로 확장 (내부 아이템 모두 유지!)
+truebackpack.workbench.level.title=용량 업그레이드: 레벨 {0}/2
+truebackpack.workbench.level.benefit=+{0}칸 슬롯 ({1}칸에서 {2}칸으로 확장)
+truebackpack.workbench.level.max_title=용량: 레벨 2/2 (최대)
+truebackpack.workbench.level.max_benefit=최대 용량에 도달했습니다 (54칸)!
+truebackpack.workbench.level.max_cost=더 이상 업그레이드할 수 없습니다.
+truebackpack.workbench.cost=비용: {0}
+truebackpack.workbench.cost.none=없음
+truebackpack.workbench.status.tier_upgraded={0}(으)로 성공적으로 업그레이드되었습니다!
+truebackpack.workbench.status.level_upgraded=업그레이드 성공! 레벨 {0}/2 ({1}칸)
+truebackpack.workbench.status.invalid_tier=잘못된 등급 업그레이드입니다!
+truebackpack.workbench.status.missing_tier_materials=등급 업그레이드에 필요한 재료가 부족합니다!
+truebackpack.workbench.status.only_extra_big_level=특대형 배낭만 레벨 업그레이드가 가능합니다!
+truebackpack.workbench.status.already_max_level=배낭이 이미 최대 레벨 2에 도달했습니다!
+truebackpack.workbench.status.missing_level_materials={0} 레벨에 필요한 재료가 부족합니다!
+truebackpack.workbench.status.no_backpack=감지된 배낭이 없습니다!
+
+items.Backpack_Workbench_Apprentice.name=Apprentice Backpack Workbench
+items.Backpack_Workbench_Apprentice.description=Use to open crafting, backpack upgrades and customization.
+
+items.Backpack_Workbench_Master.name=Master Backpack Workbench
+items.Backpack_Workbench_Master.description=Use to open crafting, backpack upgrades and customization.
+
+truebackpack.workbench.tab.crafting=Crafting
+
+truebackpack.workbench.bench.upgrade=Upgrade to Master
+truebackpack.workbench.bench.master=Master bench — maximum level
+truebackpack.workbench.bench.cost=Upgrade materials
+truebackpack.workbench.bench.upgrading=Upgrading
+truebackpack.workbench.craft.queue=Crafts queued:
+truebackpack.workbench.craft.action=Craft
+truebackpack.workbench.craft.memories=Memories level required:
+truebackpack.workbench.craft.unknown=Recipe not learned
+truebackpack.workbench.craft.materials=Missing materials
+truebackpack.workbench.bench.apprentice=Apprentice workbench
+truebackpack.workbench.bench.master_name=Master workbench

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.supremosan"
-version = "0.3.5"
+version = "0.3.6"
 val javaVersion = 25
 
 repositories {
@@ -95,7 +95,7 @@ idea {
 
 val syncAssets = tasks.register<Copy>("syncAssets") {
     group = "hytale"
-    description = "Automatically syncs assets from Build back to Source after server stops."
+    description = "Explicitly imports game-edited assets from Build back to Source."
 
     // Take from the temporary build folder (Where the game saved changes)
     from(layout.buildDirectory.dir("resources/main"))
@@ -118,10 +118,10 @@ afterEvaluate {
     // Now Gradle will find it, because the plugin has finished working
     val targetTask = tasks.findByName("runServer") ?: tasks.findByName("server")
 
-    if (targetTask != null) {
+    if (targetTask != null && providers.gradleProperty("syncGameAssets").orNull == "true") {
         targetTask.finalizedBy(syncAssets)
         logger.lifecycle("✅ specific task '${targetTask.name}' hooked for auto-sync.")
     } else {
-        logger.warn("⚠️ Could not find 'runServer' or 'server' task to hook auto-sync into.")
+        logger.lifecycle("Asset copy-back disabled; use syncAssets explicitly or -PsyncGameAssets=true.")
     }
 }

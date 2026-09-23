@@ -1,0 +1,29 @@
+Group {
+  Anchor: (Height: 154, Bottom: 8);
+  Padding: (Full: 8);
+  LayoutMode: Left;
+  Background: #141c24(0.85);
+  ItemSlot #RecipeIcon {
+    Anchor: (Width: 56, Height: 56, Right: 10, Top: 8);
+    ShowQualityBackground: true;
+  }
+  Group {
+    FlexWeight: 1;
+    LayoutMode: Top;
+    Label #RecipeName { Anchor: (Height: 24); Style: (RenderBold: true, FontSize: 14, TextColor: #e6be65); }
+    Label #Material0 { Anchor: (Height: 21); Style: (FontSize: 12, TextColor: #dfe6e9); }
+    Label #Material1 { Anchor: (Height: 21); Style: (FontSize: 12, TextColor: #dfe6e9); }
+    Label #Material2 { Anchor: (Height: 21); Style: (FontSize: 12, TextColor: #dfe6e9); }
+    Label #Material3 { Anchor: (Height: 21); Style: (FontSize: 12, TextColor: #dfe6e9); }
+    Label #RecipeStatus { Anchor: (Height: 22); Style: (FontSize: 11, TextColor: #e6be65); }
+  }
+  TextButton #CraftButton {
+    Anchor: (Width: 100, Height: 36, Left: 8, Top: 14);
+    Text: "Craft";
+    Style: (
+      Default: (Background: #25527a, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #326696, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #1b3e5e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+}

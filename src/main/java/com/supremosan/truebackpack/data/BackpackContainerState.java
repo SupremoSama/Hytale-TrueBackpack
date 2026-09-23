@@ -41,10 +41,21 @@ public class BackpackContainerState implements Component<ChunkStore> {
                     (state, o) -> state.cachedBlockId = o,
                     state -> state.cachedBlockId)
             .add()
+            .append(new KeyedCodec<>("TransmogSkin", Codec.STRING),
+                    (state, o) -> state.transmogSkin = o,
+                    state -> state.transmogSkin)
+            .add()
+            .append(new KeyedCodec<>("UpgradeLevel", Codec.INTEGER),
+                    (state, o) -> state.upgradeLevel = (o != null ? o : 0),
+                    state -> state.upgradeLevel)
+            .add()
             .build();
 
     @Nullable
     private String cachedBlockId;
+    @Nullable
+    private String transmogSkin;
+    private int upgradeLevel;
     private boolean custom;
     private boolean allowViewing;
     @Nullable
@@ -58,6 +69,8 @@ public class BackpackContainerState implements Component<ChunkStore> {
 
     public BackpackContainerState(BackpackContainerState other) {
         this.cachedBlockId = other.cachedBlockId;
+        this.transmogSkin = other.transmogSkin;
+        this.upgradeLevel = other.upgradeLevel;
         this.custom = other.custom;
         this.allowViewing = other.allowViewing;
         this.droplist = other.droplist;
@@ -76,6 +89,27 @@ public class BackpackContainerState implements Component<ChunkStore> {
     @Nullable
     public String getCachedBlockId() {
         return cachedBlockId;
+    }
+
+    public void setCachedBlockId(@Nullable String cachedBlockId) {
+        this.cachedBlockId = cachedBlockId;
+    }
+
+    @Nullable
+    public String getTransmogSkin() {
+        return transmogSkin;
+    }
+
+    public void setTransmogSkin(@Nullable String transmogSkin) {
+        this.transmogSkin = transmogSkin;
+    }
+
+    public int getUpgradeLevel() {
+        return upgradeLevel;
+    }
+
+    public void setUpgradeLevel(int upgradeLevel) {
+        this.upgradeLevel = upgradeLevel;
     }
 
     @Nonnull

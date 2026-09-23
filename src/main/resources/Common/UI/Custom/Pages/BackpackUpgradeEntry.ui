@@ -1,0 +1,74 @@
+$C = "../Common.ui";
+
+Group #UpgradeEntry {
+  Anchor: (Height: 76, Bottom: 8);
+  Padding: (Full: 8);
+  LayoutMode: Left;
+  Background: #141c24(0.85);
+
+  ItemSlot #UpgradeIcon {
+    Anchor: (Width: 56, Height: 56, Right: 10);
+    ShowQualityBackground: true;
+  }
+
+  Group #Details {
+    FlexWeight: 1;
+    LayoutMode: Top;
+
+    Label #UpgradeTitle {
+      Style: (RenderBold: true, FontSize: 14, TextColor: #e6be65);
+    }
+
+    Label #UpgradeBenefits {
+      Anchor: (Top: 2);
+      Style: (FontSize: 12, TextColor: #55efc4);
+    }
+
+    Label #CostLabel {
+      Anchor: (Top: 2);
+      Style: (FontSize: 11, TextColor: #dfe6e9);
+    }
+  }
+
+  TextButton #UpgradeButton {
+    Anchor: (Width: 110, Height: 34, Left: 8, Top: 12);
+    Text: "Upgrade";
+    Style: $C.@SecondaryTextButtonStyle;
+  }
+
+  Group #NeedItemsBadge {
+    Anchor: (Width: 110, Height: 34, Left: 8, Top: 12);
+    Background: #1c242c(0.95);
+    LayoutMode: Center;
+    Visible: false;
+
+    Label #NeedItemsText {
+      Text: "Need Items";
+      Style: (
+        FontSize: 12,
+        TextColor: #7f8c8d,
+        RenderBold: true,
+        HorizontalAlignment: Center,
+        VerticalAlignment: Center
+      );
+    }
+  }
+
+  Group #MaxedBadge {
+    Anchor: (Width: 110, Height: 34, Left: 8, Top: 12);
+    Background: #2a2414(0.95);
+    LayoutMode: Center;
+    Visible: false;
+
+    Label #MaxedText {
+      Text: "Maxed";
+      Style: (
+        FontSize: 12,
+        TextColor: #e6be65,
+        RenderBold: true,
+        HorizontalAlignment: Center,
+        VerticalAlignment: Center
+      );
+    }
+  }
+}

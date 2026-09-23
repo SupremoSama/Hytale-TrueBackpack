@@ -20,10 +20,18 @@
     ],
     "BenchRequirement": [
       {
-        "Id": "Workbench",
+        "Id": "Backpack_Workbench_Apprentice",
         "Type": "Crafting",
         "Categories": [
-          "Workbench_Tinkering"
+          "Backpack"
+        ],
+        "RequiredTierLevel": 1
+      },
+      {
+        "Id": "Backpack_Workbench_Master",
+        "Type": "Crafting",
+        "Categories": [
+          "Backpack"
         ],
         "RequiredTierLevel": 1
       }

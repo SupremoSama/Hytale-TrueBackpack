@@ -97,14 +97,16 @@ public class BackpackTooltipListener {
         ItemWithAllMetadata chest = armor.items.get(1);
         if (chest == null || chest.itemId.isBlank()) return;
 
-        short size = BackpackRegistry.getCapacity(chest.itemId);
+        ItemStack stack = buildFakeStack(chest);
+        short size = stack != null ? com.supremosan.truebackpack.factory.BackpackItemFactory.getTotalCapacity(stack) : BackpackRegistry.getCapacity(chest.itemId);
         if (size == 0) return;
 
         List<ItemStack> contents = BackpackDataStorage.getLiveContents(uuid.toString());
+        String extra = stack != null ? BackpackTooltipProvider.buildExtraInfo(stack, lang) : "";
 
         String tooltip = contents != null
-                ? BackpackTooltipProvider.buildTooltipFromLiveContents(contents, size, lang)
-                : BackpackTooltipProvider.buildEmptyTooltip(size, lang);
+                ? BackpackTooltipProvider.buildTooltipFromLiveContents(contents, size, lang, extra)
+                : BackpackTooltipProvider.buildEmptyTooltip(size, lang, extra);
 
         ItemWithAllMetadata clone = chest.clone();
         attachTooltip(clone, tooltip);

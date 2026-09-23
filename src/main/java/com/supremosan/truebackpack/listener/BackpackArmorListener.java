@@ -431,7 +431,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             if (override != null) {
                 visual = new ModelAttachment(override.model(), override.texture(), null, null, 1.0);
             } else {
-                visual = resolveVisual(equippedItem.getItemId());
+                visual = resolveVisual(equippedItem);
             }
         }
 
@@ -455,8 +455,8 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
         if (armorComp == null || storageComp == null) return;
 
-        String itemId = findEquippedItemId(armorComp, storageComp);
-        ModelAttachment visual = resolveVisual(itemId);
+        ItemStack equipped = findEquippedItem(armorComp, storageComp);
+        ModelAttachment visual = resolveVisual(equipped);
         if (visual != null) {
             CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);
         }
@@ -550,7 +550,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
 
     private static short bonus(@Nullable ItemStack stack) {
         if (stack == null || stack.isEmpty()) return 0;
-        return getBackpackSize(stack.getItemId());
+        return BackpackItemFactory.getTotalCapacity(stack);
     }
 
     @Nonnull
@@ -584,14 +584,39 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     }
 
     @Nullable
-    private static String findEquippedItemId(
+    private static ItemStack findEquippedItem(
             @Nonnull InventoryComponent.Armor armorComp,
             @Nonnull InventoryComponent.Storage storageComp) {
         ItemStack chest = armorComp.getInventory().getItemStack(CHEST_SLOT);
-        if (!ItemStack.isEmpty(chest) && bonus(chest) > 0) return chest.getItemId();
+        if (!ItemStack.isEmpty(chest) && bonus(chest) > 0) return chest;
         ItemStack storage = storageComp.getInventory().getItemStack(STORAGE_SLOT);
-        if (!ItemStack.isEmpty(storage) && bonus(storage) > 0) return storage.getItemId();
+        if (!ItemStack.isEmpty(storage) && bonus(storage) > 0) return storage;
         return null;
+    }
+
+    @Nullable
+    private static String findEquippedItemId(
+            @Nonnull InventoryComponent.Armor armorComp,
+            @Nonnull InventoryComponent.Storage storageComp) {
+        ItemStack item = findEquippedItem(armorComp, storageComp);
+        return item != null ? item.getItemId() : null;
+    }
+
+    @Nullable
+    private static ModelAttachment resolveVisual(@Nullable ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+        String itemId = stack.getItemId();
+        String skin = BackpackItemFactory.getTransmogSkin(stack);
+        // Helipack cannot be transmogged and cannot be used as a skin
+        if (skin != null && !skin.isBlank()
+                && !"Utility_Heli_Backpack".equalsIgnoreCase(itemId)
+                && !"Utility_Heli_Backpack".equalsIgnoreCase(skin)) {
+            BackpackEntry skinEntry = BackpackRegistry.getByItem(skin);
+            if (skinEntry != null) {
+                return new ModelAttachment(skinEntry.model(), skinEntry.texture(), null, null, 1.0);
+            }
+        }
+        return resolveVisual(itemId);
     }
 
     @Nullable

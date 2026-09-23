@@ -10,10 +10,13 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.commands.ReloadBackpackCommand;
 import com.supremosan.truebackpack.commands.SetBackpackModelCommand;
 import com.supremosan.truebackpack.commands.SetHelipackFuelCommand;
 import com.supremosan.truebackpack.commands.ToggleCosmeticCommand;
+import com.supremosan.truebackpack.commands.BackpackWorkbenchCommand;
 import com.supremosan.truebackpack.config.backpack.BackpackConfigService;
 import com.supremosan.truebackpack.config.hat.HatConfigService;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
@@ -75,6 +78,7 @@ public class TrueBackpack extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new ReloadBackpackCommand());
         this.getCommandRegistry().registerCommand(new SetHelipackFuelCommand());
         this.getCommandRegistry().registerCommand(new SetBackpackModelCommand());
+        this.getCommandRegistry().registerCommand(new BackpackWorkbenchCommand());
 
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {
             PlayerRef playerRef = event.getPlayerRef();
@@ -86,6 +90,10 @@ public class TrueBackpack extends JavaPlugin {
             HatArmorListener.onPlayerRemove(uuidStr);
             HatDurabilitySystem.onPlayerRemove(uuidStr);
         });
+
+        this.getCodecRegistry(Interaction.CODEC).register(
+                "TrueBackpackWorkbench", com.supremosan.truebackpack.interactions.BackpackWorkbenchInteraction.class,
+                com.supremosan.truebackpack.interactions.BackpackWorkbenchInteraction.CODEC);
 
         LOGGER.atInfo().log("[TrueBackpack] Setup complete");
     }

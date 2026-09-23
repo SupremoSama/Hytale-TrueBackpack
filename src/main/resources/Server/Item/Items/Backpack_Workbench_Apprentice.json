@@ -1,0 +1,168 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Backpack_Workbench_Apprentice.name",
+    "Description": "server.items.Backpack_Workbench_Apprentice.description"
+  },
+  "Icon": "Icons/ItemsGenerated/Backpack_Workbench_Apprentice.png",
+  "Categories": [
+    "Furniture.Benches"
+  ],
+  "BlockType": {
+    "Material": "Solid",
+    "DrawType": "Model",
+    "Opacity": "Transparent",
+    "CustomModel": "Items/Blocks/Backpack_Workbench_Apprentice.blockymodel",
+    "CustomModelTexture": [
+      {
+        "Texture": "Items/Blocks/Backpack_Workbench_Apprentice_Texture.png",
+        "Weight": 1
+      }
+    ],
+    "HitboxType": "TrueBackpack_Bench_Apprentice",
+    "VariantRotation": "NESW",
+    "Bench": {
+      "Type": "Crafting",
+      "Categories": [
+        {
+          "Id": "Backpack",
+          "Icon": "Icons/CraftingCategories/Backpack.png",
+          "Name": "server.truebackpack.ui.workbench.title"
+        }
+      ],
+      "LocalOpenSoundEventId": "SFX_Workbench_Open",
+      "LocalCloseSoundEventId": "SFX_Workbench_Close",
+      "CompletedSoundEventId": "SFX_Workbench_Craft",
+      "Id": "Backpack_Workbench_Apprentice",
+      "FailedSoundEventId": "SFX_Generic_Crafting_Failed",
+      "TierLevels": [
+        {
+          "CraftingTimeReductionModifier": 0,
+          "UpgradeRequirement": {
+            "Material": [
+              {
+                "ResourceTypeId": "Wood_Trunk",
+                "Quantity": 8
+              },
+              {
+                "ItemId": "Ingredient_Leather_Medium",
+                "Quantity": 8
+              },
+              {
+                "ItemId": "Ingredient_Fabric_Scrap_Linen",
+                "Quantity": 12
+              },
+              {
+                "ItemId": "Ingredient_Bar_Iron",
+                "Quantity": 4
+              }
+            ],
+            "TimeSeconds": 5
+          }
+        },
+        {
+          "CraftingTimeReductionModifier": 0.15
+        }
+      ],
+      "BenchUpgradeSoundEventId": "SFX_Workbench_Upgrade_Start_Default",
+      "BenchUpgradeCompletedSoundEventId": "SFX_Workbench_Upgrade_Complete_Default"
+    },
+    "BlockEntity": {
+      "Components": {
+        "BenchBlock": {}
+      }
+    },
+    "Gathering": {
+      "Breaking": {
+        "GatherType": "Benches"
+      }
+    },
+    "BlockParticleSetId": "Wood",
+    "ParticleColor": "#6e4a2f",
+    "Support": {
+      "Down": [
+        {
+          "FaceType": "Full"
+        }
+      ]
+    },
+    "BlockSoundSetId": "Wood",
+    "PhysicalMaterialId": "Wood",
+    "TextureComputedColor": "#6C4C30",
+    "Interactions": {
+      "Use": {
+        "Interactions": [
+          {
+            "Type": "TrueBackpackWorkbench"
+          }
+        ]
+      }
+    },
+    "State": {
+      "Definitions": {
+        "Tier2": {
+          "CustomModel": "Items/Blocks/Backpack_Workbench_Master.blockymodel",
+          "CustomModelTexture": [
+            {
+              "Texture": "Items/Blocks/Backpack_Workbench_Master_Texture.png",
+              "Weight": 1
+            }
+          ],
+          "HitboxType": "TrueBackpack_Bench_Master"
+        }
+      }
+    }
+  },
+  "PlayerAnimationsId": "Block",
+  "Tags": {
+    "Type": [
+      "Bench"
+    ]
+  },
+  "Recipe": {
+    "Input": [
+      {
+        "Quantity": 4,
+        "ResourceTypeId": "Wood_Trunk"
+      },
+      {
+        "Quantity": 4,
+        "ItemId": "Ingredient_Fibre"
+      },
+      {
+        "Quantity": 2,
+        "ResourceTypeId": "Rock"
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Id": "Fieldcraft",
+        "Type": "Crafting",
+        "Categories": [
+          "Tools"
+        ]
+      },
+      {
+        "Id": "Workbench",
+        "Type": "Crafting",
+        "Categories": [
+          "Workbench_Crafting"
+        ]
+      }
+    ]
+  },
+  "MaxStack": 1,
+  "ItemLevel": 1,
+  "ItemSoundSetId": "ISS_Blocks_Wood",
+  "IconProperties": {
+    "Scale": 0.4,
+    "Rotation": [
+      22.5,
+      45,
+      22.5
+    ],
+    "Translation": [
+      0,
+      -13.5
+    ]
+  }
+}
