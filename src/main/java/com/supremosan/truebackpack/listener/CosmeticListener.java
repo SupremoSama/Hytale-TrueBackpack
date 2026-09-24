@@ -53,6 +53,9 @@ public final class CosmeticListener {
     private static final Map<String, List<ModelAttachment>> PREVIOUS_INJECTED =
             new ConcurrentHashMap<>();
 
+    private static final Map<String, String> PLAYER_BASE_MODEL_ASSETS =
+            new ConcurrentHashMap<>();
+
     private static final Set<String> REBUILT_THIS_TICK = ConcurrentHashMap.newKeySet();
 
     private static final Map<String, ModelAsset.AnimationSet> EXTRA_ANIMATION_ENTRIES =
@@ -78,9 +81,16 @@ public final class CosmeticListener {
     public static void putAttachment(@Nonnull String playerUuid,
                                      @Nonnull String slotKey,
                                      @Nonnull ModelAttachment attachment) {
-        PLAYER_ATTACHMENTS
-                .computeIfAbsent(playerUuid, _ -> new LinkedHashMap<>())
-                .put(slotKey, attachment);
+        PLAYER_ATTACHMENTS.compute(playerUuid, (uuid, slots) -> {
+            Map<String, ModelAttachment> updated = slots;
+            if (updated == null) {
+                updated = Collections.synchronizedMap(new LinkedHashMap<>());
+            }
+            synchronized (updated) {
+                updated.put(slotKey, attachment);
+            }
+            return updated;
+        });
     }
 
     public static boolean hasAttachment(@Nonnull String playerUuid,
@@ -98,16 +108,16 @@ public final class CosmeticListener {
 
     public static void removeAttachment(@Nonnull String playerUuid,
                                         @Nonnull String slotKey) {
-        Map<String, ModelAttachment> slots = PLAYER_ATTACHMENTS.get(playerUuid);
-        if (slots == null) {
+        if (!PLAYER_ATTACHMENTS.containsKey(playerUuid)) {
             return;
         }
 
-        slots.remove(slotKey);
-
-        if (slots.isEmpty()) {
-            PLAYER_ATTACHMENTS.remove(playerUuid);
-        }
+        PLAYER_ATTACHMENTS.computeIfPresent(playerUuid, (uuid, slots) -> {
+            synchronized (slots) {
+                slots.remove(slotKey);
+                return slots.isEmpty() ? null : slots;
+            }
+        });
 
         scheduleRebuildForUuid(playerUuid);
     }
@@ -115,6 +125,7 @@ public final class CosmeticListener {
     public static void onPlayerLeave(@Nonnull String playerUuid) {
         PLAYER_ATTACHMENTS.remove(playerUuid);
         PREVIOUS_INJECTED.remove(playerUuid);
+        PLAYER_BASE_MODEL_ASSETS.remove(playerUuid);
         REBUILT_THIS_TICK.remove(playerUuid);
     }
 
@@ -135,8 +146,23 @@ public final class CosmeticListener {
                                        @Nonnull Store<EntityStore> store,
                                        @Nonnull Ref<EntityStore> ref,
                                        @Nonnull String playerUuid) {
+        scheduleRebuild(player, store, ref, playerUuid, RebuildMode.PLAYER_COSMETICS);
+    }
+
+    public static void scheduleAttachmentRebuild(@Nonnull Player player,
+                                                 @Nonnull Store<EntityStore> store,
+                                                 @Nonnull Ref<EntityStore> ref,
+                                                 @Nonnull String playerUuid) {
+        scheduleRebuild(player, store, ref, playerUuid, RebuildMode.ATTACHMENTS_ONLY);
+    }
+
+    private static void scheduleRebuild(@Nonnull Player player,
+                                        @Nonnull Store<EntityStore> store,
+                                        @Nonnull Ref<EntityStore> ref,
+                                        @Nonnull String playerUuid,
+                                        @Nonnull RebuildMode mode) {
         World world = player.getWorld();
-        Runnable task = () -> runProtectedRebuild(store, ref, playerUuid);
+        Runnable task = () -> runProtectedRebuild(store, ref, playerUuid, mode);
 
         if (world == null) {
             task.run();
@@ -181,7 +207,7 @@ public final class CosmeticListener {
 
             Player player = store.getComponent(ref, Player.getComponentType());
             if (player != null) {
-                scheduleRebuild(player, store, ref, playerUuid);
+                scheduleRebuild(player, store, ref, playerUuid, RebuildMode.ATTACHMENTS_ONLY);
             }
         });
     }
@@ -200,6 +226,7 @@ public final class CosmeticListener {
         Store<EntityStore> store = ref.getStore();
         String playerUuid = resolveUuid(store, ref);
         if (playerUuid != null) {
+            rememberBaseModelAsset(store, ref, playerUuid);
             scheduleRebuild(player, store, ref, playerUuid);
         }
     }
@@ -228,6 +255,21 @@ public final class CosmeticListener {
         @Override
         public ComponentType<EntityStore, ModelComponent> componentType() {
             return ModelComponent.getComponentType();
+        }
+
+        @Override
+        public void onComponentSet(@Nonnull Ref<EntityStore> ref,
+                                   @Nullable ModelComponent oldComponent,
+                                   @Nonnull ModelComponent newComponent,
+                                   @Nonnull Store<EntityStore> store,
+                                   @Nonnull CommandBuffer<EntityStore> commandBuffer) {
+            rememberPreviousModelAsset(store, ref, oldComponent);
+            handleChange(ref, store, commandBuffer, rebuildMode());
+        }
+
+        @Override
+        protected RebuildMode rebuildMode() {
+            return RebuildMode.ATTACHMENTS_ONLY;
         }
     }
 
@@ -284,7 +326,7 @@ public final class CosmeticListener {
                                      @Nonnull T component,
                                      @Nonnull Store<EntityStore> store,
                                      @Nonnull CommandBuffer<EntityStore> commandBuffer) {
-            handleChange(ref, store, commandBuffer);
+            handleChange(ref, store, commandBuffer, rebuildMode());
         }
 
         @Override
@@ -293,7 +335,7 @@ public final class CosmeticListener {
                                    @Nonnull T newComponent,
                                    @Nonnull Store<EntityStore> store,
                                    @Nonnull CommandBuffer<EntityStore> commandBuffer) {
-            handleChange(ref, store, commandBuffer);
+            handleChange(ref, store, commandBuffer, rebuildMode());
         }
 
         @Override
@@ -303,9 +345,14 @@ public final class CosmeticListener {
                                        @Nonnull CommandBuffer<EntityStore> commandBuffer) {
         }
 
-        private static void handleChange(@Nonnull Ref<EntityStore> ref,
-                                         @Nonnull Store<EntityStore> store,
-                                         @Nonnull CommandBuffer<EntityStore> commandBuffer) {
+        protected RebuildMode rebuildMode() {
+            return RebuildMode.PLAYER_COSMETICS;
+        }
+
+        protected static void handleChange(@Nonnull Ref<EntityStore> ref,
+                                           @Nonnull Store<EntityStore> store,
+                                           @Nonnull CommandBuffer<EntityStore> commandBuffer,
+                                           @Nonnull RebuildMode mode) {
             if (isProcessing()) {
                 return;
             }
@@ -317,14 +364,15 @@ public final class CosmeticListener {
 
             String playerUuid = resolveUuid(store, ref);
             if (playerUuid != null) {
-                scheduleRebuild(player, store, ref, playerUuid);
+                scheduleRebuild(player, store, ref, playerUuid, mode);
             }
         }
     }
 
     private static void runProtectedRebuild(@Nonnull Store<EntityStore> store,
                                             @Nonnull Ref<EntityStore> ref,
-                                            @Nonnull String playerUuid) {
+                                            @Nonnull String playerUuid,
+                                            @Nonnull RebuildMode mode) {
         if (!ref.isValid()) {
             return;
         }
@@ -332,7 +380,7 @@ public final class CosmeticListener {
         PROCESSING.set(true);
 
         try {
-            rebuildModel(store, ref, playerUuid);
+            rebuildModel(store, ref, playerUuid, mode);
             REBUILT_THIS_TICK.add(playerUuid);
         } finally {
             PROCESSING.set(false);
@@ -341,30 +389,38 @@ public final class CosmeticListener {
 
     private static void rebuildModel(@Nonnull Store<EntityStore> store,
                                      @Nonnull Ref<EntityStore> ref,
-                                     @Nonnull String playerUuid) {
+                                     @Nonnull String playerUuid,
+                                     @Nonnull RebuildMode mode) {
         ModelComponent modelComponent = store.getComponent(ref, ModelComponent.getComponentType());
         if (modelComponent == null) {
             return;
         }
 
         PlayerSkinComponent skinComponent = store.getComponent(ref, PlayerSkinComponent.getComponentType());
-        if (skinComponent == null) {
-            return;
-        }
-
         Model current = modelComponent.getModel();
-        PlayerSkin skin = skinComponent.getPlayerSkin();
+        PlayerSkin skin = skinComponent == null ? null : skinComponent.getPlayerSkin();
         List<ModelAttachment> attachments = current.getAttachments().length == 0
                 ? new ArrayList<>()
                 : new ArrayList<>(Arrays.asList(current.getAttachments()));
 
         List<ModelAttachment> previous = PREVIOUS_INJECTED.remove(playerUuid);
         if (previous != null) {
-            attachments.removeAll(previous);
+            removePreviousAttachments(attachments, previous);
         }
 
-        BodySkinData body = resolveBodySkinData(skin, current);
-        List<ModelAttachment> injected = buildInjectedAttachments(store, ref, playerUuid, skin, body.gradientId(), attachments);
+        boolean isExternalModel = hasExternalModel(playerUuid, current);
+        boolean rebuildPlayerCosmetics = mode == RebuildMode.PLAYER_COSMETICS
+                && skin != null
+                && !isExternalModel;
+        BodySkinData body = rebuildPlayerCosmetics
+                ? resolveBodySkinData(skin, current)
+                : new BodySkinData("", current.getGradientSet(), current.getTexture());
+        List<ModelAttachment> injected;
+        if (rebuildPlayerCosmetics) {
+            injected = buildInjectedAttachments(store, ref, playerUuid, skin, body.gradientId(), attachments);
+        } else {
+            injected = snapshotPlayerAttachments(playerUuid);
+        }
 
         attachments.addAll(injected);
 
@@ -372,8 +428,94 @@ public final class CosmeticListener {
             PREVIOUS_INJECTED.put(playerUuid, injected);
         }
 
+        if (hasSameRebuildState(current, attachments, body)) {
+            return;
+        }
+
         Model rebuilt = copyModelWithAttachments(current, attachments, body);
         store.replaceComponent(ref, ModelComponent.getComponentType(), new ModelComponent(rebuilt));
+    }
+
+    private static void rememberPreviousModelAsset(@Nonnull Store<EntityStore> store,
+                                                   @Nonnull Ref<EntityStore> ref,
+                                                   @Nullable ModelComponent previous) {
+        if (previous == null) {
+            return;
+        }
+
+        String playerUuid = resolveUuid(store, ref);
+        String previousAsset = previous.getModel().getModelAssetId();
+        if (playerUuid != null && previousAsset != null) {
+            PLAYER_BASE_MODEL_ASSETS.putIfAbsent(playerUuid, previousAsset);
+        }
+    }
+
+    private static void rememberBaseModelAsset(@Nonnull Store<EntityStore> store,
+                                               @Nonnull Ref<EntityStore> ref,
+                                               @Nonnull String playerUuid) {
+        ModelComponent modelComponent = store.getComponent(ref, ModelComponent.getComponentType());
+        if (modelComponent == null) {
+            return;
+        }
+
+        String modelAsset = modelComponent.getModel().getModelAssetId();
+        if (modelAsset != null) {
+            PLAYER_BASE_MODEL_ASSETS.putIfAbsent(playerUuid, modelAsset);
+        }
+    }
+
+    private static boolean hasExternalModel(@Nonnull String playerUuid,
+                                            @Nonnull Model current) {
+        String baseAsset = PLAYER_BASE_MODEL_ASSETS.get(playerUuid);
+        return baseAsset == null || !Objects.equals(baseAsset, current.getModelAssetId());
+    }
+
+    private static void removePreviousAttachments(@Nonnull List<ModelAttachment> current,
+                                                  @Nonnull List<ModelAttachment> previous) {
+        for (ModelAttachment injected : previous) {
+            for (int index = 0; index < current.size(); index++) {
+                if (sameAttachment(current.get(index), injected)) {
+                    current.remove(index);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static boolean sameAttachment(@Nullable ModelAttachment left,
+                                          @Nullable ModelAttachment right) {
+        if (left == right) {
+            return true;
+        }
+        return left != null && right != null
+                && Objects.equals(left.getModel(), right.getModel())
+                && Objects.equals(left.getTexture(), right.getTexture())
+                && Objects.equals(left.getGradientSet(), right.getGradientSet())
+                && Objects.equals(left.getGradientId(), right.getGradientId())
+                && Double.compare(left.getWeight(), right.getWeight()) == 0;
+    }
+
+    @Nonnull
+    private static List<ModelAttachment> snapshotPlayerAttachments(@Nonnull String playerUuid) {
+        Map<String, ModelAttachment> extras = PLAYER_ATTACHMENTS.get(playerUuid);
+        if (extras == null || extras.isEmpty()) {
+            return new ArrayList<>();
+        }
+        synchronized (extras) {
+            return new ArrayList<>(extras.values());
+        }
+    }
+
+    private static boolean hasSameRebuildState(@Nonnull Model current,
+                                               @Nonnull List<ModelAttachment> attachments,
+                                               @Nonnull BodySkinData body) {
+        return Arrays.equals(current.getAttachments(), attachments.toArray(new ModelAttachment[0]))
+                && Objects.equals(current.getGradientSet(), body.gradientSet() != null
+                        ? body.gradientSet() : current.getGradientSet())
+                && Objects.equals(current.getGradientId(), !body.gradientId().isEmpty()
+                        ? body.gradientId() : current.getGradientId())
+                && Objects.equals(current.getTexture(), body.texture() != null
+                        ? body.texture() : current.getTexture());
     }
 
     @Nonnull
@@ -396,10 +538,7 @@ public final class CosmeticListener {
             upsertAttachmentByModel(currentAttachments, attachment);
         }
 
-        Map<String, ModelAttachment> extras = PLAYER_ATTACHMENTS.get(playerUuid);
-        if (extras != null && !extras.isEmpty()) {
-            injected.addAll(extras.values());
-        }
+        injected.addAll(snapshotPlayerAttachments(playerUuid));
 
         return injected;
     }
@@ -808,5 +947,10 @@ public final class CosmeticListener {
     private record BodySkinData(@Nonnull String gradientId,
                                 @Nullable String gradientSet,
                                 @Nullable String texture) {
+    }
+
+    private enum RebuildMode {
+        PLAYER_COSMETICS,
+        ATTACHMENTS_ONLY
     }
 }

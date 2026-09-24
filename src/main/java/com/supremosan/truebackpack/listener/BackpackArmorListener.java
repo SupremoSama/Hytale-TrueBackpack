@@ -441,7 +441,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
         }
 
-        CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);
+        CosmeticListener.scheduleAttachmentRebuild(entity, store, ref, playerUuid);
     }
 
     public static void syncBackpackAttachment(
