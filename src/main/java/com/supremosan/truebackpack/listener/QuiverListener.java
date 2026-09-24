@@ -107,7 +107,7 @@ public class QuiverListener {
         if (!shouldHave) {
             if (!CosmeticListener.hasAttachment(playerUuid, ATTACHMENT_SLOT_KEY)) return;
             CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
-            CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
+            CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
             return;
         }
 
@@ -120,7 +120,7 @@ public class QuiverListener {
         if (correct.equals(current)) return;
 
         CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, correct);
-        CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
+        CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
     }
 
     private static boolean hasArrowInInventory(

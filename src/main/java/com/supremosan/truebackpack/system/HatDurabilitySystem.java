@@ -101,7 +101,7 @@ public class HatDurabilitySystem extends EntityTickingSystem<EntityStore> {
             Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
             HatArmorListener.onPlayerRemove(playerUuid);
             CosmeticListener.removeAttachment(playerUuid, "truebackpack:hat");
-            CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);
+            CosmeticListener.scheduleAttachmentRebuild(entity, store, ref, playerUuid);
 
             if (commandBuffer.getComponent(ref, DynamicLight.getComponentType()) != null) {
                 commandBuffer.removeComponent(ref, DynamicLight.getComponentType());
