@@ -4,9 +4,6 @@
     "Description": "server.items.Backpack_Workbench_Master.description"
   },
   "Icon": "Icons/ItemsGenerated/Backpack_Workbench_Master.png",
-  "Categories": [
-    "Furniture.Benches"
-  ],
   "BlockType": {
     "Material": "Solid",
     "DrawType": "Model",

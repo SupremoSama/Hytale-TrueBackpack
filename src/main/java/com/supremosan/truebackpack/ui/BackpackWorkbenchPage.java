@@ -26,6 +26,7 @@ import com.supremosan.truebackpack.listener.CosmeticListener;
 import com.supremosan.truebackpack.listener.HatArmorListener;
 import com.supremosan.truebackpack.listener.QuiverListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
+import com.supremosan.truebackpack.util.BlockPlacementUtil;
 import com.supremosan.truebackpack.util.I18nHelper;
 
 import javax.annotation.Nonnull;
@@ -820,7 +821,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 benchPosition.x + 0.5, benchPosition.y + 0.5, benchPosition.z + 0.5) > 64) return false;
         var world = store.getExternalData().getWorld();
         return com.supremosan.truebackpack.util.BackpackWorkbenchUtils.isBackpackWorkbench(
-                world.getBlockType(benchPosition.x, benchPosition.y, benchPosition.z));
+                BlockPlacementUtil.getBlockType(world, benchPosition.x, benchPosition.y, benchPosition.z));
     }
 
     /** Keep native recipe validation, queues, memories and material transactions. */
