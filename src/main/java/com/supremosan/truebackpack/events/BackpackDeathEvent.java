@@ -151,8 +151,8 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         int searchBottom = Math.max(0, startY - SCAN_DEPTH);
 
         for (int y = searchTop; y >= searchBottom; y--) {
-            BlockType floor = world.getBlockType(x, y, z);
-            BlockType place = world.getBlockType(x, y + 1, z);
+            BlockType floor = BlockPlacementUtil.getBlockType(world, x, y, z);
+            BlockType place = BlockPlacementUtil.getBlockType(world, x, y + 1, z);
 
             if (!isSolid(floor) || isEmpty(place)) continue;
             if (!hasUpSupport(world, x, y, z, floor)) continue;
