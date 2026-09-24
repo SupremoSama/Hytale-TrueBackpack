@@ -218,7 +218,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             return;
         }
 
-        BlockType supportBlockType = world.getBlockType(targetBlock.x, targetBlock.y, targetBlock.z);
+        BlockType supportBlockType = BlockPlacementUtil.getBlockType(world, targetBlock.x, targetBlock.y, targetBlock.z);
         if (supportBlockType == null) {
             context.getState().state = InteractionState.Failed;
             return;
@@ -235,7 +235,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         int placeY = targetBlock.y + 1;
         int placeZ = targetBlock.z;
 
-        BlockType occupying = world.getBlockType(placeX, placeY, placeZ);
+        BlockType occupying = BlockPlacementUtil.getBlockType(world, placeX, placeY, placeZ);
         if (occupying != null && occupying.getMaterial() != BlockMaterial.Empty) {
             context.getState().state = InteractionState.Failed;
             return;

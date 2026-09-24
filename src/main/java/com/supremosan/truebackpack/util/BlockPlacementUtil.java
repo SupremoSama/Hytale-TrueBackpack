@@ -13,15 +13,28 @@ import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.util.FillerBlockUtil;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class BlockPlacementUtil {
 
     private BlockPlacementUtil() {
     }
 
+    @Nullable
+    public static BlockType getBlockType(@Nonnull World world, int x, int y, int z) {
+        Ref<ChunkStore> sectionRef = world.getChunkStore().getChunkSectionReferenceAtBlock(x, y, z);
+        if (sectionRef == null || !sectionRef.isValid()) return null;
+
+        BlockSection blockSection = sectionRef.getStore().getComponent(sectionRef, BlockSection.getComponentType());
+        if (blockSection == null) return null;
+
+        int blockId = blockSection.get(x, y, z);
+        return BlockType.getAssetMap().getAsset(blockId);
+    }
+
     public static int getRotationIndex(@Nonnull World world, int x, int y, int z) {
         Ref<ChunkStore> sectionRef = world.getChunkStore().getChunkSectionReferenceAtBlock(x, y, z);
-        if (sectionRef == null) return RotationTuple.NONE_INDEX;
+        if (sectionRef == null || !sectionRef.isValid()) return RotationTuple.NONE_INDEX;
 
         BlockSection blockSection = sectionRef.getStore().getComponent(sectionRef, BlockSection.getComponentType());
         if (blockSection == null) return RotationTuple.NONE_INDEX;
@@ -44,7 +57,7 @@ public final class BlockPlacementUtil {
         if (index == AssetMapWithIndexes.NOT_FOUND) return false;
 
         Ref<ChunkStore> sectionRef = world.getChunkStore().getChunkSectionReferenceAtBlock(x, y, z);
-        if (sectionRef == null) return false;
+        if (sectionRef == null || !sectionRef.isValid()) return false;
 
         return BlockOperations.setBlock(
                 world.getChunkStore(), sectionRef, x, y, z,
