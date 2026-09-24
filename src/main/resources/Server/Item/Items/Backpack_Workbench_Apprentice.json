@@ -14,7 +14,7 @@
     "CustomModel": "Items/Blocks/Backpack_Workbench_Apprentice.blockymodel",
     "CustomModelTexture": [
       {
-        "Texture": "Items/Blocks/Backpack_Workbench_Apprentice_Texture.png",
+        "Texture": "Items/Blocks/Backpack_Workbench_Apprentice.png",
         "Weight": 1
       }
     ],

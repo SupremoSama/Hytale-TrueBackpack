@@ -909,8 +909,28 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 }
             }
         }
-        recipes.sort(Comparator.comparing(r -> r.getPrimaryOutput().getItemId()));
+        recipes.sort(Comparator
+                .comparingInt((com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe r) ->
+                        craftingRarityOrder(r.getPrimaryOutput().getItemId()))
+                .thenComparing(r -> r.getPrimaryOutput().getItemId())
+                .thenComparing(r -> r.getId()));
         return recipes;
+    }
+
+    private static int craftingRarityOrder(String itemId) {
+        var item = com.hypixel.hytale.server.core.asset.type.item.config.Item.getAssetMap().getAsset(itemId);
+        if (item == null) return Integer.MAX_VALUE;
+        var quality = com.hypixel.hytale.server.core.asset.type.item.config.ItemQuality
+                .getAssetMap().getAsset(item.getQualityIndex());
+        if (quality == null || quality.getId() == null) return Integer.MAX_VALUE;
+        return switch (quality.getId()) {
+            case "Common" -> 0;
+            case "Uncommon" -> 1;
+            case "Rare" -> 2;
+            case "Epic" -> 3;
+            case "Legendary" -> 4;
+            default -> Integer.MAX_VALUE;
+        };
     }
 
     private String text(String key) {
@@ -976,6 +996,21 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             var candidate = recipes.get(i);
             cb.set(row + " #RecipeIcon" + column + ".ItemId", candidate.getPrimaryOutput().getItemId());
             cb.set(row + " #Selected" + column + ".Visible", candidate.getId().equals(selectedRecipeId));
+            boolean materials = true;
+            var inputs = candidate.getInput();
+            if (inputs != null) {
+                for (var input : inputs) {
+                    materials &= inventory.countRemovableMaterial(input) >= input.getQuantity();
+                }
+            }
+            boolean known = !candidate.isKnowledgeRequired()
+                    || (player != null && player.getPlayerConfigData().getKnownRecipes()
+                    .contains(candidate.getPrimaryOutput().getItemId()));
+            boolean memory = candidate.getRequiredMemoriesLevel() <= memories;
+            boolean allowed = (creative || materials) && known && memory;
+            // Keep unavailable recipes selectable so the player can inspect their
+            // requirements; only dim the slot visually.
+            cb.set(row + " #Unavailable" + column + ".Visible", !allowed);
             eb.addEventBinding(CustomUIEventBindingType.Activating, row + " #SelectRecipe" + column,
                     new EventData().append("Action", "SelectRecipe").append("Target", candidate.getId()));
         }
