@@ -126,7 +126,8 @@ public class BackpackTooltipListener {
         }
 
         BsonDocument descDoc = new BsonDocument("RawText", new BsonString(tooltip));
-        BsonDocument itemDisplayDoc = new BsonDocument("Description", descDoc);
+        BsonDocument itemDisplayDoc = root.getDocument(ItemDisplayMetadata.KEY, new BsonDocument()).clone();
+        itemDisplayDoc.put("Description", descDoc);
         root.put(ItemDisplayMetadata.KEY, itemDisplayDoc);
 
         item.metadata = root.toJson();

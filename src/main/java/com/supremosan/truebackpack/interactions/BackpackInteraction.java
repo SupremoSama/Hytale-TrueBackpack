@@ -324,13 +324,14 @@ public class BackpackInteraction extends SimpleInstantInteraction {
         if (backpackState != null) {
             backpackState.setTransmogSkin(transmogSkin);
             backpackState.setUpgradeLevel(upgradeLevel);
+            backpackState.setCustomName(BackpackItemFactory.getCustomName(heldItem));
+            backpackState.setPaintColor(BackpackItemFactory.getPaintColor(heldItem));
         }
 
         short totalCapacity = (short) (entry.capacity() + upgradeLevel * BackpackItemFactory.SLOTS_PER_UPGRADE_LEVEL);
-        if (containerBlock.getItemContainer().getCapacity() != totalCapacity) {
-            SimpleItemContainer expanded = new SimpleItemContainer(totalCapacity);
-            containerBlock.setItemContainer(expanded);
-        }
+        var info = chunkStore.getComponent(blockEntityRef, BlockModule.BlockStateInfo.getComponentType());
+        com.supremosan.truebackpack.system.BackpackContainerSystem.resizeContainer(containerBlock, totalCapacity, () -> { if (info != null) info.markNeedsSaving(); });
+        if (info != null) info.markNeedsSaving();
 
         List<ItemStack> contents = BackpackItemFactory.loadContents(heldItem);
         for (int i = 0; i < contents.size() && i < containerBlock.getItemContainer().getCapacity(); i++) {

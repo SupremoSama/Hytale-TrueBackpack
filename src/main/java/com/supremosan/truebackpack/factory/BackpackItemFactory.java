@@ -7,6 +7,8 @@ import com.hypixel.hytale.codec.schema.SchemaContext;
 import com.hypixel.hytale.codec.schema.config.Schema;
 import com.hypixel.hytale.codec.schema.config.StringSchema;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.type.item.config.metadata.ItemDisplayMetadata;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import org.bson.BsonArray;
 import org.bson.BsonNull;
@@ -35,6 +37,40 @@ public final class BackpackItemFactory {
 
     public static final KeyedCodec<Integer> UPGRADE_LEVEL_CODEC =
             new KeyedCodec<>("Backpack_upgrade_level", Codec.INTEGER);
+
+    public static final KeyedCodec<String> CUSTOM_NAME_CODEC = new KeyedCodec<>("Backpack_custom_name", Codec.STRING);
+    public static final KeyedCodec<String> PAINT_COLOR_CODEC = new KeyedCodec<>("Backpack_paint_color", Codec.STRING);
+
+    public static String normalizeName(String name) {
+        if (name == null) return null;
+        String clean = name.codePoints().filter(c -> !Character.isISOControl(c)).collect(
+                StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString().strip();
+        int count = clean.codePointCount(0, clean.length());
+        if (count > 48) clean = clean.substring(0, clean.offsetByCodePoints(0, 48));
+        return clean.isBlank() ? null : clean;
+    }
+
+    public static String normalizeColor(String color) {
+        if (color == null || color.isBlank()) return null;
+        String clean = color.strip();
+        if (!clean.matches("#?[0-9a-fA-F]{6}")) throw new IllegalArgumentException("Use #RRGGBB");
+        return (clean.startsWith("#") ? clean : "#" + clean).toUpperCase(java.util.Locale.ROOT);
+    }
+
+    public static String getCustomName(ItemStack stack) { return normalizeName(stack.getFromMetadataOrNull(CUSTOM_NAME_CODEC)); }
+    public static String getPaintColor(ItemStack stack) {
+        try { return normalizeColor(stack.getFromMetadataOrNull(PAINT_COLOR_CODEC)); }
+        catch (IllegalArgumentException e) { return null; }
+    }
+    public static ItemStack setCustomName(ItemStack stack, String name) {
+        String clean = normalizeName(name);
+        var previous = stack.getFromMetadataOrNull(ItemDisplayMetadata.KEYED_CODEC);
+        var display = new ItemDisplayMetadata(
+                clean == null ? null : Message.raw(clean), previous == null ? null : previous.getDescription());
+        return stack.withMetadata(CUSTOM_NAME_CODEC, clean).withMetadata(
+                ItemDisplayMetadata.KEYED_CODEC, display);
+    }
+    public static ItemStack setPaintColor(ItemStack stack, String color) { return stack.withMetadata(PAINT_COLOR_CODEC, normalizeColor(color)); }
 
     public static final int MAX_UPGRADE_LEVEL = 2;
     public static final int SLOTS_PER_UPGRADE_LEVEL = 9;
@@ -157,6 +193,11 @@ public final class BackpackItemFactory {
             @Nonnull List<ItemStack> contents,
             @Nullable String transmogSkin,
             int upgradeLevel) {
+        return createFromContainer(blockId, contents, transmogSkin, upgradeLevel, null, null);
+    }
+
+    public static ItemStack createFromContainer(String blockId, List<ItemStack> contents, String transmogSkin,
+                                               int upgradeLevel, String customName, String paintColor) {
         if (blockId.equalsIgnoreCase("Empty")) {
             return null;
         }
@@ -177,6 +218,7 @@ public final class BackpackItemFactory {
             itemBackpack = setUpgradeLevel(itemBackpack, upgradeLevel);
         }
 
+        itemBackpack = setCustomName(setPaintColor(itemBackpack, paintColor), customName);
         return saveContents(itemBackpack, contents);
     }
 

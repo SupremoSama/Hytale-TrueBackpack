@@ -63,7 +63,7 @@ public class ToggleCosmeticCommand extends AbstractPlayerCommand {
                 } else {
                     CosmeticListener.removeAttachment(playerUuid, "truebackpack:backpack");
                 }
-                CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
+                CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
                 context.sendMessage(Message.raw(I18nHelper.getOrFallback(language,
                         nowVisible ? KEY_BACKPACK_VISIBLE : KEY_BACKPACK_HIDDEN)));
             }
@@ -74,7 +74,7 @@ public class ToggleCosmeticCommand extends AbstractPlayerCommand {
                 } else {
                     CosmeticListener.removeAttachment(playerUuid, "truebackpack:quiver");
                 }
-                CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
+                CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
                 context.sendMessage(Message.raw(I18nHelper.getOrFallback(language,
                         nowVisible ? KEY_QUIVER_VISIBLE : KEY_QUIVER_HIDDEN)));
             }
@@ -85,7 +85,7 @@ public class ToggleCosmeticCommand extends AbstractPlayerCommand {
                 } else {
                     CosmeticListener.removeAttachment(playerUuid, "truebackpack:hat");
                 }
-                CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
+                CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
                 context.sendMessage(Message.raw(I18nHelper.getOrFallback(language,
                         nowVisible ? KEY_HAT_VISIBLE : KEY_HAT_HIDDEN)));
             }

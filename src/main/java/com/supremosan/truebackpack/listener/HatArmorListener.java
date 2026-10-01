@@ -170,7 +170,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
         } else {
             CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
         }
-        CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);
+        CosmeticListener.scheduleAttachmentRebuild(entity, store, ref, playerUuid);
     }
 
     private static void updateDynamicLight(

@@ -1,5 +1,14 @@
 $C = "../Common.ui";
 
+@BenchUpgradeLabelStyle = LabelStyle(...$C.@DefaultButtonLabelStyle, FontSize: 14);
+@BenchUpgradeButtonStyle = TextButtonStyle(
+  Default: (Background: $C.@DefaultButtonDefaultBackground, LabelStyle: @BenchUpgradeLabelStyle),
+  Hovered: (Background: $C.@DefaultButtonHoveredBackground, LabelStyle: @BenchUpgradeLabelStyle),
+  Pressed: (Background: $C.@DefaultButtonPressedBackground, LabelStyle: @BenchUpgradeLabelStyle),
+  Disabled: (Background: $C.@DefaultButtonDisabledBackground, LabelStyle: (...@BenchUpgradeLabelStyle, TextColor: $C.@ColorDisabled)),
+  Sounds: $C.@ButtonSounds
+);
+
 $C.@DecoratedContainer {
   @CloseButton = true;
   Anchor: (Width: 1060, Height: 620);
@@ -42,7 +51,7 @@ $C.@DecoratedContainer {
         LayoutMode: Top;
 
         Label #CurrentName {
-          Style: (RenderBold: true, FontSize: 15, TextColor: #e6be65);
+          Style: (RenderBold: true, FontSize: 15, TextColor: #e6be65, ShrinkTextToFit: true);
         }
 
         Label #CurrentInfo {
@@ -57,7 +66,7 @@ $C.@DecoratedContainer {
       }
     }
 
-    // Tab buttons (Transmog vs Upgrade vs Visibility) spanning the entire row
+    // Crafting and capacity upgrades share one page.
     Group #TabButtons {
       Anchor: (Height: 38, Bottom: 10);
       LayoutMode: Left;
@@ -65,25 +74,17 @@ $C.@DecoratedContainer {
     TextButton #CraftingButton {
       FlexWeight: 1;
       Anchor: (Height: 36, Right: 3);
-      Text: "Crafting";
+      Text: "Craft & upgrade";
       Style: $C.@SecondaryTextButtonStyle;
     }
 
 
-      TextButton #TabTransmogButton {
-        FlexWeight: 1;
-        Anchor: (Height: 36, Right: 3);
-        Text: "Transmog";
-        Style: $C.@SecondaryTextButtonStyle;
-      }
-
-      TextButton #TabUpgradeButton {
+      TextButton #TabPersonalizeButton {
         FlexWeight: 1;
         Anchor: (Height: 36, Left: 3, Right: 3);
-        Text: "Upgrades";
+        Text: "Personalize";
         Style: $C.@SecondaryTextButtonStyle;
       }
-
       TextButton #TabVisibilityButton {
         FlexWeight: 1;
         Anchor: (Height: 36, Left: 3);
@@ -92,11 +93,10 @@ $C.@DecoratedContainer {
       }
     }
 
-    // Scrollable content area for entries
+    // Panels fit the available height; only recipe lists can scroll.
     Group #WorkbenchList {
       FlexWeight: 1;
-      LayoutMode: TopScrolling;
-      ScrollbarStyle: $C.@DefaultScrollbarStyle;
+      LayoutMode: Top;
       Padding: (Full: 4);
     }
 
@@ -138,12 +138,19 @@ $C.@DecoratedContainer {
         Style: (FontSize: 13, RenderBold: true, RenderUppercase: true, TextColor: #bdcbd3, HorizontalAlignment: Center, VerticalAlignment: Center, ShrinkTextToFit: true);
       }
       Group #BenchRequirements { Anchor: (Height: 92, Top: 10); LayoutMode: Left; Padding: (Horizontal: 8); }
-      TextButton #BenchUpgradeButton { Anchor: (Height: 44, Horizontal: 12, Top: 8); Text: "Upgrade"; Style: $C.@DefaultTextButtonStyle; }
-      Group { Anchor: (Height: 26, Horizontal: 12, Top: 12); LayoutMode: MiddleCenter;
-        $C.@ProgressBar #BenchProgressBar { Anchor: (Height: 10); }
+      TextButton #BenchUpgradeButton { Anchor: (Height: 44, Horizontal: 12, Top: 8); Text: "Upgrade"; Style: @BenchUpgradeButtonStyle; }
+      Group #BenchProgressContainer { Anchor: (Height: 10, Horizontal: 12, Top: 12); Visible: false;
+        ProgressBar #BenchProgressBar {
+          Anchor: (Full: 0);
+          Value: 0;
+          Background: "../Common/ProgressBar.png";
+          BarTexturePath: "../Common/ProgressBarFill.png";
+          EffectTexturePath: "../Common/ProgressBarEffect.png";
+          EffectWidth: 53;
+          EffectHeight: 30;
+          EffectOffset: 38;
+        }
       }
-      Label #BenchProgress { Anchor: (Height: 20); Style: (FontSize: 11, TextColor: #55efc4, HorizontalAlignment: Center); }
-      Label #CraftingQueue { Anchor: (Height: 26, Top: 8); Style: (FontSize: 11, TextColor: #96a9be, HorizontalAlignment: Center); }
     }
   }
 }

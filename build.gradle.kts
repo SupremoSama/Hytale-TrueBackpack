@@ -125,3 +125,16 @@ afterEvaluate {
         logger.lifecycle("Asset copy-back disabled; use syncAssets explicitly or -PsyncGameAssets=true.")
     }
 }
+
+// These regression checks use a standalone verifier against the engine codecs.
+tasks.test { failOnNoDiscoveredTests = false }
+val verifyBackpackCustomization = tasks.register<JavaExec>("verifyBackpackCustomization") {
+    group = "verification"
+    description = "Checks backpack metadata persistence, paint masks and memory thresholds."
+    dependsOn(tasks.testClasses)
+    classpath = sourceSets.test.get().runtimeClasspath + configurations.compileClasspath.get()
+    mainClass.set("com.supremosan.truebackpack.BackpackCustomizationVerification")
+    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+    workingDir = projectDir
+}
+tasks.check { dependsOn(verifyBackpackCustomization) }

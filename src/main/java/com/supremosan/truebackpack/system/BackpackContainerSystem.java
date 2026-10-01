@@ -59,36 +59,64 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
         BackpackRegistry.BackpackEntry entry = BackpackRegistry.getByBlock(blockId);
         if (entry == null) return;
 
-        short newCapacity = (short) (entry.capacity() + backpackState.getUpgradeLevel() * BackpackItemFactory.SLOTS_PER_UPGRADE_LEVEL);
-        SimpleItemContainer oldContainer = itemContainerBlock.getItemContainer();
-        short oldCapacity = oldContainer.getCapacity();
+        // Native initialization resizes to the block asset's base capacity. Keep the full
+        // upgraded inventory aside so it cannot spill overflow items during chunk reload.
+        backpackState.pendingContainer = itemContainerBlock.getItemContainer();
+        itemContainerBlock.setItemContainer(new SimpleItemContainer(entry.capacity()));
+    }
 
-        if (oldCapacity != newCapacity) {
-            SimpleItemContainer newContainer = new SimpleItemContainer(newCapacity);
-            short copyLimit = (short) Math.min(oldCapacity, newCapacity);
+    @Override
+    public java.util.Set<com.hypixel.hytale.component.dependency.Dependency<ChunkStore>> getDependencies() {
+        return java.util.Set.of(new com.hypixel.hytale.component.dependency.SystemDependency<>(
+                com.hypixel.hytale.component.dependency.Order.BEFORE,
+                com.hypixel.hytale.server.core.modules.block.system.ItemContainerSystems.OnAddedOrRemoved.class));
+    }
 
-            for (short slot = 0; slot < copyLimit; slot++) {
-                ItemStack stack = oldContainer.getItemStack(slot);
-                if (stack != null) {
-                    newContainer.addItemStackToSlot(slot, stack);
-                }
-            }
-
-            itemContainerBlock.setItemContainer(newContainer);
-        }
-
-        SimpleItemContainer container = itemContainerBlock.getItemContainer();
-        short capacity = container.getCapacity();
-        for (short slot = 0; slot < capacity; slot++) {
+    public static void configureContainer(SimpleItemContainer container) {
+        for (short slot = 0; slot < container.getCapacity(); slot++) {
             container.setSlotFilter(FilterActionType.ADD, slot,
-                    (_, _, _, item) ->
-                            item == null
-                                    || item.isEmpty()
-                                    || BackpackRegistry.getByItem(item.getItem().getId()) == null);
-
-            container.setSlotFilter(FilterActionType.DROP, slot,
-                    (_, _, _, _) -> false);
+                    (_, _, _, item) -> ItemStack.isEmpty(item) || !BackpackRegistry.isBackpack(item.getItemId()));
+            container.setSlotFilter(FilterActionType.DROP, slot, (_, _, _, _) -> false);
         }
+    }
+
+    public static void resizeContainer(ItemContainerBlock block, short capacity, Runnable markDirty) {
+        SimpleItemContainer old = block.getItemContainer();
+        if (old.getCapacity() != capacity) {
+            // Never silently discard filled overflow slots if a server lowers capacities.
+            for (short slot = capacity; slot < old.getCapacity(); slot++)
+                if (!ItemStack.isEmpty(old.getItemStack(slot))) { capacity = old.getCapacity(); break; }
+            SimpleItemContainer resized = new SimpleItemContainer(capacity);
+            for (short slot = 0; slot < Math.min(old.getCapacity(), capacity); slot++)
+                resized.setItemStackForSlot(slot, old.getItemStack(slot));
+            block.setItemContainer(resized);
+            resized.registerChangeEvent(com.hypixel.hytale.event.EventPriority.LAST, _ -> markDirty.run());
+        }
+        configureContainer(block.getItemContainer());
+    }
+
+    public static final class AfterNativeContainerSetup extends RefSystem<ChunkStore> {
+        @Override public Query<ChunkStore> getQuery() {
+            return Query.and(BackpackContainerState.getComponentType(), BlockModule.BlockStateInfo.getComponentType(), ItemContainerBlock.getComponentType());
+        }
+        @Override public java.util.Set<com.hypixel.hytale.component.dependency.Dependency<ChunkStore>> getDependencies() {
+            return java.util.Set.of(new com.hypixel.hytale.component.dependency.SystemDependency<>(
+                    com.hypixel.hytale.component.dependency.Order.AFTER,
+                    com.hypixel.hytale.server.core.modules.block.system.ItemContainerSystems.OnAddedOrRemoved.class));
+        }
+        @Override public void onEntityAdded(Ref<ChunkStore> ref, AddReason reason, Store<ChunkStore> store, CommandBuffer<ChunkStore> cb) {
+            var state = cb.getComponent(ref, BackpackContainerState.getComponentType());
+            var block = cb.getComponent(ref, ItemContainerBlock.getComponentType());
+            var info = cb.getComponent(ref, BlockModule.BlockStateInfo.getComponentType());
+            var entry = BackpackRegistry.getByBlock(state.getCachedBlockId());
+            if (entry == null || state.pendingContainer == null) return;
+            block.setItemContainer(state.pendingContainer);
+            state.pendingContainer = null;
+            short capacity = (short)(entry.capacity() + state.getUpgradeLevel() * BackpackItemFactory.SLOTS_PER_UPGRADE_LEVEL);
+            resizeContainer(block, capacity, info::markNeedsSaving);
+            block.getItemContainer().registerChangeEvent(com.hypixel.hytale.event.EventPriority.LAST, _ -> info.markNeedsSaving());
+        }
+        @Override public void onEntityRemove(Ref<ChunkStore> ref, RemoveReason reason, Store<ChunkStore> store, CommandBuffer<ChunkStore> cb) {}
     }
 
     @Override
@@ -121,7 +149,7 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
                 blockId,
                 contents,
                 backpackState.getTransmogSkin(),
-                backpackState.getUpgradeLevel()
+                backpackState.getUpgradeLevel(), backpackState.getCustomName(), backpackState.getPaintColor()
         );
         if (backpackItem == null) return;
 
@@ -147,6 +175,8 @@ public class BackpackContainerSystem extends RefSystem<ChunkStore> {
         );
 
         if (holders.length > 0) {
+            // Our serialized backpack owns the items now. Native removal must see an empty container.
+            itemContainerBlock.getItemContainer().clear();
             world.execute(() -> entityStore.addEntities(holders, AddReason.SPAWN));
         }
     }

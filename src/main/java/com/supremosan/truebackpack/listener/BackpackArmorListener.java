@@ -441,7 +441,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
         }
 
-        CosmeticListener.scheduleRebuild(entity, store, ref, playerUuid);
+        CosmeticListener.scheduleAttachmentRebuild(entity, store, ref, playerUuid);
     }
 
     public static void syncBackpackAttachment(
@@ -449,6 +449,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             @Nonnull Store<EntityStore> store,
             @Nonnull Ref<EntityStore> ref) {
         if (!hasEquippedBackpack(playerUuid)) return;
+        if (!CosmeticPreferenceUtils.isBackpackVisible(store, ref)) return;
         if (LAST_KNOWN_EQUIPPED.get(playerUuid) == null) return;
 
         InventoryComponent.Armor armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
@@ -605,18 +606,12 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     @Nullable
     private static ModelAttachment resolveVisual(@Nullable ItemStack stack) {
         if (stack == null || stack.isEmpty()) return null;
-        String itemId = stack.getItemId();
-        String skin = BackpackItemFactory.getTransmogSkin(stack);
-        // Helipack cannot be transmogged and cannot be used as a skin
-        if (skin != null && !skin.isBlank()
-                && !"Utility_Heli_Backpack".equalsIgnoreCase(itemId)
-                && !"Utility_Heli_Backpack".equalsIgnoreCase(skin)) {
-            BackpackEntry skinEntry = BackpackRegistry.getByItem(skin);
-            if (skinEntry != null) {
-                return new ModelAttachment(skinEntry.model(), skinEntry.texture(), null, null, 1.0);
-            }
-        }
-        return resolveVisual(itemId);
+        var entry = com.supremosan.truebackpack.util.BackpackPaintService.visualEntry(stack);
+        if (entry == null) return null;
+        String texture = entry.texture();
+        try { texture = com.supremosan.truebackpack.util.BackpackPaintService.texture(stack); }
+        catch (RuntimeException e) { java.util.logging.Logger.getLogger("TrueBackpack").warning("Paint texture failed: " + e.getMessage()); }
+        return new ModelAttachment(entry.model(), texture, null, null, 1.0);
     }
 
     @Nullable

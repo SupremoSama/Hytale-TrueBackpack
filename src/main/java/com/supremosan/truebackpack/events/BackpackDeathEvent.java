@@ -183,14 +183,16 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         if (backpackState != null) {
             backpackState.setTransmogSkin(entry.transmogSkin());
             backpackState.setUpgradeLevel(entry.upgradeLevel());
+            backpackState.setCustomName(entry.customName());
+            backpackState.setPaintColor(entry.paintColor());
         }
 
         BackpackRegistry.BackpackEntry regEntry = BackpackRegistry.getByBlock(entry.blockId());
         short baseCap = regEntry != null ? regEntry.capacity() : 20;
         short totalCapacity = (short) (baseCap + entry.upgradeLevel() * BackpackItemFactory.SLOTS_PER_UPGRADE_LEVEL);
-        if (containerBlock.getItemContainer().getCapacity() != totalCapacity) {
-            containerBlock.setItemContainer(new SimpleItemContainer(totalCapacity));
-        }
+        var info = chunkStore.getComponent(blockEntityRef, BlockModule.BlockStateInfo.getComponentType());
+        com.supremosan.truebackpack.system.BackpackContainerSystem.resizeContainer(containerBlock, totalCapacity, () -> { if (info != null) info.markNeedsSaving(); });
+        if (info != null) info.markNeedsSaving();
 
         List<ItemStack> contents = entry.contents;
         int capacity = containerBlock.getItemContainer().getCapacity();
@@ -217,7 +219,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
                     entry.blockId,
                     entry.contents,
                     entry.transmogSkin,
-                    entry.upgradeLevel
+                    entry.upgradeLevel, entry.customName, entry.paintColor
             );
             if (item != null) {
                 items.add(item);
@@ -287,7 +289,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
                 int upgradeLevel = BackpackItemFactory.getUpgradeLevel(item);
 
                 container.removeItemStackFromSlot(slot);
-                found.add(new BackpackEntry(registry.blockId(), contents, transmogSkin, upgradeLevel));
+                found.add(new BackpackEntry(registry.blockId(), contents, transmogSkin, upgradeLevel, BackpackItemFactory.getCustomName(item), BackpackItemFactory.getPaintColor(item)));
             }
         }
 
@@ -300,12 +302,6 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         return PlayerRef.getComponentType();
     }
 
-    private record BackpackEntry(String blockId, List<ItemStack> contents, @Nullable String transmogSkin, int upgradeLevel) {
-        private BackpackEntry(@Nonnull String blockId, @Nonnull List<ItemStack> contents, @Nullable String transmogSkin, int upgradeLevel) {
-            this.blockId = blockId;
-            this.contents = contents;
-            this.transmogSkin = transmogSkin;
-            this.upgradeLevel = upgradeLevel;
-        }
-    }
+    private record BackpackEntry(String blockId, List<ItemStack> contents, @Nullable String transmogSkin,
+                                 int upgradeLevel, @Nullable String customName, @Nullable String paintColor) {}
 }

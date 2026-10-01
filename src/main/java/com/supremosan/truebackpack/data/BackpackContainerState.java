@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 public class BackpackContainerState implements Component<ChunkStore> {
 
     private static ComponentType<ChunkStore, BackpackContainerState> componentType;
+    public transient SimpleItemContainer pendingContainer;
 
     public static final BuilderCodec<BackpackContainerState> CODEC = BuilderCodec
             .builder(BackpackContainerState.class, BackpackContainerState::new)
@@ -49,12 +50,16 @@ public class BackpackContainerState implements Component<ChunkStore> {
                     (state, o) -> state.upgradeLevel = (o != null ? o : 0),
                     state -> state.upgradeLevel)
             .add()
+            .append(new KeyedCodec<>("CustomName", Codec.STRING), (s, v) -> s.customName = v, s -> s.customName).add()
+            .append(new KeyedCodec<>("PaintColor", Codec.STRING), (s, v) -> s.paintColor = v, s -> s.paintColor).add()
             .build();
 
     @Nullable
     private String cachedBlockId;
     @Nullable
     private String transmogSkin;
+    private String customName;
+    private String paintColor;
     private int upgradeLevel;
     private boolean custom;
     private boolean allowViewing;
@@ -71,6 +76,8 @@ public class BackpackContainerState implements Component<ChunkStore> {
         this.cachedBlockId = other.cachedBlockId;
         this.transmogSkin = other.transmogSkin;
         this.upgradeLevel = other.upgradeLevel;
+        this.customName = other.customName;
+        this.paintColor = other.paintColor;
         this.custom = other.custom;
         this.allowViewing = other.allowViewing;
         this.droplist = other.droplist;
@@ -103,6 +110,11 @@ public class BackpackContainerState implements Component<ChunkStore> {
     public void setTransmogSkin(@Nullable String transmogSkin) {
         this.transmogSkin = transmogSkin;
     }
+
+    public String getCustomName() { return customName; }
+    public void setCustomName(String name) { customName = com.supremosan.truebackpack.factory.BackpackItemFactory.normalizeName(name); }
+    public String getPaintColor() { return paintColor; }
+    public void setPaintColor(String color) { paintColor = com.supremosan.truebackpack.factory.BackpackItemFactory.normalizeColor(color); }
 
     public int getUpgradeLevel() {
         return upgradeLevel;

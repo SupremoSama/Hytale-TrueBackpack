@@ -1,0 +1,11 @@
+Group {
+  FlexWeight: 1;
+  LayoutMode: Top;
+  Group #UpgradeContent { Anchor: (Height: 84); LayoutMode: Top; }
+  Group #CraftingContent { FlexWeight: 1; LayoutMode: Top; }
+  Label #CraftingQueue {
+    Anchor: (Height: 22, Top: 4);
+    Visible: false;
+    Style: (FontSize: 11, TextColor: #96a9be, HorizontalAlignment: End, VerticalAlignment: Center);
+  }
+}

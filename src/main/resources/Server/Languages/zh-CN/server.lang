@@ -110,6 +110,7 @@ items.Backpack_Workbench_Master.name=Master Backpack Workbench
 items.Backpack_Workbench_Master.description=Use to open crafting, backpack upgrades and customization.
 
 truebackpack.workbench.tab.crafting=Crafting
+truebackpack.workbench.tab.production=Craft & upgrade
 
 truebackpack.workbench.bench.upgrade=Upgrade to Master
 truebackpack.workbench.bench.master=Master bench — maximum level
@@ -122,3 +123,30 @@ truebackpack.workbench.craft.unknown=Recipe not learned
 truebackpack.workbench.craft.materials=Missing materials
 truebackpack.workbench.bench.apprentice=Apprentice workbench
 truebackpack.workbench.bench.master_name=Master workbench
+
+truebackpack.workbench.status.invalid_skin=This appearance is not available.
+
+truebackpack.workbench.tab.personalize=Personalize
+truebackpack.workbench.personalize.name=Backpack name (up to 48 characters)
+truebackpack.workbench.personalize.name_hint=Leave empty to use the original name
+truebackpack.workbench.personalize.paint=Paint leather - buckles and trim keep their original colors
+truebackpack.workbench.personalize.excluded=Helipacks and Fibre Side Bags cannot be painted (including their appearances).
+truebackpack.workbench.personalize.changed=Backpack changed. Please edit it again.
+truebackpack.workbench.personalize.updated=Backpack updated.
+truebackpack.workbench.personalize.failed=Could not apply customization. Please try again.
+truebackpack.workbench.memories.count=Memories: {0}/{1}
+truebackpack.workbench.memories.level=Memory level {0} required
+
+truebackpack.workbench.personalize.preview=Preview
+truebackpack.workbench.personalize.preview_failed=Preview unavailable. Please reopen this tab.
+
+truebackpack.workbench.personalize.appearance=Appearance
+truebackpack.workbench.personalize.use_paint=Custom color
+truebackpack.workbench.personalize.save_all=Save changes
+truebackpack.workbench.personalize.native_hint=Preview your changes, then save. Clear the name or uncheck custom color to reset.
+truebackpack.workbench.memories.find=找到
+truebackpack.workbench.memories.temple=遗忘神殿
+truebackpack.workbench.memories.restore=并恢复 {0} 个记忆以解锁此配方！
+truebackpack.workbench.personalize.preview_loading=正在更新预览…
+truebackpack.workbench.visibility.show=显示
+truebackpack.workbench.visibility.hide=隐藏

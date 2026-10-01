@@ -108,6 +108,7 @@ public class TrueBackpack extends JavaPlugin {
         this.getEntityStoreRegistry().registerSystem(new HatDurabilitySystem());
         this.getEntityStoreRegistry().registerSystem(new BackpackDeathEvent());
         this.getChunkStoreRegistry().registerSystem(new BackpackContainerSystem());
+        getChunkStoreRegistry().registerSystem(new BackpackContainerSystem.AfterNativeContainerSetup());
 
         BackpackArmorListener.register(this);
         QuiverListener.register(this);

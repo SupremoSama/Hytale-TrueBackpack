@@ -109,6 +109,7 @@ items.Backpack_Workbench_Master.name=Bancada de Mochilas do Mestre
 items.Backpack_Workbench_Master.description=Interaja para acessar a fabricação, os aprimoramentos e a personalização de mochilas.
 
 truebackpack.workbench.tab.crafting=Fabricação
+truebackpack.workbench.tab.production=Fabricação e melhorias
 
 truebackpack.workbench.bench.upgrade=Aprimorar para Mestre
 truebackpack.workbench.bench.master=Bancada Mestre — nível máximo
@@ -121,3 +122,30 @@ truebackpack.workbench.craft.unknown=Receita não aprendida
 truebackpack.workbench.craft.materials=Faltam materiais
 truebackpack.workbench.bench.apprentice=Bancada do Aprendiz
 truebackpack.workbench.bench.master_name=Bancada do Mestre
+
+truebackpack.workbench.status.invalid_skin=Este visual não está disponível.
+
+truebackpack.workbench.tab.personalize=Personalizar
+truebackpack.workbench.personalize.name=Nome da mochila (até 48 caracteres)
+truebackpack.workbench.personalize.name_hint=Deixe vazio para usar o nome original
+truebackpack.workbench.personalize.paint=Pintar couro - fivelas e detalhes mantêm suas cores originais
+truebackpack.workbench.personalize.excluded=Helipacks e Bolsas de Fibra não podem ser pintadas (incluindo seus visuais).
+truebackpack.workbench.personalize.changed=A mochila mudou. Edite-a novamente.
+truebackpack.workbench.personalize.updated=Mochila atualizada.
+truebackpack.workbench.personalize.failed=Não foi possível personalizar. Tente novamente.
+truebackpack.workbench.memories.count=Memórias: {0}/{1}
+truebackpack.workbench.memories.level=Nível de memórias {0} necessário
+
+truebackpack.workbench.personalize.preview=Prévia
+truebackpack.workbench.personalize.preview_failed=Prévia indisponível. Abra esta aba novamente.
+
+truebackpack.workbench.personalize.appearance=Visual
+truebackpack.workbench.personalize.use_paint=Cor personalizada
+truebackpack.workbench.personalize.save_all=Salvar alterações
+truebackpack.workbench.personalize.native_hint=Confira a prévia e salve. Apague o nome ou desmarque a cor para restaurar o original.
+truebackpack.workbench.memories.find=Encontre o
+truebackpack.workbench.memories.temple=Templo Esquecido
+truebackpack.workbench.memories.restore=e restaure {0} Memórias para desbloquear esta receita!
+truebackpack.workbench.personalize.preview_loading=Atualizando prévia…
+truebackpack.workbench.visibility.show=Mostrar
+truebackpack.workbench.visibility.hide=Ocultar

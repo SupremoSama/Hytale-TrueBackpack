@@ -1,16 +1,16 @@
 $C = "../Common.ui";
 
 @IngredientRow = Group {
-  Anchor: (Height: 67);
+  Anchor: (Height: 60);
   LayoutMode: Left;
 };
 
-@IngredientLabelStyle = LabelStyle(FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center, ShrinkTextToFit: true);
+@IngredientLabelStyle = LabelStyle(FontSize: 16, TextColor: #bdcbd3, VerticalAlignment: Center, Wrap: true);
 
 Group {
-  Anchor: (Height: 446);
+  FlexWeight: 1;
   LayoutMode: Left;
-  Group #RecipeGrid { Anchor: (Width: 204, Right: 14); LayoutMode: Top; }
+  Group #RecipeGrid { Anchor: (Width: 204, Right: 14); LayoutMode: TopScrolling; ScrollbarStyle: $C.@DefaultScrollbarStyle; }
   $C.@SimpleContainer #RecipeDetails {
     FlexWeight: 1;
     LayoutMode: Top;
@@ -27,24 +27,36 @@ Group {
       Group #Ingredients {
         FlexWeight: 1;
         LayoutMode: Top;
-        @IngredientRow #MaterialRow0 { ItemSlot #MaterialIcon0 { Anchor: (Width: 62, Height: 62, Right: 10); ShowQualityBackground: true; } Label #Material0 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
-        @IngredientRow #MaterialRow1 { ItemSlot #MaterialIcon1 { Anchor: (Width: 62, Height: 62, Right: 10); ShowQualityBackground: true; } Label #Material1 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
-        @IngredientRow #MaterialRow2 { ItemSlot #MaterialIcon2 { Anchor: (Width: 62, Height: 62, Right: 10); ShowQualityBackground: true; } Label #Material2 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
-        @IngredientRow #MaterialRow3 { ItemSlot #MaterialIcon3 { Anchor: (Width: 62, Height: 62, Right: 10); ShowQualityBackground: true; } Label #Material3 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+        @IngredientRow #MaterialRow0 { ItemSlot #MaterialIcon0 { Anchor: (Width: 54, Height: 54, Right: 10); ShowQualityBackground: true; } Label #Material0 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+        @IngredientRow #MaterialRow1 { ItemSlot #MaterialIcon1 { Anchor: (Width: 54, Height: 54, Right: 10); ShowQualityBackground: true; } Label #Material1 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+        @IngredientRow #MaterialRow2 { ItemSlot #MaterialIcon2 { Anchor: (Width: 54, Height: 54, Right: 10); ShowQualityBackground: true; } Label #Material2 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+        @IngredientRow #MaterialRow3 { ItemSlot #MaterialIcon3 { Anchor: (Width: 54, Height: 54, Right: 10); ShowQualityBackground: true; } Label #Material3 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
       }
       Group #OutputPreview {
-        Anchor: (Width: 210);
+        Anchor: (Width: 140);
         LayoutMode: MiddleCenter;
-        ItemSlot #RecipePreview { Anchor: (Width: 152, Height: 152); ShowQualityBackground: false; ShowQuantity: false; }
+        ItemSlot #RecipePreview { Anchor: (Width: 120, Height: 120); ShowQualityBackground: false; ShowQuantity: false; }
       }
     }
     Group #CraftFooter {
-      Anchor: (Height: 88);
+      Anchor: (Height: 78);
       Padding: (Horizontal: 14, Bottom: 10);
       LayoutMode: Top;
       $C.@PanelSeparatorFancy { @Anchor = (Height: 8); }
       Label #RecipeStatus { Anchor: (Height: 22); Style: (FontSize: 11, TextColor: #e6be65, HorizontalAlignment: Center, ShrinkTextToFit: true); }
-      TextButton #CraftButton { Anchor: (Height: 44); Text: "Craft"; Style: $C.@DefaultTextButtonStyle; }
+      Group #RecipeMemoryLock {
+        Anchor: (Height: 22);
+        LayoutMode: MiddleCenter;
+        Visible: false;
+        TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+        Group {
+          Anchor: (Width: 220, Height: 22);
+          LayoutMode: Left;
+          Group { Anchor: (Width: 22, Height: 22, Right: 8); Background: "../BackpackNative/MemoryLocked.png"; }
+          Label #MemoryLockLabel { FlexWeight: 1; Style: (FontSize: 13, TextColor: #bdcbd3, VerticalAlignment: Center); }
+        }
+      }
+      TextButton #CraftButton { Anchor: (Height: 36); Text: "Craft"; Style: $C.@DefaultTextButtonStyle; }
     }
   }
 }

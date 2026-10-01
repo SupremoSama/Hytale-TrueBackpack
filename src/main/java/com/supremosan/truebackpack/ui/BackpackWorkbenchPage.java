@@ -27,6 +27,8 @@ import com.supremosan.truebackpack.listener.HatArmorListener;
 import com.supremosan.truebackpack.listener.QuiverListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.util.BlockPlacementUtil;
+import com.supremosan.truebackpack.util.BackpackPaintService;
+import com.supremosan.truebackpack.util.BackpackProgression;
 import com.supremosan.truebackpack.util.I18nHelper;
 
 import javax.annotation.Nonnull;
@@ -42,8 +44,16 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         public static final BuilderCodec<PageData> CODEC = BuilderCodec.builder(PageData.class, PageData::new)
                 .append(new KeyedCodec<>("Action", Codec.STRING), (d, s) -> d.action = s, d -> d.action).add()
                 .append(new KeyedCodec<>("Target", Codec.STRING), (d, s) -> d.target = s, d -> d.target).add()
+                .append(new KeyedCodec<>("@Name", Codec.STRING), (d, v) -> d.name = v, d -> d.name).add()
+                .append(new KeyedCodec<>("@Color", Codec.STRING), (d, v) -> d.color = v, d -> d.color).add()
+                .append(new KeyedCodec<>("@Skin", Codec.STRING), (d, v) -> d.skin = v, d -> d.skin).add()
+                .append(new KeyedCodec<>("@UsePaint", Codec.BOOLEAN), (d, v) -> d.usePaint = v, d -> d.usePaint).add()
                 .build();
 
+        public String skin;
+        public Boolean usePaint;
+        public String name;
+        public String color;
         public String action;
         public String target;
     }
@@ -128,7 +138,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
     private boolean dismissed;
     private final java.util.concurrent.atomic.AtomicBoolean refreshQueued = new java.util.concurrent.atomic.AtomicBoolean();
     private String selectedRecipeId;
-    private String currentTab = "transmog";
+    private String currentTab = "personalize";
     private String statusMessage = "";
     @Nullable
     private final org.joml.Vector3i benchPosition;
@@ -146,11 +156,8 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
     @Override
     public void build(@Nonnull Ref<EntityStore> ref, @Nonnull UICommandBuilder commandBuilder, @Nonnull UIEventBuilder eventBuilder, @Nonnull Store<EntityStore> store) {
         commandBuilder.append("Pages/BackpackWorkbenchPage.ui");
-        commandBuilder.set("#CraftingButton.Visible", benchPosition != null);
-        commandBuilder.set("#BenchPanel.Visible", benchPosition != null);
         eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#BenchUpgradeButton",
                 new EventData().append("Action", "UpgradeBench").append("Target", ""));
-        commandBuilder.set("#CraftingButton.Text", I18nHelper.getOrFallback(playerRef.getLanguage(), "server.truebackpack.workbench.tab.crafting"));
         eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CraftingButton",
                 new EventData().append("Action", "Crafting").append("Target", ""));
 
@@ -162,22 +169,12 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
 
         eventBuilder.addEventBinding(
                 CustomUIEventBindingType.Activating,
-                "#TabTransmogButton",
-                new EventData().append("Action", "TabTransmog").append("Target", "")
-        );
-
-        eventBuilder.addEventBinding(
-                CustomUIEventBindingType.Activating,
-                "#TabUpgradeButton",
-                new EventData().append("Action", "TabUpgrade").append("Target", "")
-        );
-
-        eventBuilder.addEventBinding(
-                CustomUIEventBindingType.Activating,
                 "#TabVisibilityButton",
                 new EventData().append("Action", "TabVisibility").append("Target", "")
         );
 
+        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#TabPersonalizeButton",
+                new EventData().append("Action", "TabPersonalize"));
         refreshPage(ref, store, commandBuilder, eventBuilder);
     }
 
@@ -193,23 +190,33 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         // Localize the shared workbench tabs.
         commandBuilder.set("#PageTitle.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.title"));
 
-        String transmogLabel = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.tab.transmog");
-        String upgradesLabel = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.tab.upgrades");
         String visibilityLabel = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.tab.visibility");
 
-        commandBuilder.set("#TabTransmogButton.Text", transmogLabel);
-        commandBuilder.set("#TabUpgradeButton.Text", upgradesLabel);
+        commandBuilder.set("#CraftingButton.Text", text(craftingWindow == null ? "tab.upgrades" : "tab.production"));
         commandBuilder.set("#TabVisibilityButton.Text", visibilityLabel);
+        commandBuilder.set("#TabPersonalizeButton.Text", text("tab.personalize"));
 
         ActiveBackpack activeBp = findActiveBackpack(ref, store);
         commandBuilder.clear("#WorkbenchList");
 
-        if ("crafting".equals(currentTab) && craftingWindow != null) {
+        if ("crafting".equals(currentTab)) {
             commandBuilder.set("#LoadingContainer.Visible", false);
-            commandBuilder.set("#BackpackHeader.Visible", false);
+            commandBuilder.set("#BackpackHeader.Visible", activeBp != null);
             commandBuilder.set("#TabButtons.Visible", true);
             commandBuilder.set("#WorkbenchList.Visible", true);
-            buildCraftingTab(ref, store, commandBuilder, eventBuilder, lang);
+            updateHeader(activeBp, commandBuilder, lang);
+            commandBuilder.append("#WorkbenchList", "Pages/BackpackProductionPanel.ui");
+            boolean upgrade = activeBp != null && canUpgrade(activeBp.stack(), store);
+            commandBuilder.set("#UpgradeContent.Visible", upgrade);
+            commandBuilder.set("#CraftingContent.Visible", craftingWindow != null);
+            if (upgrade) buildUpgradeTab(ref, store, activeBp, commandBuilder, eventBuilder, lang);
+            if (craftingWindow != null) {
+                buildCraftingTab(ref, store, commandBuilder, eventBuilder, lang);
+                var data = craftingWindow.getData();
+                int queue = data.has("queueSize") ? data.get("queueSize").getAsInt() : 0;
+                commandBuilder.set("#CraftingQueue.Visible", queue > 0);
+                commandBuilder.set("#CraftingQueue.Text", text("craft.queue") + " " + queue);
+            }
             return;
         }
 
@@ -239,10 +246,8 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         commandBuilder.set("#WorkbenchList.Visible", true);
         updateHeader(activeBp, commandBuilder, lang);
 
-        if ("transmog".equalsIgnoreCase(currentTab)) {
-            buildTransmogTab(activeBp, commandBuilder, eventBuilder, lang);
-        } else {
-            buildUpgradeTab(ref, store, activeBp, commandBuilder, eventBuilder, lang);
+        if ("personalize".equalsIgnoreCase(currentTab)) {
+            buildPersonalizeTab(ref, store, activeBp, commandBuilder, eventBuilder);
         }
     }
 
@@ -258,7 +263,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         ItemStack stack = activeBp.stack();
         String itemId = stack.getItemId();
         commandBuilder.set("#BackpackHeader #CurrentIcon.ItemId", itemId);
-        commandBuilder.set("#HeaderDetails #CurrentName.Text", I18nHelper.resolveItemName(itemId, lang));
+        commandBuilder.set("#HeaderDetails #CurrentName.Text", (BackpackItemFactory.getCustomName(stack) != null ? BackpackItemFactory.getCustomName(stack) : I18nHelper.resolveItemName(itemId, lang)));
 
         boolean isHelipack = "Utility_Heli_Backpack".equalsIgnoreCase(itemId);
         if (isHelipack) {
@@ -274,7 +279,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             StringBuilder info = new StringBuilder();
             info.append(capacity).append(" ").append(I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.slots"))
                 .append(" | ").append(I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.skin")).append(": ").append(skinText);
-            if ("Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(itemId)) {
+            if ("Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(itemId) && level < BackpackItemFactory.MAX_UPGRADE_LEVEL) {
                 info.append(" | ").append(I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level")).append(" ").append(level).append("/2");
             }
             commandBuilder.set("#HeaderDetails #CurrentInfo.Text", info.toString());
@@ -283,62 +288,25 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         commandBuilder.set("#HeaderDetails #StatusMessage.Text", statusMessage);
     }
 
-    private void buildTransmogTab(
-            @Nonnull ActiveBackpack activeBp,
-            @Nonnull UICommandBuilder commandBuilder,
-            @Nonnull UIEventBuilder eventBuilder,
-            @Nullable String lang) {
-
-        ItemStack stack = activeBp.stack();
-        String currentItemId = stack.getItemId();
-        boolean isHelipack = "Utility_Heli_Backpack".equalsIgnoreCase(currentItemId);
-
-        if (isHelipack) {
-            commandBuilder.set("#HeaderDetails #StatusMessage.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.helipack.cannot_transmog"));
-            return;
-        }
-
-        String activeSkin = BackpackItemFactory.getTransmogSkin(stack);
-
-        for (int i = 0; i < AVAILABLE_SKINS.size(); i++) {
-            SkinOption skin = AVAILABLE_SKINS.get(i);
-            String selector = "#WorkbenchList[" + i + "]";
-
-            commandBuilder.append("#WorkbenchList", "Pages/BackpackSkinEntry.ui");
-            commandBuilder.set(selector + " #SkinIcon.ItemId", skin.iconItemId());
-
-            String skinName = "default".equals(skin.id())
-                    ? I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.skin.default.name")
-                    : I18nHelper.resolveItemName(skin.id(), lang);
-            String skinDesc = I18nHelper.getOrFallback(lang, skin.descKey());
-
-            commandBuilder.set(selector + " #SkinName.Text", skinName);
-            commandBuilder.set(selector + " #SkinDesc.Text", skinDesc);
-
-            boolean isCurrentActive;
-            if ("default".equals(skin.id())) {
-                isCurrentActive = (activeSkin == null || activeSkin.isBlank());
-            } else {
-                isCurrentActive = skin.id().equalsIgnoreCase(activeSkin)
-                        || (activeSkin == null && skin.id().equalsIgnoreCase(currentItemId));
-            }
-
-            if (isCurrentActive) {
-                commandBuilder.set(selector + " #ApplyButton.Visible", false);
-                commandBuilder.set(selector + " #ActiveBadge.Visible", true);
-                String activeLabel = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.active");
-                commandBuilder.set(selector + " #ActiveBadge #ActiveLabel.Text", activeLabel);
-            } else {
-                commandBuilder.set(selector + " #ApplyButton.Visible", true);
-                commandBuilder.set(selector + " #ActiveBadge.Visible", false);
-                commandBuilder.set(selector + " #ApplyButton.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.apply"));
-                eventBuilder.addEventBinding(
-                        CustomUIEventBindingType.Activating,
-                        selector + " #ApplyButton",
-                        new EventData().append("Action", "ApplySkin").append("Target", skin.id())
-                );
-            }
-        }
+    public static boolean hasAvailableUpgrade(ItemStack stack) {
+        return TIER_UPGRADES.containsKey(stack.getItemId())
+                || ("Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(stack.getItemId())
+                && BackpackItemFactory.getUpgradeLevel(stack) < BackpackItemFactory.MAX_UPGRADE_LEVEL);
+    }
+    private boolean canUpgrade(ItemStack stack, Store<EntityStore> store) {
+        if (!hasAvailableUpgrade(stack)) return false;
+        var tier = TIER_UPGRADES.get(stack.getItemId());
+        return upgradeAllowed(tier == null ? stack.getItemId() : tier.toItemId(), store);
+    }
+    private boolean upgradeAllowed(String target, Store<EntityStore> store) {
+        if (craftingWindow == null) return false;
+        int memories = com.hypixel.hytale.builtin.adventure.memories.MemoriesPlugin.get()
+                .getMemoriesLevel(store.getExternalData().getWorld().getGameplayConfig());
+        return eligibleRecipes().stream().anyMatch(recipe -> target.equals(recipe.getPrimaryOutput().getItemId())
+                && BackpackProgression.canAccessRecipe(recipe, craftingWindow.benchId(), craftingWindow.tier(), memories));
+    }
+    private boolean recipeUnlocked(com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe recipe, Store<EntityStore> store) {
+        return BackpackProgression.gate(recipe.getRequiredMemoriesLevel(), store.getExternalData().getWorld().getGameplayConfig()).unlocked();
     }
 
     private void buildUpgradeTab(
@@ -362,16 +330,18 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         // Tier Upgrade Option (for backpacks smaller than Extra Big)
         if (TIER_UPGRADES.containsKey(itemId)) {
             TierUpgrade tier = TIER_UPGRADES.get(itemId);
-            String selector = "#WorkbenchList[" + index + "]";
+            String selector = "#UpgradeContent[" + index + "]";
             index++;
 
-            commandBuilder.append("#WorkbenchList", "Pages/BackpackUpgradeEntry.ui");
+            commandBuilder.append("#UpgradeContent", "Pages/BackpackUpgradeEntry.ui");
             commandBuilder.set(selector + " #UpgradeIcon.ItemId", tier.toItemId());
             String targetName = I18nHelper.resolveItemName(tier.toItemId(), lang);
             commandBuilder.set(selector + " #UpgradeTitle.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.tier.title", targetName));
             commandBuilder.set(selector + " #UpgradeBenefits.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.tier.benefit", tier.newCapacity()));
 
-            boolean canAfford = hasMaterials(ref, store, tier.costs());
+            var gate = memoryGate(tier.toItemId(), store);
+            updateMemoryBadge(commandBuilder, selector, gate);
+            boolean canAfford = gate.unlocked() && hasMaterials(ref, store, tier.costs());
             commandBuilder.set(selector + " #CostLabel.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.cost", formatCosts(tier.costs(), canAfford, lang)));
 
             if (canAfford) {
@@ -386,7 +356,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 );
             } else {
                 commandBuilder.set(selector + " #UpgradeButton.Visible", false);
-                commandBuilder.set(selector + " #NeedItemsBadge.Visible", true);
+                commandBuilder.set(selector + " #NeedItemsBadge.Visible", gate.unlocked());
                 commandBuilder.set(selector + " #MaxedBadge.Visible", false);
                 commandBuilder.set(selector + " #NeedItemsBadge #NeedItemsText.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.need_items"));
             }
@@ -395,47 +365,40 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         // Capacity Level Upgrade (exclusive to Extra Big Backpack, max lvl 2)
         if ("Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(itemId)) {
             int currentLevel = BackpackItemFactory.getUpgradeLevel(stack);
-            String selector = "#WorkbenchList[" + index + "]";
+            if (currentLevel >= BackpackItemFactory.MAX_UPGRADE_LEVEL) return;
+            String selector = "#UpgradeContent[" + index + "]";
 
-            commandBuilder.append("#WorkbenchList", "Pages/BackpackUpgradeEntry.ui");
+            commandBuilder.append("#UpgradeContent", "Pages/BackpackUpgradeEntry.ui");
             commandBuilder.set(selector + " #UpgradeIcon.ItemId", itemId);
 
-            if (currentLevel >= BackpackItemFactory.MAX_UPGRADE_LEVEL) {
-                commandBuilder.set(selector + " #UpgradeTitle.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level.max_title"));
-                commandBuilder.set(selector + " #UpgradeBenefits.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level.max_benefit"));
-                commandBuilder.set(selector + " #CostLabel.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level.max_cost"));
-                commandBuilder.set(selector + " #UpgradeButton.Visible", false);
+            int nextLevel = currentLevel + 1;
+            LevelUpgrade nextUpgrade = LEVEL_UPGRADES.get(nextLevel);
+            short newCapacity = nextUpgrade != null ? nextUpgrade.newCapacity() : (short) (36 + nextLevel * 9);
+            Map<String, Integer> costs = nextUpgrade != null ? nextUpgrade.costs() : Map.of();
+
+            commandBuilder.set(selector + " #UpgradeTitle.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level.title", nextLevel));
+            commandBuilder.set(selector + " #UpgradeBenefits.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level.benefit", 9, BackpackItemFactory.getTotalCapacity(stack), newCapacity));
+
+            var gate = memoryGate(itemId, store);
+            updateMemoryBadge(commandBuilder, selector, gate);
+            boolean canAfford = gate.unlocked() && hasMaterials(ref, store, costs);
+            commandBuilder.set(selector + " #CostLabel.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.cost", formatCosts(costs, canAfford, lang)));
+
+            if (canAfford) {
+                commandBuilder.set(selector + " #UpgradeButton.Visible", true);
                 commandBuilder.set(selector + " #NeedItemsBadge.Visible", false);
-                commandBuilder.set(selector + " #MaxedBadge.Visible", true);
-                commandBuilder.set(selector + " #MaxedBadge #MaxedText.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.maxed"));
+                commandBuilder.set(selector + " #MaxedBadge.Visible", false);
+                commandBuilder.set(selector + " #UpgradeButton.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.upgrade"));
+                eventBuilder.addEventBinding(
+                        CustomUIEventBindingType.Activating,
+                        selector + " #UpgradeButton",
+                        new EventData().append("Action", "UpgradeLevel").append("Target", Integer.toString(nextLevel))
+                );
             } else {
-                int nextLevel = currentLevel + 1;
-                LevelUpgrade nextUpgrade = LEVEL_UPGRADES.get(nextLevel);
-                short newCapacity = nextUpgrade != null ? nextUpgrade.newCapacity() : (short) (36 + nextLevel * 9);
-                Map<String, Integer> costs = nextUpgrade != null ? nextUpgrade.costs() : Map.of();
-
-                commandBuilder.set(selector + " #UpgradeTitle.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level.title", nextLevel));
-                commandBuilder.set(selector + " #UpgradeBenefits.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level.benefit", 9, BackpackItemFactory.getTotalCapacity(stack), newCapacity));
-
-                boolean canAfford = hasMaterials(ref, store, costs);
-                commandBuilder.set(selector + " #CostLabel.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.cost", formatCosts(costs, canAfford, lang)));
-
-                if (canAfford) {
-                    commandBuilder.set(selector + " #UpgradeButton.Visible", true);
-                    commandBuilder.set(selector + " #NeedItemsBadge.Visible", false);
-                    commandBuilder.set(selector + " #MaxedBadge.Visible", false);
-                    commandBuilder.set(selector + " #UpgradeButton.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.upgrade"));
-                    eventBuilder.addEventBinding(
-                            CustomUIEventBindingType.Activating,
-                            selector + " #UpgradeButton",
-                            new EventData().append("Action", "UpgradeLevel").append("Target", Integer.toString(nextLevel))
-                    );
-                } else {
-                    commandBuilder.set(selector + " #UpgradeButton.Visible", false);
-                    commandBuilder.set(selector + " #NeedItemsBadge.Visible", true);
-                    commandBuilder.set(selector + " #MaxedBadge.Visible", false);
-                    commandBuilder.set(selector + " #NeedItemsBadge #NeedItemsText.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.need_items"));
-                }
+                commandBuilder.set(selector + " #UpgradeButton.Visible", false);
+                commandBuilder.set(selector + " #NeedItemsBadge.Visible", gate.unlocked());
+                commandBuilder.set(selector + " #MaxedBadge.Visible", false);
+                commandBuilder.set(selector + " #NeedItemsBadge #NeedItemsText.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.need_items"));
             }
         }
     }
@@ -448,9 +411,6 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             @Nonnull UIEventBuilder eventBuilder,
             @Nullable String lang) {
 
-        String visibleLabel = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.visible");
-        String hiddenLabel = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.hidden");
-
         // 1. Backpack Visibility
         boolean bpVisible = CosmeticPreferenceUtils.isBackpackVisible(store, ref);
         String bpIcon = activeBp != null ? activeBp.stack().getItemId() : "Utility_Leather_Backpack";
@@ -459,10 +419,11 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         commandBuilder.set(sel0 + " #CosmeticIcon.ItemId", bpIcon);
         commandBuilder.set(sel0 + " #CosmeticName.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.backpack.title"));
         commandBuilder.set(sel0 + " #CosmeticDesc.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.backpack.desc"));
+        updateVisibilityState(commandBuilder, sel0, bpVisible);
         if (bpVisible) {
             commandBuilder.set(sel0 + " #ToggleButton.Visible", true);
             commandBuilder.set(sel0 + " #ToggleHiddenButton.Visible", false);
-            commandBuilder.set(sel0 + " #ToggleButton.Text", visibleLabel);
+            commandBuilder.set(sel0 + " #ToggleButton.Text", text("visibility.hide"));
             eventBuilder.addEventBinding(
                     CustomUIEventBindingType.Activating,
                     sel0 + " #ToggleButton",
@@ -471,7 +432,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         } else {
             commandBuilder.set(sel0 + " #ToggleButton.Visible", false);
             commandBuilder.set(sel0 + " #ToggleHiddenButton.Visible", true);
-            commandBuilder.set(sel0 + " #ToggleHiddenButton.Text", hiddenLabel);
+            commandBuilder.set(sel0 + " #ToggleHiddenButton.Text", text("visibility.show"));
             eventBuilder.addEventBinding(
                     CustomUIEventBindingType.Activating,
                     sel0 + " #ToggleHiddenButton",
@@ -486,10 +447,11 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         commandBuilder.set(sel1 + " #CosmeticIcon.ItemId", "Weapon_Arrow_Iron");
         commandBuilder.set(sel1 + " #CosmeticName.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.quiver.title"));
         commandBuilder.set(sel1 + " #CosmeticDesc.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.quiver.desc"));
+        updateVisibilityState(commandBuilder, sel1, quiverVisible);
         if (quiverVisible) {
             commandBuilder.set(sel1 + " #ToggleButton.Visible", true);
             commandBuilder.set(sel1 + " #ToggleHiddenButton.Visible", false);
-            commandBuilder.set(sel1 + " #ToggleButton.Text", visibleLabel);
+            commandBuilder.set(sel1 + " #ToggleButton.Text", text("visibility.hide"));
             eventBuilder.addEventBinding(
                     CustomUIEventBindingType.Activating,
                     sel1 + " #ToggleButton",
@@ -498,7 +460,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         } else {
             commandBuilder.set(sel1 + " #ToggleButton.Visible", false);
             commandBuilder.set(sel1 + " #ToggleHiddenButton.Visible", true);
-            commandBuilder.set(sel1 + " #ToggleHiddenButton.Text", hiddenLabel);
+            commandBuilder.set(sel1 + " #ToggleHiddenButton.Text", text("visibility.show"));
             eventBuilder.addEventBinding(
                     CustomUIEventBindingType.Activating,
                     sel1 + " #ToggleHiddenButton",
@@ -513,10 +475,11 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         commandBuilder.set(sel2 + " #CosmeticIcon.ItemId", "Utility_Torch_Bandana");
         commandBuilder.set(sel2 + " #CosmeticName.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.hat.title"));
         commandBuilder.set(sel2 + " #CosmeticDesc.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.hat.desc"));
+        updateVisibilityState(commandBuilder, sel2, hatVisible);
         if (hatVisible) {
             commandBuilder.set(sel2 + " #ToggleButton.Visible", true);
             commandBuilder.set(sel2 + " #ToggleHiddenButton.Visible", false);
-            commandBuilder.set(sel2 + " #ToggleButton.Text", visibleLabel);
+            commandBuilder.set(sel2 + " #ToggleButton.Text", text("visibility.hide"));
             eventBuilder.addEventBinding(
                     CustomUIEventBindingType.Activating,
                     sel2 + " #ToggleButton",
@@ -525,13 +488,18 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         } else {
             commandBuilder.set(sel2 + " #ToggleButton.Visible", false);
             commandBuilder.set(sel2 + " #ToggleHiddenButton.Visible", true);
-            commandBuilder.set(sel2 + " #ToggleHiddenButton.Text", hiddenLabel);
+            commandBuilder.set(sel2 + " #ToggleHiddenButton.Text", text("visibility.show"));
             eventBuilder.addEventBinding(
                     CustomUIEventBindingType.Activating,
                     sel2 + " #ToggleHiddenButton",
                     new EventData().append("Action", "ToggleCosmetic").append("Target", "hat")
             );
         }
+    }
+
+    private void updateVisibilityState(UICommandBuilder cb, String selector, boolean visible) {
+        cb.set(selector + " #VisibilityState.Text", text(visible ? "btn.visible" : "btn.hidden"));
+        cb.set(selector + " #VisibilityState.Style.TextColor", visible ? "#91e9c2" : "#c5d1dd");
     }
 
     @Override
@@ -544,19 +512,20 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             return;
         }
         if ("Crafting".equals(data.action)) {
-            if (craftingWindow != null) currentTab = "crafting";
+            currentTab = "crafting";
+            statusMessage = "";
             sendRefresh(ref, store);
             return;
         }
 
         if ("SelectRecipe".equals(data.action) && craftingWindow != null) {
-            if (eligibleRecipes().stream().anyMatch(r -> r.getId().equals(data.target))) selectedRecipeId = data.target;
+            if (eligibleRecipes().stream().anyMatch(r -> r.getId().equals(data.target) && recipeUnlocked(r, store))) selectedRecipeId = data.target;
             sendRefresh(ref, store);
             return;
         }
         if ("CraftRecipe".equals(data.action) && craftingWindow != null) {
             var recipe = eligibleRecipes().stream().filter(r -> r.getId().equals(data.target)).findFirst().orElse(null);
-            if (recipe != null) {
+            if (recipe != null && recipeUnlocked(recipe, store)) {
                 var action = new com.hypixel.hytale.protocol.packets.window.CraftRecipeAction();
                 action.recipeId = recipe.getId();
                 action.quantity = 1;
@@ -581,20 +550,12 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             return;
         }
 
-        if ("TabTransmog".equalsIgnoreCase(data.action)) {
-            currentTab = "transmog";
+        if ("TabPersonalize".equalsIgnoreCase(data.action)) {
+            currentTab = "personalize";
             statusMessage = "";
             sendRefresh(ref, store);
             return;
         }
-
-        if ("TabUpgrade".equalsIgnoreCase(data.action)) {
-            currentTab = "upgrades";
-            statusMessage = "";
-            sendRefresh(ref, store);
-            return;
-        }
-
         if ("TabVisibility".equalsIgnoreCase(data.action)) {
             currentTab = "visibility";
             statusMessage = "";
@@ -616,11 +577,10 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             return;
         }
 
-        if ("ApplySkin".equalsIgnoreCase(data.action)) {
-            handleApplySkin(ref, store, activeBp, data.target, lang);
+        if (Set.of("DraftAppearance", "DraftColor", "DraftPaint", "DraftName", "SaveCustomization").contains(data.action)) {
+            handlePersonalize(ref, store, activeBp, data);
             return;
         }
-
         if ("UpgradeTier".equalsIgnoreCase(data.action)) {
             handleUpgradeTier(ref, store, activeBp, data.target, lang);
             return;
@@ -634,40 +594,199 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         sendRefresh(ref, store);
     }
 
-    private void handleApplySkin(
-            @Nonnull Ref<EntityStore> ref,
-            @Nonnull Store<EntityStore> store,
-            @Nonnull ActiveBackpack activeBp,
-            @Nullable String skinId,
-            @Nullable String lang) {
+    private static final java.util.concurrent.ScheduledExecutorService PREVIEW_TIMER = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread thread = new Thread(r, "TrueBackpack-preview"); thread.setDaemon(true); return thread;
+    });
+    private java.util.concurrent.ScheduledFuture<?> pendingPreview;
+    private long previewRevision;
+    private String editedBackpackId;
+    private ItemStack editedStack;
+    private ItemContainer editedContainer;
+    private short editedSlot;
+    private String draftName;
+    private String draftSkin;
+    private String draftColor;
+    private boolean draftUsePaint;
+    private final BackpackPaintService.PreviewSession preview = new BackpackPaintService.PreviewSession();
 
-        ItemStack currentStack = activeBp.stack();
-        if ("Utility_Heli_Backpack".equalsIgnoreCase(currentStack.getItemId())) {
-            statusMessage = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.helipack.cannot_transmog");
-            sendRefresh(ref, store);
-            return;
+    private boolean sameEditedBackpack(ActiveBackpack bp) {
+        return bp.container() == editedContainer && bp.slot() == editedSlot
+                && Objects.equals(editedBackpackId, BackpackItemFactory.getInstanceId(bp.stack()))
+                && (editedBackpackId != null || Objects.equals(editedStack, bp.stack()));
+    }
+    private EventData customizationEvent(String action) {
+        return new EventData().append("Action", action).append("@Name", "#BackpackName.Value")
+                .append("@Skin", "#AppearanceSelect.Value").append("@Color", "#PaintPicker.Value")
+                .append("@UsePaint", "#UsePaint.Value");
+    }
+    private void buildPersonalizeTab(Ref<EntityStore> ref, Store<EntityStore> store, ActiveBackpack bp, UICommandBuilder cb, UIEventBuilder eb) {
+        previewRevision++;
+        if (pendingPreview != null) pendingPreview.cancel(false);
+        if (!sameEditedBackpack(bp)) {
+            editedBackpackId = BackpackItemFactory.getInstanceId(bp.stack());
+            editedStack = bp.stack(); editedContainer = bp.container(); editedSlot = bp.slot();
+            draftName = BackpackItemFactory.getCustomName(bp.stack());
+            draftSkin = BackpackItemFactory.getTransmogSkin(bp.stack());
+            if (draftSkin == null || BackpackRegistry.getByItem(draftSkin) == null) draftSkin = "default";
+            draftColor = BackpackItemFactory.getPaintColor(bp.stack());
+            draftUsePaint = draftColor != null;
+            if (draftColor == null) draftColor = "#FFFFFF";
         }
-
-        if ("Utility_Heli_Backpack".equalsIgnoreCase(skinId)) {
-            statusMessage = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.helipack.cannot_be_skin");
-            sendRefresh(ref, store);
-            return;
+        cb.append("#WorkbenchList", "Pages/BackpackPersonalizePanel.ui");
+        for (var entry : Map.of("#NameTitle.Text", "personalize.name", "#BackpackName.PlaceholderText", "personalize.name_hint",
+                "#AppearanceTitle.Text", "personalize.appearance", "#UsePaintLabel.Text", "personalize.use_paint",
+                "#PaintExcluded.Text", "personalize.excluded", "#SaveCustomization.Text", "personalize.save_all",
+                "#PreviewTitle.Text", "personalize.preview", "#PreviewHint.Text", "personalize.native_hint").entrySet())
+            cb.set(entry.getKey(), text(entry.getValue()));
+        var entries = new ArrayList<com.hypixel.hytale.server.core.ui.DropdownEntryInfo>();
+        boolean heli = BackpackRegistry.getByItem(bp.stack().getItemId()).isHelipack();
+        for (SkinOption skin : AVAILABLE_SKINS) {
+            if (heli && !skin.id().equals("default")) continue;
+            String label = skin.id().equals("default") ? text("skin.default.name") : I18nHelper.resolveItemName(skin.id(), playerRef.getLanguage());
+            entries.add(new com.hypixel.hytale.server.core.ui.DropdownEntryInfo(
+                    com.hypixel.hytale.server.core.ui.LocalizableString.fromString(label), skin.id()));
         }
-
-        String targetSkin = ("default".equalsIgnoreCase(skinId) || skinId == null) ? null : skinId;
-        ItemStack updated = BackpackItemFactory.setTransmogSkin(currentStack, targetSkin);
-        activeBp.container().setItemStackForSlot(activeBp.slot(), updated);
-
+        cb.set("#AppearanceSelect.Entries", entries);
+        cb.set("#AppearanceSelect.Value", draftSkin);
+        cb.set("#BackpackName.Value", draftName == null ? "" : draftName);
+        cb.set("#PaintPicker.Value", draftColor);
+        cb.set("#UsePaint.Value", draftUsePaint);
+        updateNativePreview(ref, store, bp.stack(), cb);
+        eb.addEventBinding(CustomUIEventBindingType.ValueChanged, "#AppearanceSelect", customizationEvent("DraftAppearance"), false);
+        eb.addEventBinding(CustomUIEventBindingType.ValueChanged, "#PaintPicker", customizationEvent("DraftColor"), false);
+        eb.addEventBinding(CustomUIEventBindingType.ValueChanged, "#UsePaint", customizationEvent("DraftPaint"), false);
+        eb.addEventBinding(CustomUIEventBindingType.ValueChanged, "#BackpackName", customizationEvent("DraftName"), false);
+        eb.addEventBinding(CustomUIEventBindingType.Activating, "#SaveCustomization", customizationEvent("SaveCustomization"));
+    }
+    private ItemStack customizationDraft(ItemStack stack) {
+        return com.supremosan.truebackpack.util.BackpackCustomization.draft(stack, draftName, draftSkin, draftColor, draftUsePaint);
+    }
+    private void updateNativePreview(Ref<EntityStore> ref, Store<EntityStore> store, ItemStack original, UICommandBuilder cb) {
+        var draft = customizationDraft(original);
+        boolean paintable = BackpackPaintService.canPaint(draft);
+        cb.set("#PaintControls.Visible", paintable);
+        cb.set("#PaintExcluded.Visible", !paintable);
+        cb.set("#PreviewColor.Text", paintable && draftUsePaint ? draftColor : text("original"));
+        // Deliver the empty host before asset packets, including during the initial page
+        // build. Debouncing also avoids rebuilding the atlas for every picker movement.
+        cb.clear("#PaintPreviewHost");
+        cb.set("#PreviewHint.Text", text("personalize.preview_loading"));
+        long revision = ++previewRevision;
+        if (pendingPreview != null) pendingPreview.cancel(false);
+        pendingPreview = PREVIEW_TIMER.schedule(() -> store.getExternalData().getWorld().execute(() -> {
+            if (!previewIsCurrent(ref, store, revision)) return;
+            try {
+                String id = preview.prepare(draft, playerRef);
+                long delay = preview.remainingDelayMillis();
+                if (delay == 0) {
+                    var ready = new UICommandBuilder();
+                    attachNativePreview(id, ready);
+                    sendUpdate(ready, new UIEventBuilder(), false);
+                } else {
+                    pendingPreview = PREVIEW_TIMER.schedule(() -> store.getExternalData().getWorld().execute(() -> {
+                        if (!previewIsCurrent(ref, store, revision)) return;
+                        var ready = new UICommandBuilder();
+                        attachNativePreview(id, ready);
+                        sendUpdate(ready, new UIEventBuilder(), false);
+                    }), delay, java.util.concurrent.TimeUnit.MILLISECONDS);
+                }
+            } catch (java.io.IOException | RuntimeException e) {
+                var fallback = new UICommandBuilder();
+                fallback.clear("#PaintPreviewHost");
+                fallback.append("#PaintPreviewHost", "Pages/BackpackNativePreview.ui");
+                fallback.set("#PaintPreview.ItemId", BackpackPaintService.visualEntry(draft).itemId());
+                fallback.set("#PreviewHint.Text", text("personalize.preview_failed"));
+                sendUpdate(fallback, new UIEventBuilder(), false);
+                java.util.logging.Logger.getLogger("TrueBackpack").warning("Native backpack preview failed: " + e.getMessage());
+            }
+        }), 500, java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+    private boolean previewIsCurrent(Ref<EntityStore> ref, Store<EntityStore> store, long revision) {
+        if (dismissed || !ref.isValid() || revision != previewRevision || !"personalize".equals(currentTab)) return false;
+        var active = findActiveBackpack(ref, store);
+        return active != null && sameEditedBackpack(active);
+    }
+    private void attachNativePreview(String id, UICommandBuilder cb) {
+        preview.publish(id, playerRef);
+        cb.clear("#PaintPreviewHost");
+        cb.append("#PaintPreviewHost", "Pages/BackpackNativePreview.ui");
+        cb.set("#PaintPreview.ItemId", id);
+        cb.set("#PreviewHint.Text", text("personalize.native_hint"));
+    }
+    private static String pickerColor(String value) {
+        if (value != null && value.matches("#[0-9a-fA-F]{8}")) value = value.substring(0, 7);
+        return BackpackItemFactory.normalizeColor(value);
+    }
+    private void handlePersonalize(Ref<EntityStore> ref, Store<EntityStore> store, ActiveBackpack bp, PageData data) {
+        if (!"personalize".equals(currentTab) || !sameEditedBackpack(bp)) {
+            statusMessage = text("personalize.changed"); sendRefresh(ref, store); return;
+        }
+        try {
+            draftName = data.name;
+            draftSkin = data.skin;
+            draftColor = pickerColor(data.color);
+            draftUsePaint = "DraftColor".equals(data.action) || Boolean.TRUE.equals(data.usePaint);
+            var draft = customizationDraft(bp.stack());
+            if ("SaveCustomization".equals(data.action)) {
+                previewRevision++;
+                if (pendingPreview != null) pendingPreview.cancel(false);
+                BackpackPaintService.texture(draft);
+                preview.waitForAtlasRebuild();
+                if (!BackpackItemFactory.hasInstanceId(draft)) draft = BackpackItemFactory.createBackpackInstance(draft);
+                bp.container().setItemStackForSlot(bp.slot(), draft);
+                rebuildBackpack(ref, store);
+                editedContainer = null;
+                statusMessage = text("personalize.updated");
+                sendRefresh(ref, store);
+                return;
+            }
+            if ("DraftName".equals(data.action)) return;
+            var selection = new UICommandBuilder();
+            selection.set("#UsePaint.Value", draftUsePaint);
+            updateNativePreview(ref, store, bp.stack(), selection);
+            sendUpdate(selection, new UIEventBuilder(), false);
+        } catch (RuntimeException e) {
+            editedContainer = null;
+            statusMessage = text("personalize.failed");
+            sendRefresh(ref, store);
+        }
+    }
+    private void rebuildBackpack(Ref<EntityStore> ref, Store<EntityStore> store) {
         Player player = store.getComponent(ref, Player.getComponentType());
-        if (player != null) {
-            String playerUuid = playerRef.getUuid().toString();
-            BackpackArmorListener.syncBackpackAttachment(playerUuid, store, ref);
-        }
-
-        statusMessage = targetSkin == null
-                ? I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.status.skin_reverted")
-                : I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.status.skin_applied", I18nHelper.resolveItemName(targetSkin, lang));
-        sendRefresh(ref, store);
+        if (player == null) return;
+        String uuid = playerRef.getUuid().toString();
+        BackpackArmorListener.syncBackpackAttachment(uuid, store, ref);
+        CosmeticListener.scheduleAttachmentRebuild(player, store, ref, uuid);
+    }
+    private BackpackProgression.Gate memoryGate(String itemId, Store<EntityStore> store) {
+        return BackpackProgression.gate(itemId, store.getExternalData().getWorld().getGameplayConfig());
+    }
+    private String memoryLabel(BackpackProgression.Gate gate) {
+        return gate.required() < 0 ? I18nHelper.getOrFallback(playerRef.getLanguage(), "server.truebackpack.workbench.memories.level", gate.level())
+                : I18nHelper.getOrFallback(playerRef.getLanguage(), "server.truebackpack.workbench.memories.count", gate.recorded(), gate.required());
+    }
+    private com.hypixel.hytale.server.core.Message memoryTooltip(BackpackProgression.Gate gate) {
+        var instruction = gate.required() < 0
+                ? com.hypixel.hytale.server.core.Message.raw(memoryLabel(gate))
+                : com.hypixel.hytale.server.core.Message.join(
+                        com.hypixel.hytale.server.core.Message.raw(text("memories.find") + " "),
+                        com.hypixel.hytale.server.core.Message.raw(text("memories.temple")).color("#f1ba50"),
+                        com.hypixel.hytale.server.core.Message.raw(" " + I18nHelper.getOrFallback(playerRef.getLanguage(),
+                                "server.truebackpack.workbench.memories.restore", gate.required())));
+        return com.hypixel.hytale.server.core.Message.join(
+                com.hypixel.hytale.server.core.Message.translation("client.inventory.crafting.unknownItem").color("#2c86d6").bold(true),
+                com.hypixel.hytale.server.core.Message.raw("\n\n"), instruction.color("#969daa"));
+    }
+    private void updateMemoryBadge(UICommandBuilder cb, String selector, BackpackProgression.Gate gate) {
+        cb.set(selector + " #MemoryLockBadge.Visible", !gate.unlocked());
+        if (gate.unlocked()) return;
+        cb.set(selector + " #MemoryLockCount.Text", gate.required() < 0 ? memoryLabel(gate) : gate.recorded() + " / " + gate.required());
+        cb.set(selector + " #MemoryLockBadge.TooltipTextSpans", memoryTooltip(gate));
+    }
+    private boolean requireMemories(String itemId, Ref<EntityStore> ref, Store<EntityStore> store) {
+        var gate = memoryGate(itemId, store);
+        if (gate.unlocked()) return true;
+        statusMessage = memoryLabel(gate); sendRefresh(ref, store); return false;
     }
 
     private void handleUpgradeTier(
@@ -685,6 +804,8 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             return;
         }
 
+        if (!upgradeAllowed(tier.toItemId(), store)) { sendRefresh(ref, store); return; }
+        if (!requireMemories(tier.toItemId(), ref, store)) return;
         if (!consumeMaterials(ref, store, tier.costs())) {
             statusMessage = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.status.missing_tier_materials");
             sendRefresh(ref, store);
@@ -708,7 +829,11 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             upgraded = BackpackItemFactory.setTransmogSkin(upgraded, BackpackItemFactory.getTransmogSkin(oldStack));
         }
 
+        upgraded = BackpackItemFactory.setCustomName(upgraded, BackpackItemFactory.getCustomName(oldStack));
+        upgraded = BackpackItemFactory.setPaintColor(upgraded, BackpackItemFactory.getPaintColor(oldStack));
+        upgraded = BackpackItemFactory.setEquipped(upgraded, BackpackItemFactory.isEquipped(oldStack));
         activeBp.container().setItemStackForSlot(activeBp.slot(), upgraded);
+        rebuildBackpack(ref, store);
 
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player != null) {
@@ -744,6 +869,8 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         LevelUpgrade upgrade = LEVEL_UPGRADES.get(nextLevel);
         if (upgrade == null) return;
 
+        if (!upgradeAllowed(stack.getItemId(), store)) { sendRefresh(ref, store); return; }
+        if (!requireMemories(stack.getItemId(), ref, store)) return;
         if (!consumeMaterials(ref, store, upgrade.costs())) {
             statusMessage = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.status.missing_level_materials", nextLevel);
             sendRefresh(ref, store);
@@ -781,7 +908,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             } else {
                 CosmeticListener.removeAttachment(playerUuid, "truebackpack:backpack");
             }
-            CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
+            CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
             statusMessage = I18nHelper.getOrFallback(lang, nowVisible ? "server.truebackpack.toggle.backpack.visible" : "server.truebackpack.toggle.backpack.hidden");
         } else if ("quiver".equalsIgnoreCase(target)) {
             boolean nowVisible = CosmeticPreferenceUtils.toggleQuiver(store, ref);
@@ -790,7 +917,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             } else {
                 CosmeticListener.removeAttachment(playerUuid, "truebackpack:quiver");
             }
-            CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
+            CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
             statusMessage = I18nHelper.getOrFallback(lang, nowVisible ? "server.truebackpack.toggle.quiver.visible" : "server.truebackpack.toggle.quiver.hidden");
         } else if ("hat".equalsIgnoreCase(target)) {
             boolean nowVisible = CosmeticPreferenceUtils.toggleHat(store, ref);
@@ -799,7 +926,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             } else {
                 CosmeticListener.removeAttachment(playerUuid, "truebackpack:hat");
             }
-            CosmeticListener.scheduleRebuild(player, store, ref, playerUuid);
+            CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
             statusMessage = I18nHelper.getOrFallback(lang, nowVisible ? "server.truebackpack.toggle.hat.visible" : "server.truebackpack.toggle.hat.hidden");
         }
 
@@ -886,6 +1013,9 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
     @Override
     public void onDismiss(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
         dismissed = true;
+        preview.close(playerRef);
+        previewRevision++;
+        if (pendingPreview != null) pendingPreview.cancel(false);
         if (craftingWindow != null) {
             // The client owns closing windows attached through
             // openCustomPageWithWindows. Calling WindowManager.closeWindow here
@@ -949,6 +1079,8 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
     }
 
     private void updateBenchPanel(UICommandBuilder cb, String lang) {
+        cb.set("#BenchPanel.Visible", "crafting".equals(currentTab) && craftingWindow != null
+                && craftingWindow.upgradeRequirement() != null);
         if (craftingWindow == null) return;
         cb.set("#BenchName.Text", text(craftingWindow.isMaster() ? "bench.master_name" : "bench.apprentice"));
         cb.set("#BenchLevel.Text", text("level") + " " + (craftingWindow.isMaster() ? "2 / 2" : "1 / 2"));
@@ -969,10 +1101,9 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         }
         var data = craftingWindow.getData();
         float progress = data.has("tierUpgradeProgress") ? data.get("tierUpgradeProgress").getAsFloat() : 0;
-        cb.set("#BenchProgressBar.Visible", progress > 0);
-        cb.set("#BenchProgress.Text", progress > 0 ? text("bench.upgrading") + " " + Math.round(progress * 100) + "%" : "");
-        int queue = data.has("queueSize") ? data.get("queueSize").getAsInt() : 0;
-        cb.set("#CraftingQueue.Text", text("craft.queue") + " " + queue);
+        cb.set("#BenchProgressContainer.Visible", progress > 0 && requirement != null);
+        cb.set("#BenchProgressBar.Value", Math.clamp(progress, 0f, 1f));
+        cb.set("#BenchUpgradeButton.Disabled", progress > 0);
     }
 
     private void buildCraftingTab(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder cb,
@@ -986,16 +1117,18 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 .getMemoriesLevel(store.getExternalData().getWorld().getGameplayConfig());
         var recipes = eligibleRecipes();
         if (recipes.isEmpty()) return;
-        if (selectedRecipeId == null || recipes.stream().noneMatch(r -> r.getId().equals(selectedRecipeId)))
-            selectedRecipeId = recipes.getFirst().getId();
-        cb.append("#WorkbenchList", "Pages/BackpackCraftingPanel.ui");
-        String grid = "#WorkbenchList[0] #RecipeGrid";
+        if (selectedRecipeId == null || recipes.stream().noneMatch(r -> r.getId().equals(selectedRecipeId) && recipeUnlocked(r, store)))
+            selectedRecipeId = recipes.stream().filter(r -> recipeUnlocked(r, store)).map(r -> r.getId()).findFirst().orElse(null);
+        cb.append("#CraftingContent", "Pages/BackpackCraftingPanel.ui");
+        cb.set("#RecipeDetails.Visible", selectedRecipeId != null);
+        String grid = "#CraftingContent[0] #RecipeGrid";
         for (int i = 0; i < recipes.size(); i++) {
             if (i % 3 == 0) cb.append(grid, "Pages/BackpackRecipeGridRow.ui");
             String row = grid + "[" + (i / 3) + "]";
             int column = i % 3;
             var candidate = recipes.get(i);
-            cb.set(row + " #RecipeIcon" + column + ".ItemId", candidate.getPrimaryOutput().getItemId());
+            boolean memory = candidate.getRequiredMemoriesLevel() <= memories;
+            cb.set(row + " #RecipeIcon" + column + ".ItemId", memory ? candidate.getPrimaryOutput().getItemId() : "");
             cb.set(row + " #Selected" + column + ".Visible", candidate.getId().equals(selectedRecipeId));
             boolean materials = true;
             var inputs = candidate.getInput();
@@ -1007,12 +1140,20 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             boolean known = !candidate.isKnowledgeRequired()
                     || (player != null && player.getPlayerConfigData().getKnownRecipes()
                     .contains(candidate.getPrimaryOutput().getItemId()));
-            boolean memory = candidate.getRequiredMemoriesLevel() <= memories;
             boolean allowed = (creative || materials) && known && memory;
-            // Keep unavailable recipes selectable so the player can inspect their
-            // requirements; only dim the slot visually.
-            cb.set(row + " #Unavailable" + column + ".Visible", !allowed);
-            eb.addEventBinding(CustomUIEventBindingType.Activating, row + " #SelectRecipe" + column,
+            // Match the game's memory lock: hide the item behind the rune and
+            // explain the unlock condition in its native localized tooltip.
+            cb.set(row + " #RecipeIcon" + column + ".Visible", memory);
+            cb.set(row + " #MemoryLocked" + column + ".Visible", !memory);
+            cb.set(row + " #SelectRecipe" + column + ".Disabled", !memory);
+            cb.set(row + " #Unavailable" + column + ".Visible", memory && !allowed);
+            if (!memory) {
+                var tooltip = memoryTooltip(BackpackProgression.gate(candidate.getRequiredMemoriesLevel(),
+                        store.getExternalData().getWorld().getGameplayConfig()));
+                cb.set(row + " #SelectRecipe" + column + ".TooltipTextSpans", tooltip);
+                cb.set(row + " #MemoryLocked" + column + ".TooltipTextSpans", tooltip);
+            }
+            if (memory) eb.addEventBinding(CustomUIEventBindingType.Activating, row + " #SelectRecipe" + column,
                     new EventData().append("Action", "SelectRecipe").append("Target", candidate.getId()));
         }
         int remainder = recipes.size() % 3;
@@ -1024,7 +1165,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         }
         for (var recipe : recipes) {
             if (!recipe.getId().equals(selectedRecipeId)) continue;
-            String sel = "#WorkbenchList[0] #RecipeDetails";
+            String sel = "#CraftingContent[0] #RecipeDetails";
             String itemId = recipe.getPrimaryOutput().getItemId();
             cb.set(sel + " #RecipePreview.ItemId", itemId);
             cb.set(sel + " #RecipeName.Text", I18nHelper.resolveItemName(itemId, lang));
@@ -1035,7 +1176,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 if (inputs != null && i < inputs.length) {
                     int count = inventory.countRemovableMaterial(inputs[i]);
                     materials &= count >= inputs[i].getQuantity();
-                    label = (creative ? "*" : Integer.toString(count)) + " / " + materialLabel(inputs[i], lang);
+                    label = (creative ? "" : count + " / ") + materialLabel(inputs[i], lang);
                     cb.set(sel + " #MaterialIcon" + i + ".ItemId", materialIcon(inputs[i]));
                     cb.set(sel + " #Material" + i + ".Style.TextColor",
                             creative || count >= inputs[i].getQuantity() ? "#62b78d" : "#d78b82");
@@ -1049,8 +1190,14 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             boolean allowed = (creative || materials) && known && memory;
             cb.set(sel + " #CraftButton.Disabled", !allowed);
             cb.set(sel + " #CraftButton.Text", text("craft.action"));
-            cb.set(sel + " #RecipeStatus.Text", !memory ? text("craft.memories") + " " + recipe.getRequiredMemoriesLevel()
-                    : !known ? text("craft.unknown") : !materials && !creative ? text("craft.materials") : "");
+            cb.set(sel + " #RecipeStatus.Visible", memory);
+            cb.set(sel + " #RecipeMemoryLock.Visible", !memory);
+            if (!memory) {
+                var gate = BackpackProgression.gate(recipe.getRequiredMemoriesLevel(), store.getExternalData().getWorld().getGameplayConfig());
+                cb.set(sel + " #RecipeMemoryLock.TooltipTextSpans", memoryTooltip(gate));
+                cb.set(sel + " #MemoryLockLabel.Text", memoryLabel(gate));
+            }
+            cb.set(sel + " #RecipeStatus.Text", !known ? text("craft.unknown") : !materials && !creative ? text("craft.materials") : "");
             eb.addEventBinding(CustomUIEventBindingType.Activating, sel + " #CraftButton",
                     new EventData().append("Action", "CraftRecipe").append("Target", recipe.getId()));
         }

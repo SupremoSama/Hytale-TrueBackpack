@@ -1,14 +1,24 @@
 $C = "../Common.ui";
 
+@VisibilityButtonLabelStyle = LabelStyle(...$C.@SecondaryButtonLabelStyle, FontSize: 16, TextColor: #eef5fb);
+@VisibilityButtonStyle = TextButtonStyle(
+  Default: (Background: PatchStyle(TexturePath: "../Common/Buttons/Secondary.png", Border: 12), LabelStyle: @VisibilityButtonLabelStyle),
+  Hovered: (Background: PatchStyle(TexturePath: "../Common/Buttons/Secondary_Hovered.png", Border: 12), LabelStyle: @VisibilityButtonLabelStyle),
+  Pressed: (Background: PatchStyle(TexturePath: "../Common/Buttons/Secondary_Pressed.png", Border: 12), LabelStyle: @VisibilityButtonLabelStyle),
+  Disabled: (Background: PatchStyle(TexturePath: "../Common/Buttons/Disabled.png", Border: 12), LabelStyle: $C.@SecondaryButtonDisabledLabelStyle),
+  Sounds: $C.@ButtonSounds
+);
+
 Group #VisibilityEntry {
-  Anchor: (Height: 56, Bottom: 8);
-  Padding: (Full: 8);
+  Anchor: (Height: 108, Bottom: 12);
+  Padding: (Horizontal: 16, Vertical: 16);
   LayoutMode: Left;
-  Background: #141c24(0.85);
+  Background: #1b2939;
 
   ItemSlot #CosmeticIcon {
-    Anchor: (Width: 40, Height: 40, Right: 10);
+    Anchor: (Width: 64, Height: 64, Right: 18, Top: 6);
     ShowQualityBackground: true;
+    ShowQuantity: false;
   }
 
   Group #Details {
@@ -17,25 +27,35 @@ Group #VisibilityEntry {
     Padding: (Top: 2);
 
     Label #CosmeticName {
-      Style: (RenderBold: true, FontSize: 14, TextColor: #ffffff);
+      Anchor: (Height: 26);
+      Style: (RenderBold: true, FontSize: 18, TextColor: #ffffff, VerticalAlignment: Center, ShrinkTextToFit: true);
     }
 
     Label #CosmeticDesc {
-      Anchor: (Top: 2);
-      Style: (FontSize: 11, TextColor: #8090a0);
+      Anchor: (Height: 42, Top: 4);
+      Style: (FontSize: 15, TextColor: #c9d8e4, Wrap: true, VerticalAlignment: Center);
     }
   }
 
-  TextButton #ToggleButton {
-    Anchor: (Width: 105, Height: 34, Left: 8, Top: 3);
-    Text: "Visible";
-    Style: $C.@SecondaryTextButtonStyle;
-  }
+  Group {
+    Anchor: (Width: 160, Left: 20, Top: 2);
+    LayoutMode: Top;
+    Label #VisibilityState {
+      Anchor: (Height: 24, Bottom: 6);
+      Text: "Visible";
+      Style: (FontSize: 15, RenderBold: true, TextColor: #91e9c2, HorizontalAlignment: Center, VerticalAlignment: Center, ShrinkTextToFit: true);
+    }
+    TextButton #ToggleButton {
+      Anchor: (Height: 42);
+      Text: "Hide";
+      Style: @VisibilityButtonStyle;
+    }
 
-  TextButton #ToggleHiddenButton {
-    Anchor: (Width: 105, Height: 34, Left: 8, Top: 3);
-    Text: "Hidden";
-    Visible: false;
-    Style: $C.@SecondaryTextButtonStyle;
+    TextButton #ToggleHiddenButton {
+      Anchor: (Height: 42);
+      Text: "Show";
+      Visible: false;
+      Style: @VisibilityButtonStyle;
+    }
   }
 }

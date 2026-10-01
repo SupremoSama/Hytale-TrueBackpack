@@ -15,12 +15,25 @@ $C = "../Common.ui";
 
 @RecipeButton = ItemSlotButton {
   Anchor: (Width: 64, Height: 64, Right: 4);
+  TextTooltipStyle: $C.@DefaultTextTooltipStyle;
   Style: (
     Default: (),
     Hovered: (Background: #ffffff(0.06)),
     Pressed: (Background: #ffffff(0.11)),
     Sounds: $C.@ButtonSounds
   );
+};
+
+@MemoryLock = Group {
+  Anchor: (Full: 0);
+  TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+  LayoutMode: MiddleCenter;
+  Background: #111b24;
+  Visible: false;
+  Group {
+    Anchor: (Width: 38, Height: 38);
+    Background: (TexturePath: "../BackpackNative/MemoryLocked.png", Color: #9fb9c8(0.6));
+  }
 };
 
 @UnavailableOverlay = Group {
@@ -35,17 +48,20 @@ Group {
   @RecipeButton #SelectRecipe0 {
     ItemSlot #RecipeIcon0 { Anchor: (Full: 0); ShowQualityBackground: true; ShowQuantity: false; }
     @UnavailableOverlay #Unavailable0 {}
+    @MemoryLock #MemoryLocked0 {}
     @SelectionCorners #Selected0 {}
   }
   @RecipeButton #SelectRecipe1 {
     ItemSlot #RecipeIcon1 { Anchor: (Full: 0); ShowQualityBackground: true; ShowQuantity: false; }
     @UnavailableOverlay #Unavailable1 {}
+    @MemoryLock #MemoryLocked1 {}
     @SelectionCorners #Selected1 {}
   }
   @RecipeButton #SelectRecipe2 {
     Anchor: (Width: 64, Height: 64);
     ItemSlot #RecipeIcon2 { Anchor: (Full: 0); ShowQualityBackground: true; ShowQuantity: false; }
     @UnavailableOverlay #Unavailable2 {}
+    @MemoryLock #MemoryLocked2 {}
     @SelectionCorners #Selected2 {}
   }
 }

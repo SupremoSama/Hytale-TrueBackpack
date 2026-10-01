@@ -71,4 +71,15 @@ Group #UpgradeEntry {
       );
     }
   }
+
+  Group #MemoryLockBadge {
+    Anchor: (Width: 110, Height: 34, Left: 8, Top: 12);
+    Padding: (Horizontal: 6);
+    LayoutMode: Left;
+    Background: #101b25;
+    Visible: false;
+    TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+    Group { Anchor: (Width: 24, Height: 24, Top: 5, Right: 6); Background: "../BackpackNative/MemoryLocked.png"; }
+    Label #MemoryLockCount { FlexWeight: 1; Style: (FontSize: 12, TextColor: #bdcbd3, VerticalAlignment: Center, HorizontalAlignment: Center, ShrinkTextToFit: true); }
+  }
 }
