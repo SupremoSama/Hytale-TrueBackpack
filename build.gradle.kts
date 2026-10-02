@@ -149,3 +149,13 @@ val verifyBackpackWorkbenchInventory = tasks.register<JavaExec>("verifyBackpackW
     workingDir = projectDir
 }
 tasks.check { dependsOn(verifyBackpackWorkbenchInventory) }
+
+val verifyBackpackArmorVisibility = tasks.register<JavaExec>("verifyBackpackArmorVisibility") {
+    group = "verification"
+    description = "Checks armor visibility toggles, world permissions and unchanged player preferences."
+    dependsOn(tasks.testClasses)
+    classpath = sourceSets.test.get().runtimeClasspath + configurations.compileClasspath.get()
+    mainClass.set("com.supremosan.truebackpack.ui.BackpackArmorVisibilityVerification")
+    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+}
+tasks.check { dependsOn(verifyBackpackArmorVisibility) }

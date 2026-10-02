@@ -41,30 +41,30 @@ $C.@DecoratedContainer #PlayerPanel {
         RenderItemQualityBackground: true;
         Style: $G.@InventoryGridStyle;
       }
-      // These indicators reflect the player's settings; the custom page does not change them.
-      Group #HelmetVisibility {
+      // Use the native render preferences, leaving armor equipped and its stats intact.
+      Button #HelmetVisibility {
         Anchor: (Left: 54, Top: 46, Width: 32, Height: 32);
         TextTooltipStyle: $C.@DefaultTextTooltipStyle;
-        Group #Visible { Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOn.png"; }
-        Group #Hidden { Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOff.png"; Visible: false; }
+        Group #Visible { HitTestVisible: false; Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOn.png"; }
+        Group #Hidden { HitTestVisible: false; Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOff.png"; Visible: false; }
       }
-      Group #CuirassVisibility {
+      Button #CuirassVisibility {
         Anchor: (Left: 54, Top: 122, Width: 32, Height: 32);
         TextTooltipStyle: $C.@DefaultTextTooltipStyle;
-        Group #Visible { Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOn.png"; }
-        Group #Hidden { Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOff.png"; Visible: false; }
+        Group #Visible { HitTestVisible: false; Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOn.png"; }
+        Group #Hidden { HitTestVisible: false; Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOff.png"; Visible: false; }
       }
-      Group #GauntletsVisibility {
+      Button #GauntletsVisibility {
         Anchor: (Left: 54, Top: 198, Width: 32, Height: 32);
         TextTooltipStyle: $C.@DefaultTextTooltipStyle;
-        Group #Visible { Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOn.png"; }
-        Group #Hidden { Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOff.png"; Visible: false; }
+        Group #Visible { HitTestVisible: false; Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOn.png"; }
+        Group #Hidden { HitTestVisible: false; Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOff.png"; Visible: false; }
       }
-      Group #PantsVisibility {
+      Button #PantsVisibility {
         Anchor: (Left: 54, Top: 274, Width: 32, Height: 32);
         TextTooltipStyle: $C.@DefaultTextTooltipStyle;
-        Group #Visible { Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOn.png"; }
-        Group #Hidden { Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOff.png"; Visible: false; }
+        Group #Visible { HitTestVisible: false; Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOn.png"; }
+        Group #Hidden { HitTestVisible: false; Anchor: (Full: 0); Background: "../BackpackNative/ArmorVisibilityOff.png"; Visible: false; }
       }
       Group {
         Anchor: (Right: 0, Top: 98, Width: 72, Height: 212);

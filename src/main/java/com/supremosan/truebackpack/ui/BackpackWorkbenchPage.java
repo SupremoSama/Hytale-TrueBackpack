@@ -201,6 +201,10 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 new EventData().append("Action", "TabVisibility"));
         eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CharacterPersonalizeButton",
                 new EventData().append("Action", "TabPersonalize"));
+        for (var slot : BackpackArmorVisibility.Slot.values()) {
+            eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, slot.selector,
+                    new EventData().append("Action", "ToggleArmorVisibility").append("Target", slot.name()));
+        }
         for (var section : BackpackWorkbenchInventory.Section.values()) {
             String grid = inventoryMount(section);
             // The client adds slot and drag-source fields to ItemGrid events automatically.
@@ -578,6 +582,11 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             clearInventorySelection();
             BackpackWorkbenchInventory.sortStorage(ref, store);
             inventoryStatus = "";
+            sendInventoryRefresh(ref, store);
+            return;
+        }
+        if ("ToggleArmorVisibility".equals(data.action)) {
+            toggleArmorVisibility(ref, store, data.target);
             sendInventoryRefresh(ref, store);
             return;
         }
@@ -1061,6 +1070,27 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
 
     private String armorVisibilitySnapshot;
 
+    private void toggleArmorVisibility(Ref<EntityStore> ref, Store<EntityStore> store, String target) {
+        if (target == null) return;
+        final BackpackArmorVisibility.Slot slot;
+        try {
+            slot = BackpackArmorVisibility.Slot.valueOf(target);
+        } catch (IllegalArgumentException ignored) {
+            return;
+        }
+        var armor = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
+        if (armor == null || slot.ordinal() >= armor.getInventory().getCapacity()
+                || ItemStack.isEmpty(armor.getInventory().getItemStack((short) slot.ordinal()))) return;
+        PlayerSettings settings = store.getComponent(ref, PlayerSettings.getComponentType());
+        if (settings == null) settings = PlayerSettings.defaults();
+        var option = store.getExternalData().getWorld().getGameplayConfig().getPlayerConfig().getArmorVisibilityOption();
+        PlayerSettings updated = BackpackArmorVisibility.toggle(settings, slot, option);
+        if (updated == settings) return;
+        store.putComponent(ref, PlayerSettings.getComponentType(), updated);
+        // Match the native preference handler: settings alone do not resend rendered equipment.
+        armor.setOutdatedEquipment(true);
+    }
+
     private void updateArmorVisibility(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder cb) {
         PlayerSettings settings = store.getComponent(ref, PlayerSettings.getComponentType());
         if (settings == null) settings = PlayerSettings.defaults();
@@ -1075,18 +1105,18 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         boolean[] occupied = new boolean[4];
         for (short slot = 0; slot < occupied.length; slot++)
             occupied[slot] = armor != null && slot < armor.getCapacity() && !ItemStack.isEmpty(armor.getItemStack(slot));
-        String snapshot = playerRef.getLanguage() + Arrays.toString(hidden) + Arrays.toString(occupied);
+        String snapshot = playerRef.getLanguage() + option + Arrays.toString(hidden) + Arrays.toString(occupied);
         if (snapshot.equals(armorVisibilitySnapshot)) return;
         armorVisibilitySnapshot = snapshot;
-        String[] selectors = {"#HelmetVisibility", "#CuirassVisibility", "#GauntletsVisibility", "#PantsVisibility"};
-        String[] names = {"inventory.helmet", "inventory.cuirass", "inventory.gauntlets", "inventory.pants"};
-        for (int slot = 0; slot < selectors.length; slot++) {
-            cb.set(selectors[slot] + ".Visible", occupied[slot]);
-            cb.set(selectors[slot] + " #Visible.Visible", !hidden[slot]);
-            cb.set(selectors[slot] + " #Hidden.Visible", hidden[slot]);
-            // Native armor preferences belong to the client; mirror them without replacing that preference flow.
-            cb.set(selectors[slot] + ".TooltipText", I18nHelper.getOrFallback(playerRef.getLanguage(),
-                    "server.truebackpack.workbench.inventory.armor_" + (hidden[slot] ? "hidden" : "visible"), text(names[slot])));
+        for (var slot : BackpackArmorVisibility.Slot.values()) {
+            int index = slot.ordinal();
+            cb.set(slot.selector + ".Visible", occupied[index]);
+            cb.set(slot.selector + ".Disabled", !slot.allowed(option));
+            cb.set(slot.selector + " #Visible.Visible", !hidden[index]);
+            cb.set(slot.selector + " #Hidden.Visible", hidden[index]);
+            String state = !slot.allowed(option) ? "locked" : hidden[index] ? "hidden" : "visible";
+            cb.set(slot.selector + ".TooltipText", I18nHelper.getOrFallback(playerRef.getLanguage(),
+                    "server.truebackpack.workbench.inventory.armor_" + state, text(slot.nameKey)));
         }
     }
 
