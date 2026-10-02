@@ -1,23 +1,24 @@
 $C = "../Common.ui";
 Group {
-  LayoutMode: Top;
   FlexWeight: 1;
-  Padding: (Full: 6);
-  Label #NameTitle { Anchor: (Height: 20); Text: "Backpack name"; Style: (FontSize: 13, TextColor: #bdcbd3, ShrinkTextToFit: true); }
-  $C.@TextField #BackpackName { @Anchor = (Height: 32, Bottom: 8); PlaceholderText: "Leave empty for the original name"; }
+  LayoutMode: Top;
   Group {
-    LayoutMode: Left;
     FlexWeight: 1;
+    LayoutMode: Left;
+    Padding: (Full: 6);
+    // ColorPicker handles must share a fixed, unscrolled coordinate space.
     Group {
       FlexWeight: 1;
       Anchor: (Right: 16);
       LayoutMode: Top;
+      Label #NameTitle { Anchor: (Height: 20); Text: "Backpack name"; Style: (FontSize: 13, TextColor: #bdcbd3, ShrinkTextToFit: true); }
+      $C.@TextField #BackpackName { @Anchor = (Height: 32, Bottom: 8); PlaceholderText: "Leave empty for the original name"; }
       Label #PreviewTitle { Anchor: (Height: 24); Text: "Preview"; Style: (FontSize: 13, TextColor: #bdcbd3, HorizontalAlignment: Center); }
       Group #PaintPreviewHost { LayoutMode: Top; FlexWeight: 1; }
     }
     Group {
       LayoutMode: Top;
-      Anchor: (Width: 350);
+      Anchor: (Width: 330);
       Label #AppearanceTitle { Anchor: (Height: 20); Text: "Appearance"; Style: (FontSize: 13, TextColor: #bdcbd3); }
       $C.@DropdownBox #AppearanceSelect { @Anchor = (Bottom: 8); }
       Group #PaintControls {
@@ -28,15 +29,21 @@ Group {
           $C.@CheckBox #UsePaint { Anchor: (Width: 22, Height: 22, Right: 8); }
           Label #UsePaintLabel { FlexWeight: 1; Anchor: (Height: 22); Text: "Custom color"; Style: (FontSize: 13, TextColor: #bdcbd3, VerticalAlignment: Center); }
         }
-        ColorPicker #PaintPicker { Anchor: (Width: 290, Height: 190); Format: Rgb; Style: $C.@DefaultColorPickerStyle; }
+        ColorPicker #PaintPicker {
+          Anchor: (Width: 290, Height: 170);
+          Format: Rgb;
+          Style: $C.@DefaultColorPickerStyle;
+          DisplayTextField: false;
+        }
       }
       Label #PaintExcluded { Anchor: (Height: 90); Text: "This backpack cannot be painted."; Style: (FontSize: 12, TextColor: #bdcbd3, Wrap: true); }
     }
   }
-  Label #PreviewHint { Anchor: (Height: 24); Text: "Preview your changes, then save."; Style: (FontSize: 11, TextColor: #96a9be, ShrinkTextToFit: true); }
+  Label #PreviewHint { Anchor: (Height: 22); Padding: (Horizontal: 6); Text: "Preview your changes, then save."; Style: (FontSize: 12, TextColor: #96a9be, ShrinkTextToFit: true); }
   Group {
     LayoutMode: Left;
     Anchor: (Height: 34);
+    Padding: (Horizontal: 6);
     TextButton #SaveCustomization { Anchor: (Width: 210, Height: 32); Text: "Save changes"; Style: $C.@SmallSecondaryTextButtonStyle; }
     Label #PreviewColor { FlexWeight: 1; Anchor: (Height: 32, Left: 8); Style: (FontSize: 12, TextColor: #bdcbd3, HorizontalAlignment: End, VerticalAlignment: Center); }
   }

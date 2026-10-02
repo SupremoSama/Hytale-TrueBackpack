@@ -1,4 +1,4 @@
 ItemPreviewComponent #PaintPreview {
   FlexWeight: 1;
-  ItemScale: 0.7;
+  ItemScale: 1.0;
 }

@@ -1,0 +1,24 @@
+$C = "../Common.ui";
+
+// Native inventory textures and dimensions, also used by the equipment grids.
+@InventoryGridStyle = ItemGridStyle(
+  SlotSize: 74,
+  SlotIconSize: 64,
+  SlotSpacing: 2,
+  SlotBackground: "../BackpackNative/Slot.png",
+  QuantityPopupSlotOverlay: "../BackpackNative/QuantityPopupSlotOverlay.png",
+  BrokenSlotBackgroundOverlay: "../BackpackNative/SlotItemBrokenCracksOverlay.png",
+  BrokenSlotIconOverlay: "../BackpackNative/SlotItemBrokenIconOverlay.png",
+  DefaultItemIcon: "../BackpackNative/UnknownItemIcon.png",
+  DurabilityBar: "../BackpackNative/DurabilityBar.png",
+  DurabilityBarBackground: "../BackpackNative/DurabilityBarBackground.png",
+  DurabilityBarAnchor: (Bottom: 10, Left: 13, Width: 48, Height: 2),
+  DurabilityBarColorStart: #a63232,
+  DurabilityBarColorEnd: #63b649
+);
+@UtilityGridStyle = ItemGridStyle(
+  ...@InventoryGridStyle,
+  SlotSize: 68,
+  SlotIconSize: 60,
+  DurabilityBarAnchor: (Bottom: 9, Left: 11, Width: 46, Height: 2)
+);

@@ -36,6 +36,13 @@ truebackpack.items.Ingredient_Leather_Storm.name=Storm Leather
 
 # Workbench General / UI
 truebackpack.workbench.title=Backpack Workbench
+truebackpack.workbench.page.crafting=Backpack crafting & upgrades
+truebackpack.workbench.page.upgrades=Upgrade backpack
+truebackpack.workbench.page.personalize=Customize backpack
+truebackpack.workbench.page.visibility=Cosmetic visibility
+truebackpack.workbench.header.upgrade_target=Upgrade target
+truebackpack.workbench.header.selected=Selected backpack
+truebackpack.workbench.header.capacity={0} slots
 truebackpack.workbench.tab.transmog=Transmog
 truebackpack.workbench.tab.upgrades=Upgrades
 truebackpack.workbench.tab.visibility=Visibility
@@ -149,3 +156,27 @@ truebackpack.workbench.memories.restore=and restore {0} Memories to unlock this 
 truebackpack.workbench.personalize.preview_loading=Updating preview…
 truebackpack.workbench.visibility.show=Show
 truebackpack.workbench.visibility.hide=Hide
+
+# Workbench inventory and equipment
+truebackpack.workbench.bench.nearby_chests=Nearby chests: {0}/{1}
+truebackpack.workbench.inventory.title=Inventory
+truebackpack.workbench.inventory.armor=Armor
+truebackpack.workbench.inventory.helmet=Helmet
+truebackpack.workbench.inventory.cuirass=Chest armor
+truebackpack.workbench.inventory.gauntlets=Gloves
+truebackpack.workbench.inventory.pants=Leg armor
+truebackpack.workbench.inventory.armor_visible={0}: visible. Change visibility in the game inventory.
+truebackpack.workbench.inventory.armor_hidden={0}: hidden. Change visibility in the game inventory.
+truebackpack.workbench.inventory.utility=Utility
+truebackpack.workbench.inventory.stats=Statistics
+truebackpack.workbench.inventory.health=Health
+truebackpack.workbench.inventory.stamina=Stamina
+truebackpack.workbench.inventory.mana=Mana
+truebackpack.workbench.inventory.defense=Defense
+truebackpack.workbench.inventory.sort=Sort
+truebackpack.workbench.inventory.cancel=Cancel
+truebackpack.workbench.inventory.hint=Drag an item to move it. Shift-click to transfer quickly.
+truebackpack.workbench.inventory.destination=Choose a destination. Click the selected slot again to cancel.
+truebackpack.workbench.inventory.changed=The dragged item changed. Pick it up again.
+truebackpack.workbench.inventory.empty=Empty slot
+truebackpack.workbench.inventory.blocked=That slot cannot accept this item.

@@ -36,6 +36,13 @@ truebackpack.items.Ingredient_Leather_Storm.name=Couro da Tempestade
 
 # Workbench General / UI
 truebackpack.workbench.title=Bancada de Mochila
+truebackpack.workbench.page.crafting=Fabricação e melhorias de mochilas
+truebackpack.workbench.page.upgrades=Melhorar mochila
+truebackpack.workbench.page.personalize=Personalizar mochila
+truebackpack.workbench.page.visibility=Visibilidade dos cosméticos
+truebackpack.workbench.header.upgrade_target=Mochila a melhorar
+truebackpack.workbench.header.selected=Mochila selecionada
+truebackpack.workbench.header.capacity={0} espaços
 truebackpack.workbench.tab.transmog=Transmog
 truebackpack.workbench.tab.upgrades=Melhorias
 truebackpack.workbench.tab.visibility=Visibilidade
@@ -149,3 +156,27 @@ truebackpack.workbench.memories.restore=e restaure {0} Memórias para desbloquea
 truebackpack.workbench.personalize.preview_loading=Atualizando prévia…
 truebackpack.workbench.visibility.show=Mostrar
 truebackpack.workbench.visibility.hide=Ocultar
+
+# Inventário e equipamentos da bancada
+truebackpack.workbench.bench.nearby_chests=Baús próximos: {0}/{1}
+truebackpack.workbench.inventory.title=Inventário
+truebackpack.workbench.inventory.armor=Armadura
+truebackpack.workbench.inventory.helmet=Capacete
+truebackpack.workbench.inventory.cuirass=Peitoral
+truebackpack.workbench.inventory.gauntlets=Luvas
+truebackpack.workbench.inventory.pants=Armadura das pernas
+truebackpack.workbench.inventory.armor_visible={0}: visível. Altere a visibilidade no inventário do jogo.
+truebackpack.workbench.inventory.armor_hidden={0}: oculto. Altere a visibilidade no inventário do jogo.
+truebackpack.workbench.inventory.utility=Utilidade
+truebackpack.workbench.inventory.stats=Estatísticas
+truebackpack.workbench.inventory.health=Vida
+truebackpack.workbench.inventory.stamina=Estamina
+truebackpack.workbench.inventory.mana=Mana
+truebackpack.workbench.inventory.defense=Defesa
+truebackpack.workbench.inventory.sort=Organizar
+truebackpack.workbench.inventory.cancel=Cancelar
+truebackpack.workbench.inventory.hint=Arraste um item para movê-lo. Shift + clique para transferir rapidamente.
+truebackpack.workbench.inventory.destination=Escolha o destino. Clique novamente no espaço selecionado para cancelar.
+truebackpack.workbench.inventory.changed=O item arrastado mudou. Pegue-o novamente.
+truebackpack.workbench.inventory.empty=Espaço vazio
+truebackpack.workbench.inventory.blocked=Esse espaço não aceita o item.

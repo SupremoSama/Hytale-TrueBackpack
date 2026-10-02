@@ -138,3 +138,14 @@ val verifyBackpackCustomization = tasks.register<JavaExec>("verifyBackpackCustom
     workingDir = projectDir
 }
 tasks.check { dependsOn(verifyBackpackCustomization) }
+
+val verifyBackpackWorkbenchInventory = tasks.register<JavaExec>("verifyBackpackWorkbenchInventory") {
+    group = "verification"
+    description = "Checks workbench inventory moves, metadata preservation and equipment filters."
+    dependsOn(tasks.testClasses)
+    classpath = sourceSets.test.get().runtimeClasspath + configurations.compileClasspath.get()
+    mainClass.set("com.supremosan.truebackpack.ui.BackpackWorkbenchInventoryVerification")
+    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+    workingDir = projectDir
+}
+tasks.check { dependsOn(verifyBackpackWorkbenchInventory) }

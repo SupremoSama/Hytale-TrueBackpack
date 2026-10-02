@@ -1,13 +1,13 @@
 $C = "../Common.ui";
 
 Group #UpgradeEntry {
-  Anchor: (Height: 76, Bottom: 8);
-  Padding: (Full: 8);
+  Anchor: (Height: 56, Bottom: 4);
+  Padding: (Full: 4);
   LayoutMode: Left;
   Background: #141c24(0.85);
 
   ItemSlot #UpgradeIcon {
-    Anchor: (Width: 56, Height: 56, Right: 10);
+    Anchor: (Width: 44, Height: 44, Right: 8);
     ShowQualityBackground: true;
   }
 
@@ -16,28 +16,28 @@ Group #UpgradeEntry {
     LayoutMode: Top;
 
     Label #UpgradeTitle {
-      Style: (RenderBold: true, FontSize: 14, TextColor: #e6be65);
+      Style: (RenderBold: true, FontSize: 13, TextColor: #e6be65, ShrinkTextToFit: true);
     }
 
     Label #UpgradeBenefits {
-      Anchor: (Top: 2);
+      Anchor: (Top: 1);
       Style: (FontSize: 12, TextColor: #55efc4);
     }
 
     Label #CostLabel {
-      Anchor: (Top: 2);
-      Style: (FontSize: 11, TextColor: #dfe6e9);
+      Anchor: (Top: 1);
+      Style: (FontSize: 12, TextColor: #dfe6e9, ShrinkTextToFit: true);
     }
   }
 
   TextButton #UpgradeButton {
-    Anchor: (Width: 110, Height: 34, Left: 8, Top: 12);
+    Anchor: (Width: 110, Height: 32, Left: 8, Top: 8);
     Text: "Upgrade";
-    Style: $C.@SecondaryTextButtonStyle;
+    Style: $C.@SmallSecondaryTextButtonStyle;
   }
 
   Group #NeedItemsBadge {
-    Anchor: (Width: 110, Height: 34, Left: 8, Top: 12);
+    Anchor: (Width: 110, Height: 32, Left: 8, Top: 8);
     Background: #1c242c(0.95);
     LayoutMode: Center;
     Visible: false;
@@ -55,7 +55,7 @@ Group #UpgradeEntry {
   }
 
   Group #MaxedBadge {
-    Anchor: (Width: 110, Height: 34, Left: 8, Top: 12);
+    Anchor: (Width: 110, Height: 32, Left: 8, Top: 8);
     Background: #2a2414(0.95);
     LayoutMode: Center;
     Visible: false;
@@ -73,7 +73,7 @@ Group #UpgradeEntry {
   }
 
   Group #MemoryLockBadge {
-    Anchor: (Width: 110, Height: 34, Left: 8, Top: 12);
+    Anchor: (Width: 110, Height: 32, Left: 8, Top: 8);
     Padding: (Horizontal: 6);
     LayoutMode: Left;
     Background: #101b25;
