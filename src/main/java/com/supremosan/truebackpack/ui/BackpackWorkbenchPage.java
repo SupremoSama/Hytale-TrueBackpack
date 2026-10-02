@@ -172,6 +172,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
     private String statsSnapshot;
     private int activeHotbarSlot = Integer.MIN_VALUE;
     private String selectedRecipeId;
+    private boolean upgradeSelected;
     private String currentTab = "personalize";
     private String statusMessage = "";
     @Nullable
@@ -257,14 +258,29 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         if ("crafting".equals(currentTab)) {
             commandBuilder.set("#LoadingContainer.Visible", false);
             commandBuilder.set("#WorkbenchList.Visible", true);
-            boolean upgrade = activeBp != null && canUpgrade(activeBp.stack(), store);
-            commandBuilder.set("#BackpackHeader.Visible", upgrade);
+            commandBuilder.set("#BackpackHeader.Visible", false);
             commandBuilder.append("#WorkbenchList", "Pages/BackpackProductionPanel.ui");
-            commandBuilder.set("#UpgradeContent.Visible", upgrade);
-            commandBuilder.set("#CraftingContent.Visible", craftingWindow != null);
-            if (upgrade) buildUpgradeTab(ref, store, activeBp, commandBuilder, eventBuilder, lang);
+            buildCraftingTab(ref, store, commandBuilder, eventBuilder, lang);
+            boolean showUpgrade = upgradeSelected || craftingWindow == null;
+            commandBuilder.set("#RecipeDetails.Visible", !showUpgrade && selectedRecipeId != null);
+            commandBuilder.set("#UpgradeDetails.Visible", showUpgrade);
+            commandBuilder.set("#UpgradeSelected.Visible", showUpgrade);
+            commandBuilder.set("#ProductionEmpty.Visible", !showUpgrade && selectedRecipeId == null);
+            commandBuilder.set("#ProductionEmptyText.Text", text("flow.select_recipe"));
+            commandBuilder.set("#CraftNewTitle.Text", text("flow.craft_new"));
+            commandBuilder.set("#CraftNewTitle.Visible", craftingWindow != null);
+            commandBuilder.set("#RecipeGrid.Visible", craftingWindow != null);
+            commandBuilder.set("#UpgradeSectionTitle.Text", text("flow.upgrade_existing"));
+            commandBuilder.set("#UpgradeChoiceIcon.Visible", activeBp != null);
+            commandBuilder.set("#SelectUpgrade.TooltipText", text("flow.hold_backpack"));
+            commandBuilder.set("#UpgradeChoiceName.Text", activeBp == null ? text("flow.choose_backpack") : backpackName(activeBp.stack(), lang));
+            commandBuilder.set("#UpgradeChoiceInfo.Text", activeBp == null ? text("flow.hold_backpack")
+                    : I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.header.capacity", BackpackItemFactory.getTotalCapacity(activeBp.stack())));
+            if (activeBp != null) commandBuilder.set("#UpgradeChoiceIcon.ItemId", activeBp.stack().getItemId());
+            eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#SelectUpgrade",
+                    new EventData().append("Action", "SelectUpgrade"));
+            if (showUpgrade) buildUpgradeTab(ref, store, activeBp, commandBuilder, eventBuilder, lang);
             if (craftingWindow != null) {
-                buildCraftingTab(ref, store, commandBuilder, eventBuilder, lang);
                 var data = craftingWindow.getData();
                 int queue = data.has("queueSize") ? data.get("queueSize").getAsInt() : 0;
                 commandBuilder.set("#CraftingQueue.Visible", queue > 0);
@@ -325,11 +341,6 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 || ("Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(stack.getItemId())
                 && BackpackItemFactory.getUpgradeLevel(stack) < BackpackItemFactory.MAX_UPGRADE_LEVEL);
     }
-    private boolean canUpgrade(ItemStack stack, Store<EntityStore> store) {
-        if (!hasAvailableUpgrade(stack)) return false;
-        var tier = TIER_UPGRADES.get(stack.getItemId());
-        return upgradeAllowed(tier == null ? stack.getItemId() : tier.toItemId(), store);
-    }
     private boolean upgradeAllowed(String target, Store<EntityStore> store) {
         if (craftingWindow == null) return false;
         int memories = com.hypixel.hytale.builtin.adventure.memories.MemoriesPlugin.get()
@@ -341,99 +352,102 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         return BackpackProgression.gate(recipe.getRequiredMemoriesLevel(), store.getExternalData().getWorld().getGameplayConfig()).unlocked();
     }
 
+    private static String backpackName(ItemStack stack, @Nullable String lang) {
+        String name = BackpackItemFactory.getCustomName(stack);
+        return name == null ? I18nHelper.resolveItemName(stack.getItemId(), lang) : name;
+    }
+
     private void buildUpgradeTab(
             @Nonnull Ref<EntityStore> ref,
             @Nonnull Store<EntityStore> store,
-            @Nonnull ActiveBackpack activeBp,
-            @Nonnull UICommandBuilder commandBuilder,
-            @Nonnull UIEventBuilder eventBuilder,
+            @Nullable ActiveBackpack activeBp,
+            @Nonnull UICommandBuilder cb,
+            @Nonnull UIEventBuilder eb,
             @Nullable String lang) {
+        cb.append("#UpgradeDetails", "Pages/BackpackUpgradeEntry.ui");
+        cb.set("#UpgradeTitle.Text", text("flow.upgrade_existing"));
+        cb.set("#UpgradeButton.Text", text("flow.apply_upgrade"));
+        cb.set("#UpgradeButton.Disabled", true);
+        cb.set("#UpgradeCurrentLabel.Text", text("flow.current"));
+        cb.set("#UpgradeResultLabel.Text", text("flow.result"));
+        cb.set("#UpgradeMaterialsTitle.Text", text("flow.inventory_materials"));
+        cb.set("#UpgradePreservationNote.Text", text("flow.preserved"));
 
-        ItemStack stack = activeBp.stack();
-        String itemId = stack.getItemId();
-
-        if ("Utility_Heli_Backpack".equalsIgnoreCase(itemId)) {
-            commandBuilder.set("#StatusMessage.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.helipack.no_upgrades"));
-            commandBuilder.set("#StatusMessage.Visible", true);
+        if (activeBp == null) {
+            showUpgradeEmpty(cb, text("flow.hold_backpack"));
             return;
         }
-
-        int index = 0;
-
-        // Tier Upgrade Option (for backpacks smaller than Extra Big)
-        if (TIER_UPGRADES.containsKey(itemId)) {
-            TierUpgrade tier = TIER_UPGRADES.get(itemId);
-            String selector = "#UpgradeContent[" + index + "]";
-            index++;
-
-            commandBuilder.append("#UpgradeContent", "Pages/BackpackUpgradeEntry.ui");
-            commandBuilder.set(selector + " #UpgradeIcon.ItemId", tier.toItemId());
-            String targetName = I18nHelper.resolveItemName(tier.toItemId(), lang);
-            commandBuilder.set(selector + " #UpgradeTitle.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.tier.title", targetName));
-            commandBuilder.set(selector + " #UpgradeBenefits.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.tier.benefit", tier.newCapacity()));
-
-            var gate = memoryGate(tier.toItemId(), store);
-            updateMemoryBadge(commandBuilder, selector, gate);
-            boolean canAfford = gate.unlocked() && hasMaterials(ref, store, tier.costs());
-            commandBuilder.set(selector + " #CostLabel.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.cost", formatCosts(tier.costs(), canAfford, lang)));
-
-            if (canAfford) {
-                commandBuilder.set(selector + " #UpgradeButton.Visible", true);
-                commandBuilder.set(selector + " #NeedItemsBadge.Visible", false);
-                commandBuilder.set(selector + " #MaxedBadge.Visible", false);
-                commandBuilder.set(selector + " #UpgradeButton.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.upgrade"));
-                eventBuilder.addEventBinding(
-                        CustomUIEventBindingType.Activating,
-                        selector + " #UpgradeButton",
-                        new EventData().append("Action", "UpgradeTier").append("Target", tier.toItemId())
-                );
-            } else {
-                commandBuilder.set(selector + " #UpgradeButton.Visible", false);
-                commandBuilder.set(selector + " #NeedItemsBadge.Visible", gate.unlocked());
-                commandBuilder.set(selector + " #MaxedBadge.Visible", false);
-                commandBuilder.set(selector + " #NeedItemsBadge #NeedItemsText.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.need_items"));
-            }
+        ItemStack stack = activeBp.stack();
+        String itemId = stack.getItemId();
+        if ("Utility_Heli_Backpack".equalsIgnoreCase(itemId)) {
+            showUpgradeEmpty(cb, text("helipack.no_upgrades"));
+            return;
         }
-
-        // Capacity Level Upgrade (exclusive to Extra Big Backpack, max lvl 2)
-        if ("Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(itemId)) {
-            int currentLevel = BackpackItemFactory.getUpgradeLevel(stack);
-            if (currentLevel >= BackpackItemFactory.MAX_UPGRADE_LEVEL) return;
-            String selector = "#UpgradeContent[" + index + "]";
-
-            commandBuilder.append("#UpgradeContent", "Pages/BackpackUpgradeEntry.ui");
-            commandBuilder.set(selector + " #UpgradeIcon.ItemId", itemId);
-
-            int nextLevel = currentLevel + 1;
-            LevelUpgrade nextUpgrade = LEVEL_UPGRADES.get(nextLevel);
-            short newCapacity = nextUpgrade != null ? nextUpgrade.newCapacity() : (short) (36 + nextLevel * 9);
-            Map<String, Integer> costs = nextUpgrade != null ? nextUpgrade.costs() : Map.of();
-
-            commandBuilder.set(selector + " #UpgradeTitle.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level.title", nextLevel));
-            commandBuilder.set(selector + " #UpgradeBenefits.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.level.benefit", 9, BackpackItemFactory.getTotalCapacity(stack), newCapacity));
-
-            var gate = memoryGate(itemId, store);
-            updateMemoryBadge(commandBuilder, selector, gate);
-            boolean canAfford = gate.unlocked() && hasMaterials(ref, store, costs);
-            commandBuilder.set(selector + " #CostLabel.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.cost", formatCosts(costs, canAfford, lang)));
-
-            if (canAfford) {
-                commandBuilder.set(selector + " #UpgradeButton.Visible", true);
-                commandBuilder.set(selector + " #NeedItemsBadge.Visible", false);
-                commandBuilder.set(selector + " #MaxedBadge.Visible", false);
-                commandBuilder.set(selector + " #UpgradeButton.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.upgrade"));
-                eventBuilder.addEventBinding(
-                        CustomUIEventBindingType.Activating,
-                        selector + " #UpgradeButton",
-                        new EventData().append("Action", "UpgradeLevel").append("Target", Integer.toString(nextLevel))
-                );
-            } else {
-                commandBuilder.set(selector + " #UpgradeButton.Visible", false);
-                commandBuilder.set(selector + " #NeedItemsBadge.Visible", gate.unlocked());
-                commandBuilder.set(selector + " #MaxedBadge.Visible", false);
-                commandBuilder.set(selector + " #NeedItemsBadge #NeedItemsText.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.btn.need_items"));
-            }
+        TierUpgrade tier = TIER_UPGRADES.get(itemId);
+        int nextLevel = BackpackItemFactory.getUpgradeLevel(stack) + 1;
+        LevelUpgrade level = "Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(itemId)
+                ? LEVEL_UPGRADES.get(nextLevel) : null;
+        if (tier == null && level == null) {
+            showUpgradeEmpty(cb, text("Utility_Leather_Extra_Big_Backpack".equalsIgnoreCase(itemId)
+                    ? "flow.max_capacity" : "flow.no_upgrades"));
+            return;
         }
+        String target = tier != null ? tier.toItemId() : itemId;
+        short capacity = tier != null ? tier.newCapacity() : level.newCapacity();
+        Map<String, Integer> costs = tier != null ? tier.costs() : level.costs();
+        var gate = memoryGate(target, store);
+
+        cb.set("#UpgradeCurrentIcon.ItemId", itemId);
+        cb.set("#UpgradeCurrentName.Text", backpackName(stack, lang));
+        cb.set("#UpgradeCurrentCapacity.Text", I18nHelper.getOrFallback(lang,
+                "server.truebackpack.workbench.header.capacity", BackpackItemFactory.getTotalCapacity(stack)));
+        cb.set("#UpgradeResultIcon.Visible", gate.unlocked());
+        cb.set("#UpgradeResultLockedMarker.Visible", !gate.unlocked());
+        if (gate.unlocked()) cb.set("#UpgradeResultIcon.ItemId", target);
+        cb.set("#UpgradeResultName.Text", gate.unlocked() ? I18nHelper.resolveItemName(target, lang) : text("flow.locked_upgrade"));
+        cb.set("#UpgradeResultCapacity.Text", I18nHelper.getOrFallback(lang,
+                "server.truebackpack.workbench.header.capacity", capacity));
+        if (tier == null) cb.set("#UpgradeResultLabel.Text", text("flow.result") + " · " + text("level") + " " + nextLevel + "/2");
+
+        var hotbar = BackpackWorkbenchInventory.container(ref, store, BackpackWorkbenchInventory.Section.HOTBAR);
+        var storage = BackpackWorkbenchInventory.container(ref, store, BackpackWorkbenchInventory.Section.STORAGE);
+        var materials = costs.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList();
+        for (int i = 0; i < 3; i++) {
+            cb.set("#UpgradeMaterialRow" + i + ".Visible", i < materials.size());
+            if (i >= materials.size()) continue;
+            var material = materials.get(i);
+            int count = (hotbar == null ? 0 : countItem(hotbar, material.getKey()))
+                    + (storage == null ? 0 : countItem(storage, material.getKey()));
+            cb.set("#UpgradeMaterialIcon" + i + ".ItemId", "Wood_Trunk".equals(material.getKey()) ? "Wood_Oak_Trunk" : material.getKey());
+            cb.set("#UpgradeMaterial" + i + ".Text", count + " / " + material.getValue() + " × "
+                    + ("Wood_Trunk".equals(material.getKey()) ? text("flow.any_trunk") : I18nHelper.resolveItemName(material.getKey(), lang)));
+            cb.set("#UpgradeMaterial" + i + ".Style.TextColor", count >= material.getValue() ? "#62b78d" : "#d78b82");
+        }
+        boolean materialsReady = hasMaterials(ref, store, costs);
+        boolean benchReady = upgradeAllowed(target, store);
+        boolean ready = benchReady && gate.unlocked() && materialsReady;
+        String reason = craftingWindow == null ? text("flow.requires_bench")
+                : !gate.unlocked() ? memoryLabel(gate)
+                : !benchReady ? text(craftingWindow.isMaster() ? "flow.upgrade_unavailable" : "flow.requires_master")
+                : !materialsReady ? text("craft.materials") : "";
+        cb.set("#UpgradeStatus.Text", reason);
+        cb.set("#UpgradeButton.Disabled", !ready);
+        if (!gate.unlocked()) {
+            cb.set("#UpgradeResultLockedMarker.TooltipTextSpans", memoryTooltip(gate));
+            cb.set("#UpgradeStatus.TooltipTextSpans", memoryTooltip(gate));
+        }
+        eb.addEventBinding(CustomUIEventBindingType.Activating, "#UpgradeButton",
+                new EventData().append("Action", tier != null ? "UpgradeTier" : "UpgradeLevel")
+                        .append("Target", tier != null ? target : Integer.toString(nextLevel)));
+    }
+
+    private void showUpgradeEmpty(UICommandBuilder cb, String explanation) {
+        cb.set("#UpgradeComparison.Visible", false);
+        cb.set("#UpgradeMaterials.Visible", false);
+        cb.set("#UpgradeEmpty.Visible", true);
+        cb.set("#UpgradeEmptyText.Text", explanation);
+        cb.set("#UpgradePreservationNote.Visible", false);
+        cb.set("#UpgradeStatus.Text", "");
     }
 
     private void buildVisibilityTab(
@@ -446,7 +460,8 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
 
         // 1. Backpack Visibility
         boolean bpVisible = CosmeticPreferenceUtils.isBackpackVisible(store, ref);
-        String bpIcon = activeBp != null ? activeBp.stack().getItemId() : "Utility_Leather_Backpack";
+        var activeEntry = activeBp == null ? null : BackpackRegistry.getByItem(activeBp.stack().getItemId());
+        String bpIcon = activeEntry != null && !activeEntry.isHelipack() ? activeBp.stack().getItemId() : "Utility_Leather_Backpack";
         commandBuilder.append("#VisibilityEntries", "Pages/BackpackVisibilityEntry.ui");
         String sel0 = "#VisibilityEntries[0]";
         commandBuilder.set(sel0 + " #CosmeticIcon.ItemId", bpIcon);
@@ -574,7 +589,18 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         }
 
         if ("SelectRecipe".equals(data.action) && craftingWindow != null) {
-            if (eligibleRecipes().stream().anyMatch(r -> r.getId().equals(data.target) && recipeUnlocked(r, store))) selectedRecipeId = data.target;
+            if (eligibleRecipes().stream().anyMatch(r -> r.getId().equals(data.target) && recipeUnlocked(r, store))) {
+                selectedRecipeId = data.target;
+                upgradeSelected = false;
+                statusMessage = "";
+            }
+            sendRefresh(ref, store);
+            return;
+        }
+        if ("SelectUpgrade".equals(data.action)) {
+            currentTab = "crafting";
+            upgradeSelected = true;
+            statusMessage = "";
             sendRefresh(ref, store);
             return;
         }
@@ -832,12 +858,6 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 com.hypixel.hytale.server.core.Message.translation("client.inventory.crafting.unknownItem").color("#2c86d6").bold(true),
                 com.hypixel.hytale.server.core.Message.raw("\n\n"), instruction.color("#969daa"));
     }
-    private void updateMemoryBadge(UICommandBuilder cb, String selector, BackpackProgression.Gate gate) {
-        cb.set(selector + " #MemoryLockBadge.Visible", !gate.unlocked());
-        if (gate.unlocked()) return;
-        cb.set(selector + " #MemoryLockCount.Text", gate.required() < 0 ? memoryLabel(gate) : gate.recorded() + " / " + gate.required());
-        cb.set(selector + " #MemoryLockBadge.TooltipTextSpans", memoryTooltip(gate));
-    }
     private boolean requireMemories(String itemId, Ref<EntityStore> ref, Store<EntityStore> store) {
         var gate = memoryGate(itemId, store);
         if (gate.unlocked()) return true;
@@ -958,11 +978,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
 
         if ("backpack".equalsIgnoreCase(target)) {
             boolean nowVisible = CosmeticPreferenceUtils.toggleBackpack(store, ref);
-            if (nowVisible) {
-                BackpackArmorListener.syncBackpackAttachment(playerUuid, store, ref);
-            } else {
-                CosmeticListener.removeAttachment(playerUuid, "truebackpack:backpack");
-            }
+            BackpackArmorListener.syncBackpackAttachment(playerUuid, store, ref);
             CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
             statusMessage = I18nHelper.getOrFallback(lang, nowVisible ? "server.truebackpack.toggle.backpack.visible" : "server.truebackpack.toggle.backpack.hidden");
         } else if ("quiver".equalsIgnoreCase(target)) {
@@ -1457,7 +1473,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
 
     private void buildCraftingTab(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder cb,
             UIEventBuilder eb, String lang) {
-        var inventory = new com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer(
+        var inventory = craftingWindow == null ? null : new com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer(
                 InventoryComponent.getCombined(store, ref, InventoryComponent.BACKPACK_STORAGE_HOTBAR),
                 craftingWindow.getExtraResourcesSection().getItemContainer());
         var player = store.getComponent(ref, Player.getComponentType());
@@ -1465,7 +1481,6 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         int memories = com.hypixel.hytale.builtin.adventure.memories.MemoriesPlugin.get()
                 .getMemoriesLevel(store.getExternalData().getWorld().getGameplayConfig());
         var recipes = eligibleRecipes();
-        if (recipes.isEmpty()) return;
         if (selectedRecipeId == null || recipes.stream().noneMatch(r -> r.getId().equals(selectedRecipeId) && recipeUnlocked(r, store)))
             selectedRecipeId = recipes.stream().filter(r -> recipeUnlocked(r, store)).map(r -> r.getId()).findFirst().orElse(null);
         cb.append("#CraftingContent", "Pages/BackpackCraftingPanel.ui");
@@ -1478,7 +1493,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             var candidate = recipes.get(i);
             boolean memory = candidate.getRequiredMemoriesLevel() <= memories;
             cb.set(row + " #RecipeIcon" + column + ".ItemId", memory ? candidate.getPrimaryOutput().getItemId() : "");
-            cb.set(row + " #Selected" + column + ".Visible", candidate.getId().equals(selectedRecipeId));
+            cb.set(row + " #Selected" + column + ".Visible", !upgradeSelected && candidate.getId().equals(selectedRecipeId));
             boolean materials = true;
             var inputs = candidate.getInput();
             if (inputs != null) {
@@ -1705,13 +1720,4 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         return amount;
     }
 
-    private static String formatCosts(@Nonnull Map<String, Integer> costs, boolean canAfford, @Nullable String lang) {
-        if (costs.isEmpty()) return I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.cost.none");
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, Integer> e : costs.entrySet()) {
-            if (!sb.isEmpty()) sb.append(", ");
-            sb.append(e.getValue()).append("x ").append(I18nHelper.resolveItemName(e.getKey(), lang));
-        }
-        return sb.toString();
-    }
 }

@@ -102,8 +102,15 @@ public class SetBackpackModelCommand extends AbstractCommand {
             BackpackVisualOverride.remove(uuid);
 
             if (BackpackArmorListener.hasEquippedBackpack(uuidStr)) {
-                CosmeticListener.removeAttachment(uuidStr, ATTACHMENT_SLOT_KEY);
-                CosmeticListener.scheduleRebuildForUuid(uuidStr);
+                var ref = target.getReference();
+                if (ref != null && ref.isValid()) {
+                    var store = ref.getStore();
+                    store.getExternalData().getWorld().execute(() -> {
+                        if (!ref.isValid()) return;
+                        BackpackArmorListener.syncBackpackAttachment(uuidStr, store, ref);
+                        CosmeticListener.scheduleRebuildForUuid(uuidStr);
+                    });
+                }
             }
 
             context.sendMessage(Message.raw("[TrueBackpack] Model override cleared for " + target.getUsername() + " (" + uuidStr + ")."));

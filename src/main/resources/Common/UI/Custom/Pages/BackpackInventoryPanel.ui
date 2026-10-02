@@ -3,7 +3,7 @@ $G = "BackpackInventoryStyle.ui";
 
 @HotkeyStyle = LabelStyle(FontSize: 12, RenderBold: true, TextColor: #ccd3dd, HorizontalAlignment: Center, VerticalAlignment: Center);
 
-$C.@DecoratedContainer #InventoryPanel {
+$C.@Container #InventoryPanel {
   FlexWeight: 1;
   #Title {
     Padding: (Horizontal: 16, Top: 4);

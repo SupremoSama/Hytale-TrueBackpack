@@ -423,7 +423,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             @Nonnull Ref<EntityStore> ref,
             @Nonnull String playerUuid,
             @Nullable ItemStack equippedItem) {
-        boolean backpackVisible = CosmeticPreferenceUtils.isBackpackVisible(store, ref);
+        boolean backpackVisible = CosmeticPreferenceUtils.isBackpackModelVisible(store, ref, equippedItem);
 
         ModelAttachment visual = null;
         if (equippedItem != null && backpackVisible) {
@@ -449,7 +449,6 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             @Nonnull Store<EntityStore> store,
             @Nonnull Ref<EntityStore> ref) {
         if (!hasEquippedBackpack(playerUuid)) return;
-        if (!CosmeticPreferenceUtils.isBackpackVisible(store, ref)) return;
         if (LAST_KNOWN_EQUIPPED.get(playerUuid) == null) return;
 
         InventoryComponent.Armor armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
@@ -457,9 +456,12 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         if (armorComp == null || storageComp == null) return;
 
         ItemStack equipped = findEquippedItem(armorComp, storageComp);
-        ModelAttachment visual = resolveVisual(equipped);
+        ModelAttachment visual = CosmeticPreferenceUtils.isBackpackModelVisible(store, ref, equipped)
+                ? resolveVisual(equipped) : null;
         if (visual != null) {
             CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);
+        } else {
+            CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
         }
     }
 

@@ -10,62 +10,119 @@ $C = "../Common.ui";
 );
 
 @IngredientRow = Group {
-  Anchor: (Height: 40);
+  Anchor: (Height: 56);
   LayoutMode: Left;
 };
 
-@IngredientLabelStyle = LabelStyle(FontSize: 14, TextColor: #bdcbd3, VerticalAlignment: Center, Wrap: true);
+@IngredientLabelStyle = LabelStyle(FontSize: 16, TextColor: #bdcbd3, VerticalAlignment: Center, Wrap: true);
+@UpgradeSelectionStyle = ButtonStyle(
+  Default: (Background: (TexturePath: "../Common/Buttons/Secondary.png", Border: 12)),
+  Hovered: (Background: (TexturePath: "../Common/Buttons/Secondary_Hovered.png", Border: 12)),
+  Pressed: (Background: (TexturePath: "../Common/Buttons/Secondary_Pressed.png", Border: 12)),
+  Sounds: $C.@ButtonSounds
+);
 
 Group {
   FlexWeight: 1;
   LayoutMode: Left;
-  Group #RecipeGrid { Anchor: (Width: 204, Right: 14); LayoutMode: TopScrolling; ScrollbarStyle: $C.@DefaultScrollbarStyle; }
-  $C.@SimpleContainer #RecipeDetails {
-    FlexWeight: 1;
+  Group {
+    Anchor: (Width: 204, Right: 14);
     LayoutMode: Top;
-    Padding: 0;
-    Label #RecipeName {
-      Anchor: (Height: 28);
-      Background: #0c151e(0.55);
-      Style: (FontSize: 14, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true, HorizontalAlignment: Center, VerticalAlignment: Center, ShrinkTextToFit: true);
+    Label #CraftNewTitle {
+      Anchor: (Height: 22);
+      Text: "Craft new";
+      Style: (FontSize: 12, RenderBold: true, RenderUppercase: true, TextColor: #96a9be, VerticalAlignment: Center, ShrinkTextToFit: true);
     }
-    Group #RecipeBody {
-      FlexWeight: 1;
-      LayoutMode: Left;
-      Padding: (Horizontal: 10, Vertical: 4);
-      Group #Ingredients {
-        FlexWeight: 1;
-        LayoutMode: Top;
-        @IngredientRow #MaterialRow0 { ItemSlot #MaterialIcon0 { Anchor: (Width: 38, Height: 38, Right: 10); ShowQualityBackground: true; } Label #Material0 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
-        @IngredientRow #MaterialRow1 { ItemSlot #MaterialIcon1 { Anchor: (Width: 38, Height: 38, Right: 10); ShowQualityBackground: true; } Label #Material1 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
-        @IngredientRow #MaterialRow2 { ItemSlot #MaterialIcon2 { Anchor: (Width: 38, Height: 38, Right: 10); ShowQualityBackground: true; } Label #Material2 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
-        @IngredientRow #MaterialRow3 { ItemSlot #MaterialIcon3 { Anchor: (Width: 38, Height: 38, Right: 10); ShowQualityBackground: true; } Label #Material3 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
-      }
-      Group #OutputPreview {
-        Anchor: (Width: 112);
-        LayoutMode: MiddleCenter;
-        ItemSlot #RecipePreview { Anchor: (Width: 106, Height: 106); ShowQualityBackground: false; ShowQuantity: false; }
-      }
-    }
-    Group #CraftFooter {
-      Anchor: (Height: 52);
-      Padding: (Horizontal: 10, Bottom: 2);
+    Group #RecipeGrid { FlexWeight: 1; LayoutMode: TopScrolling; ScrollbarStyle: $C.@DefaultScrollbarStyle; }
+    Group #UpgradeSelectorGroup {
+      Anchor: (Height: 104, Top: 8);
       LayoutMode: Top;
-      Group { Anchor: (Height: 2); Background: #243449; }
-      Label #RecipeStatus { Anchor: (Height: 18); Style: (FontSize: 12, TextColor: #e6be65, HorizontalAlignment: Center, ShrinkTextToFit: true); }
-      Group #RecipeMemoryLock {
-        Anchor: (Height: 18);
-        LayoutMode: MiddleCenter;
-        Visible: false;
+      Label #UpgradeSectionTitle {
+        Anchor: (Height: 22);
+        Text: "Upgrade existing";
+        Style: (FontSize: 12, RenderBold: true, RenderUppercase: true, TextColor: #96a9be, VerticalAlignment: Center, ShrinkTextToFit: true);
+      }
+      Button #SelectUpgrade {
+        Anchor: (Height: 74);
+        Style: @UpgradeSelectionStyle;
         TextTooltipStyle: $C.@DefaultTextTooltipStyle;
-        Group {
-          Anchor: (Width: 220, Height: 18);
-          LayoutMode: Left;
-          Group { Anchor: (Width: 16, Height: 16, Right: 8); Background: "../BackpackNative/MemoryLocked.png"; }
-          Label #MemoryLockLabel { FlexWeight: 1; Style: (FontSize: 12, TextColor: #bdcbd3, VerticalAlignment: Center); }
+        Group #UpgradeSelected { Anchor: (Full: 0); Background: #e6be65(0.12); Visible: false; }
+        ItemSlot #UpgradeChoiceIcon {
+          Anchor: (Left: 6, Top: 8, Width: 56, Height: 56);
+          ShowQualityBackground: true;
+          ShowQuantity: false;
+        }
+        Label #UpgradeChoiceName {
+          Anchor: (Left: 70, Right: 6, Top: 8, Height: 24);
+          Style: (FontSize: 13, RenderBold: true, TextColor: #e6be65, VerticalAlignment: Center, ShrinkTextToFit: true);
+        }
+        Label #UpgradeChoiceInfo {
+          Anchor: (Left: 70, Right: 6, Top: 32, Height: 34);
+          Style: (FontSize: 12, TextColor: #bdcbd3, VerticalAlignment: Center, Wrap: true);
         }
       }
-      TextButton #CraftButton { Anchor: (Height: 30); Text: "Craft"; Style: @CraftButtonStyle; }
+    }
+  }
+  Group #ProductionDetails {
+    FlexWeight: 1;
+    LayoutMode: Top;
+    $C.@SimpleContainer #RecipeDetails {
+      FlexWeight: 1;
+      LayoutMode: Top;
+      Padding: 0;
+      Label #RecipeName {
+        Anchor: (Height: 28);
+        Background: #0c151e(0.55);
+        Style: (FontSize: 14, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true, HorizontalAlignment: Center, VerticalAlignment: Center, ShrinkTextToFit: true);
+      }
+      Group #RecipeBody {
+        FlexWeight: 1;
+        LayoutMode: Left;
+        Padding: (Horizontal: 10, Vertical: 4);
+        Group #Ingredients {
+          FlexWeight: 1;
+          LayoutMode: Top;
+          @IngredientRow #MaterialRow0 { ItemSlot #MaterialIcon0 { Anchor: (Width: 52, Height: 52, Right: 10); ShowQualityBackground: true; } Label #Material0 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+          @IngredientRow #MaterialRow1 { ItemSlot #MaterialIcon1 { Anchor: (Width: 52, Height: 52, Right: 10); ShowQualityBackground: true; } Label #Material1 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+          @IngredientRow #MaterialRow2 { ItemSlot #MaterialIcon2 { Anchor: (Width: 52, Height: 52, Right: 10); ShowQualityBackground: true; } Label #Material2 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+          @IngredientRow #MaterialRow3 { ItemSlot #MaterialIcon3 { Anchor: (Width: 52, Height: 52, Right: 10); ShowQualityBackground: true; } Label #Material3 { FlexWeight: 1; Style: @IngredientLabelStyle; } }
+        }
+        Group #OutputPreview {
+          Anchor: (Width: 112);
+          LayoutMode: MiddleCenter;
+          ItemSlot #RecipePreview { Anchor: (Width: 106, Height: 106); ShowQualityBackground: false; ShowQuantity: false; }
+        }
+      }
+      Group #CraftFooter {
+        Anchor: (Height: 52);
+        Padding: (Horizontal: 10, Bottom: 2);
+        LayoutMode: Top;
+        Group { Anchor: (Height: 2); Background: #243449; }
+        Label #RecipeStatus { Anchor: (Height: 18); Style: (FontSize: 12, TextColor: #e6be65, HorizontalAlignment: Center, ShrinkTextToFit: true); }
+        Group #RecipeMemoryLock {
+          Anchor: (Height: 18);
+          LayoutMode: MiddleCenter;
+          Visible: false;
+          TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+          Group {
+            Anchor: (Width: 220, Height: 18);
+            LayoutMode: Left;
+            Group { Anchor: (Width: 16, Height: 16, Right: 8); Background: "../BackpackNative/MemoryLocked.png"; }
+            Label #MemoryLockLabel { FlexWeight: 1; Style: (FontSize: 12, TextColor: #bdcbd3, VerticalAlignment: Center); }
+          }
+        }
+        TextButton #CraftButton { Anchor: (Height: 30); Text: "Craft"; Style: @CraftButtonStyle; }
+      }
+    }
+    Group #UpgradeDetails { FlexWeight: 1; LayoutMode: Top; Visible: false; }
+    Group #ProductionEmpty {
+      FlexWeight: 1;
+      LayoutMode: MiddleCenter;
+      Visible: false;
+      Label #ProductionEmptyText {
+        Padding: (Full: 16);
+        Style: (FontSize: 15, TextColor: #bdcbd3, HorizontalAlignment: Center, VerticalAlignment: Center, Wrap: true);
+      }
     }
   }
 }

@@ -21,8 +21,7 @@ Group #WorkbenchRoot {
     Anchor: (Left: 426, Top: 0, Width: 720, Height: 938);
     LayoutMode: Top;
 
-    $C.@DecoratedContainer #WorkbenchPanel {
-      @CloseButton = true;
+    $C.@Container #WorkbenchPanel {
       Anchor: (Height: 470, Bottom: 14);
       #Title {
         Label #PageTitle {

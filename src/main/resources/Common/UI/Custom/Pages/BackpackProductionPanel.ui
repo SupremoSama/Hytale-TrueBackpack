@@ -1,7 +1,6 @@
 Group {
   FlexWeight: 1;
   LayoutMode: Top;
-  Group #UpgradeContent { Anchor: (Height: 60); LayoutMode: Top; }
   Group #CraftingContent { FlexWeight: 1; LayoutMode: Top; }
   Label #CraftingQueue {
     Anchor: (Height: 18);

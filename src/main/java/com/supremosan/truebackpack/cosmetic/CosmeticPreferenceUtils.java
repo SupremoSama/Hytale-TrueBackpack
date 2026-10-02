@@ -2,9 +2,12 @@ package com.supremosan.truebackpack.cosmetic;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.supremosan.truebackpack.registries.BackpackRegistry;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class CosmeticPreferenceUtils {
 
@@ -26,6 +29,15 @@ public final class CosmeticPreferenceUtils {
                                             @Nonnull Ref<EntityStore> ref) {
         CosmeticPreference pref = store.getComponent(ref, CosmeticPreference.TYPE);
         return pref == null || pref.isShowBackpack();
+    }
+
+    public static boolean isBackpackModelVisible(@Nonnull Store<EntityStore> store,
+                                                 @Nonnull Ref<EntityStore> ref,
+                                                 @Nullable ItemStack equipped) {
+        if (ItemStack.isEmpty(equipped)) return false;
+        var entry = BackpackRegistry.getByItem(equipped.getItemId());
+        // Helipacks are functional equipment and stay visible independently of the cosmetic preference.
+        return entry != null && (entry.isHelipack() || isBackpackVisible(store, ref));
     }
 
     public static boolean isQuiverVisible(@Nonnull Store<EntityStore> store,
