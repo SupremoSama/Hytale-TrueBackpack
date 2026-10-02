@@ -1,0 +1,64 @@
+$C = "../Common.ui";
+
+SceneBlur {}
+$C.@PageOverlay {}
+
+Group #InventoryShell {
+  Anchor: (Width: 1160, Height: 840);
+  LayoutMode: Top;
+  Background: #121c29(0.97);
+  Padding: (Full: 18);
+
+  Group {
+    Anchor: (Height: 50, Bottom: 12);
+    LayoutMode: Left;
+    Label #PageTitle {
+      FlexWeight: 1;
+      Style: (FontSize: 25, RenderBold: true, TextColor: #eef4f8, VerticalAlignment: Center);
+      Text: "Inventory";
+    }
+    TextButton #RefreshButton {
+      Anchor: (Width: 120, Height: 38, Right: 12);
+      Text: "Refresh";
+      Style: $C.@SecondaryTextButtonStyle;
+    }
+    TextButton #CloseButton {
+      Anchor: (Width: 100, Height: 38);
+      Text: "Close";
+      Style: $C.@SecondaryTextButtonStyle;
+    }
+  }
+
+  Group {
+    FlexWeight: 1;
+    LayoutMode: Left;
+    Group {
+      Anchor: (Width: 210, Right: 18);
+      LayoutMode: Top;
+      Label {
+        Anchor: (Height: 28, Bottom: 8);
+        Text: "Pages";
+        Style: (FontSize: 14, RenderBold: true, TextColor: #97adc2);
+      }
+      Group #Navigation {
+        Anchor: (Height: 290);
+        LayoutMode: TopScrolling;
+        ScrollbarStyle: $C.@DefaultScrollbarStyle;
+      }
+      Label {
+        Anchor: (Height: 28, Top: 20, Bottom: 8);
+        Text: "Actions";
+        Style: (FontSize: 14, RenderBold: true, TextColor: #97adc2);
+      }
+      Group #ExtensionButtons {
+        FlexWeight: 1;
+        LayoutMode: TopScrolling;
+        ScrollbarStyle: $C.@DefaultScrollbarStyle;
+      }
+    }
+    Group #ContentHost {
+      FlexWeight: 1;
+      LayoutMode: Top;
+    }
+  }
+}

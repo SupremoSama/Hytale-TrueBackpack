@@ -1,0 +1,31 @@
+$C = "../Common.ui";
+
+Group {
+  FlexWeight: 1;
+  LayoutMode: Top;
+  Padding: (Full: 20);
+  Background: #19283a;
+  Label {
+    Anchor: (Height: 44, Bottom: 12);
+    Text: "An optional mod registered this page";
+    Style: (FontSize: 22, RenderBold: true, TextColor: #e7f0f8, Wrap: true);
+  }
+  Label #PlayerName {
+    Anchor: (Height: 36, Bottom: 12);
+    Style: (FontSize: 18, TextColor: #86bbdf);
+  }
+  Label {
+    Anchor: (Height: 86, Bottom: 18);
+    Text: "This demonstrates an appearance tab extension. A production mod can mount its own controls here and use scoped events without changing the inventory core.";
+    Style: (FontSize: 15, TextColor: #bdcddd, Wrap: true);
+  }
+  Label #GreetingCount {
+    Anchor: (Height: 32, Bottom: 14);
+    Style: (FontSize: 15, TextColor: #b1ccad);
+  }
+  TextButton #GreetButton {
+    Anchor: (Width: 230, Height: 44);
+    Text: "Run extension action";
+    Style: $C.@DefaultTextButtonStyle;
+  }
+}

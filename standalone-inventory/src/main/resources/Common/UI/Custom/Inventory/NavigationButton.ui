@@ -1,0 +1,10 @@
+$C = "../Common.ui";
+
+Group {
+  Anchor: (Height: 46, Bottom: 6);
+  TextButton #EntryButton {
+    Anchor: (Full: 0);
+    Style: $C.@SecondaryTextButtonStyle;
+    Text: "Page";
+  }
+}

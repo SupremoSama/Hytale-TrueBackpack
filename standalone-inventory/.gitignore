@@ -1,0 +1,4 @@
+/build/
+/.gradle/
+/example-extension/build/
+/run-smoke/

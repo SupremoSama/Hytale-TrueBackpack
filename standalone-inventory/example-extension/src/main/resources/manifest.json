@@ -1,0 +1,11 @@
+{
+  "Group": "SupremoSama",
+  "Name": "CustomInventoryExample",
+  "Version": "0.1.0",
+  "Description": "Optional companion demonstrating inventory page and button registration.",
+  "Authors": [{"Name": "SupremoSama"}],
+  "Main": "com.supremosan.custominventory.example.ExampleInventoryPlugin",
+  "ServerVersion": ">=0.7.0-pre.4",
+  "IncludesAssetPack": true,
+  "Dependencies": {"SupremoSama:CustomInventory": "*"}
+}
