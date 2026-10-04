@@ -46,6 +46,7 @@ public final class NativeInventoryContent implements InventoryContent {
     private final Map<DragKey, InventorySelection> dragOrigins = new HashMap<>();
     private final Map<DragKey, PendingRemoval> pendingRemovals = new HashMap<>();
     private InventorySelection hoveredSelection;
+    private InventorySelection dropButtonSelection;
     private Boolean dropDisabled;
     private String dropTooltip;
     private String status = "";
@@ -135,9 +136,13 @@ public final class NativeInventoryContent implements InventoryContent {
             if (events != null) {
                 events.bind(CustomUIEventBindingType.SlotClicking, grid, "DragSource", section.name(), false);
                 events.bind(CustomUIEventBindingType.Dropped, grid, "Drop", section.name(), false);
+                events.bind(CustomUIEventBindingType.SlotClickReleaseWhileDragging, grid, "DragRelease", section.name(), false);
+                events.bind(CustomUIEventBindingType.SlotClickPressWhileDragging, grid, "DragPress", section.name(), false);
                 events.bind(CustomUIEventBindingType.DragCancelled, grid, "CancelDrag", "", false);
-                if (section != NativeInventorySection.UTILITY)
+                if (section != NativeInventorySection.UTILITY) {
                     events.bind(CustomUIEventBindingType.SlotMouseEntered, grid, "HoverSource", section.name(), false);
+                    events.bind(CustomUIEventBindingType.SlotMouseExited, grid, "UnhoverSource", section.name(), false);
+                }
             }
         }
         listeners.entrySet().removeIf(entry -> {
@@ -185,8 +190,11 @@ public final class NativeInventoryContent implements InventoryContent {
         if (bindEvents) {
             events.bind(CustomUIEventBindingType.SlotClicking, grid, "DragSource", section.name(), false);
             events.bind(CustomUIEventBindingType.Dropped, grid, "Drop", section.name(), false);
+            events.bind(CustomUIEventBindingType.SlotClickReleaseWhileDragging, grid, "DragRelease", section.name(), false);
+            events.bind(CustomUIEventBindingType.SlotClickPressWhileDragging, grid, "DragPress", section.name(), false);
             events.bind(CustomUIEventBindingType.DragCancelled, grid, "CancelDrag", "", false);
             events.bind(CustomUIEventBindingType.SlotMouseEntered, grid, "HoverSource", section.name(), false);
+            events.bind(CustomUIEventBindingType.SlotMouseExited, grid, "UnhoverSource", section.name(), false);
         }
     }
 
@@ -247,6 +255,10 @@ public final class NativeInventoryContent implements InventoryContent {
 
     @Override
     public void handleEvent(InventoryContext context, InventoryContentEvent event) {
+        if ("UnhoverSource".equals(event.action())) {
+            hoveredSelection = null;
+            return;
+        }
         if ("CancelDrag".equals(event.action())) {
             selection = null;
             dragOrigin = null;
@@ -264,18 +276,24 @@ public final class NativeInventoryContent implements InventoryContent {
             dropOutside(context, event);
             return;
         }
-        if ("DropSelected".equals(event.action())) {
+        if ("DropSelected".equals(event.action()) || "DropHovered".equals(event.action())) {
             reconcileRemovals();
-            var source = hoveredSelection != null ? hoveredSelection : dragOrigin;
+            var source = "DropHovered".equals(event.action()) ? hoveredSelection : dropButtonSelection;
+            if (source == null) return;
             if (source != null && hasPendingMove(source)) {
                 status = "The previous inventory move is still pending. Try again.";
                 return;
             }
             var result = InventoryOperations.drop(context.ref(), context.store(), source, source == null ? 0 : source.quantity());
+            if (result == InventoryOperations.Result.SUBMITTED) {
+                pendingRemovals.put(new DragKey(source.section().id(), source.slot()),
+                        new PendingRemoval(source, source.quantity(), System.nanoTime()));
+            }
             status = result == InventoryOperations.Result.SUBMITTED ? "" : "The selected item cannot be dropped.";
             selection = null;
             dragOrigin = null;
             hoveredSelection = null;
+            dropButtonSelection = null;
             dragOrigins.clear();
             return;
         }
@@ -293,11 +311,16 @@ public final class NativeInventoryContent implements InventoryContent {
             status = "";
             return;
         }
+        boolean press = "DragPress".equals(event.action()) || "UtilityWheelDragPress".equals(event.action());
+        boolean release = "DragRelease".equals(event.action()) || "UtilityWheelDragRelease".equals(event.action());
+        // Right placement happens on press; its release must not place a second time.
+        if (press && !event.rightMouseButton() || release && event.rightMouseButton()) return;
         boolean wheel = "UtilityWheelDragSource".equals(event.action()) || "UtilityWheelDrop".equals(event.action())
-                || "UtilityWheelDropOne".equals(event.action());
+                || "UtilityWheelDropOne".equals(event.action()) || "UtilityWheelDragPress".equals(event.action())
+                || "UtilityWheelDragRelease".equals(event.action());
         String action = "UtilityWheelDragSource".equals(event.action()) ? "DragSource"
-                : "UtilityWheelDrop".equals(event.action()) ? "Drop"
-                : "UtilityWheelDropOne".equals(event.action()) ? "DropOne" : event.action();
+                : "UtilityWheelDrop".equals(event.action()) || release ? "Drop"
+                : "UtilityWheelDropOne".equals(event.action()) || press ? "DropOne" : event.action();
         NativeInventorySection target = wheel ? NativeInventorySection.UTILITY : NativeInventorySection.parse(event.payload());
         if (target == null || !displayed.containsKey(target)) return;
         if ("HoverSource".equals(action)) {
@@ -391,6 +414,10 @@ public final class NativeInventoryContent implements InventoryContent {
                 return;
             }
             Integer requested = drag == null ? null : drag.quantity();
+            if ((press || release) && requested == null) {
+                status = "The client did not report the held item quantity. Pick up the stack again.";
+                return;
+            }
             int quantity = "DropOne".equals(action) ? 1 : requested == null ? expected.quantity() : requested;
             if (hasPendingMove(expected)) {
                 status = "The previous inventory move is still pending. Try again.";
@@ -477,7 +504,12 @@ public final class NativeInventoryContent implements InventoryContent {
             status = "The selected item changed. Try again.";
             return;
         }
-        int quantity = requested == null ? origin.quantity() : requested;
+        // Never infer a full stack for a background release: it may be a split stack.
+        if (requested == null) {
+            status = "The client did not report the held item quantity. Pick up the stack again.";
+            return;
+        }
+        int quantity = requested;
         if (quantity <= 0 || quantity > origin.quantity()) {
             status = "Invalid item quantity.";
             return;
@@ -490,6 +522,12 @@ public final class NativeInventoryContent implements InventoryContent {
         var result = InventoryOperations.drop(context.ref(), context.store(), origin, quantity);
         if (result == InventoryOperations.Result.SUBMITTED && sourceKey != null) {
             pendingRemovals.put(sourceKey, new PendingRemoval(origin, quantity, System.nanoTime()));
+        }
+        if (result == InventoryOperations.Result.SUBMITTED) {
+            // A backdrop release consumes the whole cursor stack, including a split.
+            // A second callback from the same release must not resolve its source again.
+            dragOrigins.clear();
+            dropButtonSelection = null;
         }
         status = switch (result) {
             case SUBMITTED -> "";
@@ -518,6 +556,7 @@ public final class NativeInventoryContent implements InventoryContent {
         var origin = InventorySelection.fromDisplayed(section, displayedContainers.get(section), actual, snapshot[actual]);
         hoveredSelection = origin;
         if (origin == null) return;
+        dropButtonSelection = origin;
         int gridId = section == NativeInventorySection.UTILITY
                 ? wheel ? UtilitySlotProjection.wheelGridId(actual) : UtilitySlotProjection.CENTER_GRID_ID : section.id();
         var key = new DragKey(gridId, visibleSlot);
@@ -541,6 +580,7 @@ public final class NativeInventoryContent implements InventoryContent {
             if (remaining != null) dragOrigins.replaceAll((key, origin) -> origin.sameSnapshot(before) ? remaining : origin);
             if (before.sameSnapshot(dragOrigin)) dragOrigin = remaining;
             if (before.sameSnapshot(hoveredSelection)) hoveredSelection = remaining;
+            if (before.sameSnapshot(dropButtonSelection)) dropButtonSelection = remaining;
             return true;
         });
     }
@@ -564,7 +604,7 @@ public final class NativeInventoryContent implements InventoryContent {
     }
 
     public void refreshDropAction(InventoryContext context, UICommandBuilder commands) {
-        var source = hoveredSelection != null ? hoveredSelection : dragOrigin;
+        var source = dropButtonSelection;
         boolean disabled = InventoryOperations.locked(context.ref(), context.store()) || source == null
                 || InventoryOperations.resolveContainer(context.ref(), context.store(), source.section()) != source.container()
                 || !InventoryOperations.validSlot(source.container(), source.slot())
@@ -614,6 +654,7 @@ public final class NativeInventoryContent implements InventoryContent {
         dragOrigins.clear();
         pendingRemovals.clear();
         hoveredSelection = null;
+        dropButtonSelection = null;
         displayedUtilitySlot = -1;
     }
 }

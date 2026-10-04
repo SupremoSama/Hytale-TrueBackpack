@@ -8,6 +8,7 @@ import com.hypixel.hytale.protocol.packets.interface_.CustomPageEventType;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUICommandType;
 import com.hypixel.hytale.protocol.packets.interface_.SetPage;
 import com.hypixel.hytale.protocol.packets.player.SetGameMode;
+import com.hypixel.hytale.protocol.packets.inventory.DropItemStack;
 import com.hypixel.hytale.protocol.packets.window.ClientOpenWindow;
 import com.hypixel.hytale.protocol.packets.window.CloseWindow;
 import com.hypixel.hytale.protocol.packets.window.OpenWindow;
@@ -54,6 +55,8 @@ public final class InventoryPacketRouter<K> implements AutoCloseable {
 
         /** Inventory Data validates its mounted session; other events use the native PageManager. */
         void handleCustomPageInput(K connection, CustomPageEvent event);
+
+        void dropHoveredInventoryItem(K connection);
     }
 
     private final Actions<K> actions;
@@ -79,6 +82,14 @@ public final class InventoryPacketRouter<K> implements AutoCloseable {
         if (!active) return false;
 
         var key = new IdentityKey<>(connection);
+        if (packet instanceof DropItemStack && gameModes.get(key) == GameMode.Adventure) {
+            var state = connections.get(key);
+            if (state != null && state.inventoryPageVisible) {
+                // Do not let a native G request accidentally drop the active hotbar
+                // while the custom inventory displays a different hovered source.
+                return enqueue(connection, key, state, () -> actions.dropHoveredInventoryItem(connection));
+            }
+        }
         if (packet instanceof CustomPageEvent event && event.type == CustomPageEventType.Acknowledge) {
             var state = connections.get(key);
             if (state != null) synchronized (state) { state.pageAcknowledgments.pollFirst(); }

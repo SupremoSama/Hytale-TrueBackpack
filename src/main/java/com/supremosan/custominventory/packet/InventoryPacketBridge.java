@@ -85,6 +85,13 @@ public final class InventoryPacketBridge implements AutoCloseable {
             }
 
             @Override
+            public void dropHoveredInventoryItem(PlayerRef playerRef) {
+                var context = currentContext(playerRef);
+                var page = ownedPage(context);
+                if (page != null) page.dropHoveredItem(context.ref(), context.store());
+            }
+
+            @Override
             public void handleCustomPageInput(PlayerRef playerRef, CustomPageEvent event) {
                 var context = currentContext(playerRef);
                 var page = ownedPage(context);

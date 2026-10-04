@@ -18,6 +18,7 @@ import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.builtin.adventure.memories.component.PlayerMemories;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.ui.Anchor;
+import com.hypixel.hytale.server.core.ui.ItemGridSlot;
 import com.hypixel.hytale.server.core.ui.PatchStyle;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -140,6 +141,7 @@ public final class InventoryShellPage extends InteractiveCustomUIPage<InventoryS
 
         if (initial) {
             commands.append("Inventory/InventoryShell.ui");
+            commands.set("#InventoryBackdrop #InventoryDropZone.Slots", new ItemGridSlot[]{new ItemGridSlot()});
             commands.append("Inventory/Navigation.ui");
             commands.set("#NavigationVersionLabel.Text", GameVersionLabel.text());
             commands.append("Inventory/InputHints.ui");
@@ -152,6 +154,9 @@ public final class InventoryShellPage extends InteractiveCustomUIPage<InventoryS
         }
         // These controls remain mounted across extension page changes and inventory updates.
         if (initial) {
+            var backdropEvents = new InventoryEventBindings(events, "#InventoryBackdrop", INVENTORY_PANELS, pageInstanceId);
+            backdropEvents.bind(CustomUIEventBindingType.Dropped, "#InventoryDropZone", "DropOutside", "", false);
+            backdropEvents.bind(CustomUIEventBindingType.SlotClickReleaseWhileDragging, "#InventoryDropZone", "DropOutside", "", false);
             playerPanel.build(activeContext, commands,
                     new InventoryEventBindings(events, "#PlayerPanelHost", PLAYER_PANEL, pageInstanceId), "#PlayerPanelHost");
             inventoryPanels.build(activeContext, commands,
@@ -399,10 +404,11 @@ public final class InventoryShellPage extends InteractiveCustomUIPage<InventoryS
                 }
             }
             case "Content" -> {
-                var contentEvent = new InventoryContentEvent(event.contentAction, event.payload, event.slotIndex, event.dragData());
+                var contentEvent = new InventoryContentEvent(event.contentAction, event.payload, event.slotIndex,
+                        event.dragData(), event.pressedMouseButton != null ? event.pressedMouseButton : event.dragPressedMouseButton);
                 if (INVENTORY_PANELS.equals(event.pageId)) {
                     inventoryPanels.handleEvent(activeContext, contentEvent);
-                    if ("HoverSource".equals(event.contentAction)) {
+                    if ("HoverSource".equals(event.contentAction) || "UnhoverSource".equals(event.contentAction)) {
                         var commands = new UICommandBuilder();
                         inventoryPanels.refreshDropAction(activeContext, commands);
                         sendPresentationUpdate(ref, store, commands);
@@ -410,6 +416,7 @@ public final class InventoryShellPage extends InteractiveCustomUIPage<InventoryS
                     }
                     // Rebuilding on drag start interrupts the client's held item and cursor.
                     if (!"DragSource".equals(event.contentAction) && !"UtilityWheelDragSource".equals(event.contentAction)
+                            && !"DragPress".equals(event.contentAction) && !"UtilityWheelDragPress".equals(event.contentAction)
                             && !"CancelDrag".equals(event.contentAction)) requestRefresh();
                     return;
                 }
@@ -463,6 +470,13 @@ public final class InventoryShellPage extends InteractiveCustomUIPage<InventoryS
                 || !(INVENTORY_PANELS.equals(event.pageId) || PLAYER_PANEL.equals(event.pageId))) return false;
         handleDataEvent(ref, store, event);
         return true;
+    }
+
+    /** Native DropItemStack input is retargeted only while this Adventure page owns the UI. */
+    public void dropHoveredItem(Ref<EntityStore> ref, Store<EntityStore> store) {
+        if (dismissed || !isActive(ref, store) || !remainInAdventure(ref, store)) return;
+        inventoryPanels.handleEvent(activeContext, new InventoryContentEvent("DropHovered", "", null));
+        requestRefresh();
     }
 
     private void sendPresentationUpdate(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder commands) {
@@ -638,6 +652,25 @@ public final class InventoryShellPage extends InteractiveCustomUIPage<InventoryS
         // when taking part of a stack). A non-PrimitiveCodec wrapper lets the
         // BuilderCodec preserve those nulls instead of rejecting the entire event.
         private static final Codec<Integer> OPTIONAL_INTEGER = new FunctionCodec<>(Codec.INTEGER, value -> value, value -> value);
+        // Client versions may encode the mouse-button enum as a name or an integer.
+        private static final Codec<String> MOUSE_BUTTON = new Codec<>() {
+            @Override
+            public String decode(org.bson.BsonValue value, ExtraInfo info) {
+                if (value == null || value.isNull()) return null;
+                if (value.isString()) return value.asString().getValue();
+                return value.isInt32() ? Integer.toString(value.asInt32().getValue()) : null;
+            }
+
+            @Override
+            public org.bson.BsonValue encode(String value, ExtraInfo info) {
+                return value == null ? org.bson.BsonNull.VALUE : new org.bson.BsonString(value);
+            }
+
+            @Override
+            public com.hypixel.hytale.codec.schema.config.Schema toSchema(com.hypixel.hytale.codec.schema.SchemaContext context) {
+                return Codec.STRING.toSchema(context);
+            }
+        };
         public static final BuilderCodec<Event> CODEC = BuilderCodec.builder(Event.class, Event::new)
                 .append(new KeyedCodec<>("Action", Codec.STRING), (d, v) -> d.action = v, d -> d.action).add()
                 .append(new KeyedCodec<>("Target", Codec.STRING), (d, v) -> d.target = v, d -> d.target).add()
@@ -647,6 +680,8 @@ public final class InventoryShellPage extends InteractiveCustomUIPage<InventoryS
                 .append(new KeyedCodec<>("Payload", Codec.STRING), (d, v) -> d.payload = v, d -> d.payload).add()
                 .append(new KeyedCodec<>(SEARCH_QUERY, Codec.STRING), (d, v) -> d.searchQuery = v, d -> d.searchQuery).add()
                 .append(new KeyedCodec<>("SlotIndex", OPTIONAL_INTEGER), (d, v) -> d.slotIndex = v, d -> d.slotIndex).add()
+                .append(new KeyedCodec<>("PressedMouseButton", MOUSE_BUTTON), (d, v) -> d.pressedMouseButton = v, d -> d.pressedMouseButton).add()
+                .append(new KeyedCodec<>("DragPressedMouseButton", MOUSE_BUTTON), (d, v) -> d.dragPressedMouseButton = v, d -> d.dragPressedMouseButton).add()
                 .append(new KeyedCodec<>("SourceInventorySectionId", OPTIONAL_INTEGER), (d, v) -> d.sourceInventorySectionId = v, d -> d.sourceInventorySectionId).add()
                 .append(new KeyedCodec<>("SourceSlotId", OPTIONAL_INTEGER), (d, v) -> d.sourceSlotId = v, d -> d.sourceSlotId).add()
                 .append(new KeyedCodec<>("DragSourceInventorySectionId", OPTIONAL_INTEGER), (d, v) -> d.dragSourceInventorySectionId = v, d -> d.dragSourceInventorySectionId).add()
@@ -664,6 +699,8 @@ public final class InventoryShellPage extends InteractiveCustomUIPage<InventoryS
         public String payload;
         public String searchQuery;
         public Integer slotIndex;
+        public String pressedMouseButton;
+        public String dragPressedMouseButton;
         public Integer sourceInventorySectionId;
         public Integer sourceSlotId;
         public Integer dragSourceInventorySectionId;

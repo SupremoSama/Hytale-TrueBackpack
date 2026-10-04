@@ -5,11 +5,11 @@ public record InventoryDragData(Integer sourceInventorySectionId, Integer source
                                 Integer dragSourceInventorySectionId, Integer dragSourceSlotId,
                                 String itemStackId, Integer itemStackQuantity,
                                 String dragItemStackId, Integer dragItemStackQuantity) {
-    public Integer sectionId() { return sourceInventorySectionId != null ? sourceInventorySectionId : dragSourceInventorySectionId; }
-    public Integer slotId() { return sourceSlotId != null ? sourceSlotId : dragSourceSlotId; }
+    public Integer sectionId() { return dragSourceInventorySectionId != null ? dragSourceInventorySectionId : sourceInventorySectionId; }
+    public Integer slotId() { return dragSourceSlotId != null ? dragSourceSlotId : sourceSlotId; }
     public String itemId() {
-        String id = itemStackId != null && !itemStackId.isBlank() ? itemStackId : dragItemStackId;
+        String id = dragItemStackId != null && !dragItemStackId.isBlank() ? dragItemStackId : itemStackId;
         return id == null || id.isBlank() ? null : id;
     }
-    public Integer quantity() { return itemStackQuantity != null ? itemStackQuantity : dragItemStackQuantity; }
+    public Integer quantity() { return dragItemStackQuantity != null ? dragItemStackQuantity : itemStackQuantity; }
 }

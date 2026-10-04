@@ -28,7 +28,7 @@ public final class InventoryEventBindings {
     public String selector(String relativeSelector) {
         if (relativeSelector == null || !relativeSelector.startsWith("#"))
             throw new IllegalArgumentException("Content selectors must start with a local #id");
-        return hostSelector + " " + relativeSelector;
+        return hostSelector.isBlank() ? relativeSelector : hostSelector.strip() + " " + relativeSelector;
     }
 
     /** Useful for codec-level verification; do not replace core routing fields. */

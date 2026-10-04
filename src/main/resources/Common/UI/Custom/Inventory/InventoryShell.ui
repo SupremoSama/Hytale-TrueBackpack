@@ -10,6 +10,19 @@ $C = "../Common.ui";
 SceneBlur {}
 Group { Background: #000000(0.55); }
 
+// Behind the panels: only drops onto the exposed backdrop reach this empty slot.
+Group #InventoryBackdrop {
+  Anchor: (Full: 0);
+  ItemGrid #InventoryDropZone {
+    Anchor: (Full: 0);
+    SlotsPerRow: 1;
+    AreItemsDraggable: false;
+    RenderItemQualityBackground: false;
+    Padding: 0;
+    Style: (SlotSize: 4096, SlotIconSize: 1, SlotSpacing: 0, SlotBackground: "Utility/Textures/TransparentSlot.png");
+  }
+}
+
 // InventoryPage.ui and InGame/Common.ui: 715 + 410*2 + 38*2.
 Group #InventoryShell {
   Anchor: (Width: 1611, Top: 0, Bottom: 20);
