@@ -1,7 +1,0 @@
-$C = "../Common.ui";
-
-Group #VisibilityEntries {
-  FlexWeight: 1;
-  LayoutMode: TopScrolling;
-  ScrollbarStyle: $C.@DefaultScrollbarStyle;
-}

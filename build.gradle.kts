@@ -1,161 +1,88 @@
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
+
 plugins {
-    `maven-publish`
-    id("hytale-mod") version "0.+"
+    java
 }
 
 group = "com.supremosan"
-version = "0.3.6"
-val javaVersion = 25
+version = "0.1.0"
 
-repositories {
-    mavenCentral()
-    maven("https://maven.hytale-modding.info/releases") {
-        name = "HytaleModdingReleases"
+// Use an installed official server binary. No shared-source build or modification is needed.
+val installedServer = providers.gradleProperty("hytaleServerJar")
+    .orElse(providers.environmentVariable("HYTALE_SERVER_JAR"))
+    .orElse(providers.environmentVariable("APPDATA").map {
+        "$it/Hytale/install/pre-release/package/game/latest/Server/HytaleServer.jar"
+    })
+val engineFiles = files(installedServer)
+
+allprojects {
+    apply(plugin = "java")
+    group = "com.supremosan"
+    version = "0.1.0"
+    extensions.configure<JavaPluginExtension> {
+        toolchain.languageVersion.set(JavaLanguageVersion.of(25))
+        withSourcesJar()
     }
-}
-
-dependencies {
-    compileOnly(libs.jetbrains.annotations)
-    compileOnly(libs.jspecify)
-}
-
-hytale {
-    // uncomment if you want to add the Assets.zip file to your external libraries;
-    // ⚠️ CAUTION, this file is very big and might make your IDE unresponsive for some time!
-    //
-    addAssetsDependency = true
-
-    // uncomment if you want to develop your mod against the pre-release version of the game.
-    //
-    updateChannel = "pre-release"
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(javaVersion)
+    dependencies {
+        add("compileOnly", engineFiles)
     }
-
-    withSourcesJar()
+    tasks.withType<JavaCompile>().configureEach { options.encoding = "UTF-8" }
 }
 
-tasks.named<ProcessResources>("processResources") {
-    var replaceProperties = mapOf(
-        "plugin_group" to findProperty("plugin_group"),
-        "plugin_maven_group" to project.group,
-        "plugin_name" to project.name,
-        "plugin_version" to project.version,
-        "server_version" to findProperty("server_version"),
-
-        "plugin_description" to findProperty("plugin_description"),
-        "plugin_website" to findProperty("plugin_website"),
-
-        "plugin_main_entrypoint" to findProperty("plugin_main_entrypoint"),
-        "plugin_author" to findProperty("plugin_author")
-    )
-
-    filesMatching("manifest.json") {
-        expand(replaceProperties)
-    }
-
-    inputs.properties(replaceProperties)
+findProject(":example-extension")?.run {
+    dependencies { add("compileOnly", rootProject) }
+    tasks.named<Jar>("jar") { archiveBaseName.set("CustomInventoryExample") }
 }
 
-tasks.withType<Jar> {
-    manifest {
-        attributes["Specification-Title"] = rootProject.name
-        attributes["Specification-Version"] = version
-        attributes["Implementation-Title"] = project.name
-        attributes["Implementation-Version"] =
-            providers.environmentVariable("COMMIT_SHA_SHORT")
-                .map { "${version}-${it}" }
-                .getOrElse(version.toString())
-    }
-}
+val assetsZip = providers.gradleProperty("hytaleAssetsZip")
+    .orElse(providers.environmentVariable("HYTALE_ASSETS_ZIP"))
+    .orElse(installedServer.map { file(it).parentFile.parentFile.resolve("Assets.zip").absolutePath })
+val serverRunDirectory = providers.gradleProperty("serverRunDir").orElse("run").map { file(it) }
+val serverAuthMode = providers.gradleProperty("serverAuthMode").orElse("authenticated")
+val serverBind = providers.gradleProperty("serverBind").orElse("127.0.0.1:5520")
 
-publishing {
-    repositories {
-        // This is where you put repositories that you want to publish to.
-        // Do NOT put repositories for your dependencies here.
-    }
-
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
+val prepareRunServer = tasks.register("prepareRunServer") {
+    group = "hytale"
+    description = "Builds and installs CustomInventory into the development server."
+    dependsOn(tasks.jar)
+    doLast {
+        check(file(installedServer.get()).isFile) { "Server JAR not found. Set -PhytaleServerJar=<path>." }
+        check(file(assetsZip.get()).isFile) { "Assets.zip not found. Set -PhytaleAssetsZip=<path>." }
+        val runDirectory = serverRunDirectory.get()
+        copy {
+            from(tasks.jar.get().archiveFile)
+            into(runDirectory.resolve("mods"))
+            rename { "CustomInventory-dev.jar" }
+        }
+        // Avoid the installed server's first-run permission-writer failure. Preserve existing files.
+        val permissions = runDirectory.resolve("permissions.json").toPath()
+        if (!Files.exists(permissions)) {
+            Files.writeString(permissions, "{\"users\":{},\"groups\":{}}\n",
+                StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW)
         }
     }
 }
 
-// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
-idea {
-    module {
-        isDownloadSources = true
-        isDownloadJavadoc = true
-    }
-}
-
-val syncAssets = tasks.register<Copy>("syncAssets") {
+tasks.register<JavaExec>("runServer") {
     group = "hytale"
-    description = "Explicitly imports game-edited assets from Build back to Source."
-
-    // Take from the temporary build folder (Where the game saved changes)
-    from(layout.buildDirectory.dir("resources/main"))
-
-    // Copy into your actual project source (Where your code lives)
-    into("src/main/resources")
-
-    // IMPORTANT: Protect the manifest template from being overwritten
-    exclude("manifest.json")
-
-    // If a file exists, overwrite it with the new version from the game
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-
-    doLast {
-        println("✅ Assets successfully synced from Game to Source Code!")
-    }
-}
-
-afterEvaluate {
-    // Now Gradle will find it, because the plugin has finished working
-    val targetTask = tasks.findByName("runServer") ?: tasks.findByName("server")
-
-    if (targetTask != null && providers.gradleProperty("syncGameAssets").orNull == "true") {
-        targetTask.finalizedBy(syncAssets)
-        logger.lifecycle("✅ specific task '${targetTask.name}' hooked for auto-sync.")
-    } else {
-        logger.lifecycle("Asset copy-back disabled; use syncAssets explicitly or -PsyncGameAssets=true.")
-    }
-}
-
-// These regression checks use a standalone verifier against the engine codecs.
-tasks.test { failOnNoDiscoveredTests = false }
-val verifyBackpackCustomization = tasks.register<JavaExec>("verifyBackpackCustomization") {
-    group = "verification"
-    description = "Checks backpack metadata persistence, paint masks and memory thresholds."
-    dependsOn(tasks.testClasses)
-    classpath = sourceSets.test.get().runtimeClasspath + configurations.compileClasspath.get()
-    mainClass.set("com.supremosan.truebackpack.BackpackCustomizationVerification")
+    description = "Runs the local Hytale server with CustomInventory and an interactive console."
+    dependsOn(prepareRunServer)
+    mainClass.set("com.hypixel.hytale.Main")
+    classpath = engineFiles
     javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
-    workingDir = projectDir
+    workingDir(serverRunDirectory)
+    standardInput = System.`in`
+    maxHeapSize = "4G"
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    argumentProviders.add(org.gradle.process.CommandLineArgumentProvider {
+        val arguments = mutableListOf("--assets", file(assetsZip.get()).absolutePath,
+            "--allow-op", "--disable-sentry", "--auth-mode", serverAuthMode.get(),
+            "--bind", serverBind.get())
+        providers.gradleProperty("serverBootCommand").orNull?.let {
+            arguments.addAll(listOf("--boot-command", it))
+        }
+        arguments
+    })
 }
-tasks.check { dependsOn(verifyBackpackCustomization) }
-
-val verifyBackpackWorkbenchInventory = tasks.register<JavaExec>("verifyBackpackWorkbenchInventory") {
-    group = "verification"
-    description = "Checks workbench inventory moves, metadata preservation and equipment filters."
-    dependsOn(tasks.testClasses)
-    classpath = sourceSets.test.get().runtimeClasspath + configurations.compileClasspath.get()
-    mainClass.set("com.supremosan.truebackpack.ui.BackpackWorkbenchInventoryVerification")
-    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
-    workingDir = projectDir
-}
-tasks.check { dependsOn(verifyBackpackWorkbenchInventory) }
-
-val verifyBackpackArmorVisibility = tasks.register<JavaExec>("verifyBackpackArmorVisibility") {
-    group = "verification"
-    description = "Checks armor visibility toggles, world permissions and unchanged player preferences."
-    dependsOn(tasks.testClasses)
-    classpath = sourceSets.test.get().runtimeClasspath + configurations.compileClasspath.get()
-    mainClass.set("com.supremosan.truebackpack.ui.BackpackArmorVisibilityVerification")
-    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
-}
-tasks.check { dependsOn(verifyBackpackArmorVisibility) }
