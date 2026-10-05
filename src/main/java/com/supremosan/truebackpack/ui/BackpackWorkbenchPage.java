@@ -1,26 +1,19 @@
 package com.supremosan.truebackpack.ui;
 
-import com.hypixel.hytale.codec.Codec;
-import com.hypixel.hytale.codec.KeyedCodec;
-import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.event.EventRegistration;
-import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
-import com.hypixel.hytale.protocol.packets.interface_.Page;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
-import com.hypixel.hytale.server.core.modules.entity.player.PlayerSettings;
 import com.hypixel.hytale.server.core.ui.Anchor;
-import com.hypixel.hytale.server.core.ui.ItemGridSlot;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
-import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
+import com.supremosan.custominventory.CustomInventoryPlugin;
+import com.supremosan.custominventory.api.*;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
@@ -41,44 +34,33 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 /**
- * Interactive custom UI page for transmogrification and backpack upgrades.
+ * Backpack-specific content hosted by CustomInventory. Native grids, input and page lifetime belong to the host.
  */
-public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkbenchPage.PageData> {
+public class BackpackWorkbenchPage implements InventoryContent {
+    public static final String VIEW_ID = "truebackpack:workbench";
+    private final PlayerRef playerRef;
+    private InventoryContext activeContext;
+    private String contentSelector;
+    private String renderedTab;
+    private List<String> mountedRecipes = List.of();
+    private String mountedUpgrade;
+    private static final Set<BackpackWorkbenchPage> ACTIVE = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
-    public static class PageData {
-        public static final BuilderCodec<PageData> CODEC = BuilderCodec.builder(PageData.class, PageData::new)
-                .append(new KeyedCodec<>("Action", Codec.STRING), (d, s) -> d.action = s, d -> d.action).add()
-                .append(new KeyedCodec<>("Target", Codec.STRING), (d, s) -> d.target = s, d -> d.target).add()
-                .append(new KeyedCodec<>("SlotIndex", Codec.INTEGER), (d, v) -> d.slotIndex = v, d -> d.slotIndex).add()
-                .append(new KeyedCodec<>("ItemStackId", Codec.STRING), (d, v) -> d.itemStackId = v, d -> d.itemStackId).add()
-                .append(new KeyedCodec<>("ItemStackQuantity", Codec.INTEGER), (d, v) -> d.itemStackQuantity = v, d -> d.itemStackQuantity).add()
-                .append(new KeyedCodec<>("SourceInventorySectionId", Codec.INTEGER), (d, v) -> d.sourceSectionId = v, d -> d.sourceSectionId).add()
-                .append(new KeyedCodec<>("SourceSlotId", Codec.INTEGER), (d, v) -> d.sourceSlotId = v, d -> d.sourceSlotId).add()
-                .append(new KeyedCodec<>("DragSourceInventorySectionId", Codec.INTEGER), (d, v) -> d.dragSourceSectionId = v, d -> d.dragSourceSectionId).add()
-                .append(new KeyedCodec<>("DragSourceSlotId", Codec.INTEGER), (d, v) -> d.dragSourceSlotId = v, d -> d.dragSourceSlotId).add()
-                .append(new KeyedCodec<>("DragItemStackId", Codec.STRING), (d, v) -> d.dragItemStackId = v, d -> d.dragItemStackId).add()
-                .append(new KeyedCodec<>("DragItemStackQuantity", Codec.INTEGER), (d, v) -> d.dragItemStackQuantity = v, d -> d.dragItemStackQuantity).add()
-                .append(new KeyedCodec<>("@Name", Codec.STRING), (d, v) -> d.name = v, d -> d.name).add()
-                .append(new KeyedCodec<>("@Color", Codec.STRING), (d, v) -> d.color = v, d -> d.color).add()
-                .append(new KeyedCodec<>("@Skin", Codec.STRING), (d, v) -> d.skin = v, d -> d.skin).add()
-                .append(new KeyedCodec<>("@UsePaint", Codec.BOOLEAN), (d, v) -> d.usePaint = v, d -> d.usePaint).add()
-                .build();
-
-        public String skin;
-        public Boolean usePaint;
-        public String name;
-        public String color;
-        public String action;
-        public String target;
-        public Integer slotIndex;
-        public String itemStackId;
-        public Integer itemStackQuantity;
-        public Integer sourceSectionId;
-        public Integer sourceSlotId;
-        public Integer dragSourceSectionId;
-        public Integer dragSourceSlotId;
-        public String dragItemStackId;
-        public Integer dragItemStackQuantity;
+    private static final class PageData {
+        String action;
+        String target;
+        String skin;
+        Boolean usePaint;
+        String name;
+        String color;
+        PageData(InventoryContentEvent event) {
+            action = event.action(); target = event.payload();
+            name = event.values().get("@Text");
+            color = event.values().get("@Color");
+            skin = event.values().get("@Choice");
+            String checked = event.values().get("@Checked");
+            usePaint = checked == null ? null : Boolean.valueOf(checked);
+        }
     }
 
     public record ActiveBackpack(
@@ -159,18 +141,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
 
     private BackpackCraftingWindow craftingWindow;
     private boolean dismissed;
-    private final java.util.concurrent.atomic.AtomicBoolean refreshQueued = new java.util.concurrent.atomic.AtomicBoolean();
-    private final Map<ItemContainer, EventRegistration<?, ?>> inventoryListeners = new IdentityHashMap<>();
-    private final Map<BackpackWorkbenchInventory.Section, ItemStack[]> displayedInventory = new EnumMap<>(BackpackWorkbenchInventory.Section.class);
-    private java.util.concurrent.ScheduledFuture<?> pendingStats;
-    private BackpackWorkbenchInventory.Section selectedSection;
-    private short selectedSlot;
-    private ItemContainer selectedContainer;
-    private ItemStack selectedStack;
-    private boolean inventoryDragInvalidated;
-    private String inventoryStatus = "";
-    private String statsSnapshot;
-    private int activeHotbarSlot = Integer.MIN_VALUE;
+    private java.util.concurrent.ScheduledFuture<?> pendingBenchCheck;
     private String selectedRecipeId;
     private boolean upgradeSelected;
     private String currentTab = "personalize";
@@ -183,88 +154,146 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
     }
 
     public BackpackWorkbenchPage(@Nonnull PlayerRef playerRef, @Nullable org.joml.Vector3i benchPosition) {
-        super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction, PageData.CODEC);
+        this.playerRef = Objects.requireNonNull(playerRef);
         this.benchPosition = benchPosition == null ? null : new org.joml.Vector3i(benchPosition);
         if (benchPosition != null) currentTab = "crafting";
     }
 
+    public static void closeAll() {
+        for (var page : ACTIVE) {
+            var context = page.activeContext;
+            if (context != null) context.requestClose();
+        }
+    }
+
+    private InventoryPageDefinition definition() {
+        return new InventoryPageDefinition(VIEW_ID, text("page.personalize"), 0, context -> this);
+    }
+
+    /** One content/controller and extension are created for each player opening. */
+    public static boolean open(Ref<EntityStore> ref, Store<EntityStore> store, PlayerRef playerRef) {
+        var content = new BackpackWorkbenchPage(playerRef);
+        return CustomInventoryPlugin.get().openView(ref, store, playerRef,
+                content.definition(), content.extension());
+    }
+
+    private InventoryUiExtension extension() {
+        return new InventoryUiExtension() {
+            @Override public void onCreated(InventoryContext context, InventoryUiEditor editor) {
+                editor.append(InventoryElementId.NAVIGATION, "Pages/BackpackWorkbenchNavigation.ui");
+                editor.bind(CustomUIEventBindingType.Activating, InventoryElementId.NAVIGATION,
+                        "#CharacterCraftingButton", "Crafting", "", true);
+                editor.bind(CustomUIEventBindingType.Activating, InventoryElementId.NAVIGATION,
+                        "#CharacterVisibilityButton", "TabVisibility", "", true);
+                editor.bind(CustomUIEventBindingType.Activating, InventoryElementId.NAVIGATION,
+                        "#CharacterPersonalizeButton", "TabPersonalize", "", true);
+                if (craftingWindow != null) {
+                    editor.append(InventoryElementId.AUXILIARY_HOST, "Pages/BackpackWorkbenchBench.ui");
+                    editor.bind(CustomUIEventBindingType.Activating, InventoryElementId.AUXILIARY_HOST,
+                            "#BenchUpgradeButton", "UpgradeBench", "", true);
+                }
+            }
+            @Override public void onUpdate(InventoryContext context, InventoryUiEditor editor) {
+                applyPresentation(context, editor);
+            }
+            @Override public void handleEvent(InventoryContext context, InventoryContentEvent event) {
+                BackpackWorkbenchPage.this.handleEvent(context, event);
+            }
+        };
+    }
+
+    private void applyPresentation(InventoryContext context, InventoryUiEditor editor) {
+        String title = switch (currentTab) {
+            case "crafting" -> craftingWindow == null ? "page.upgrades" : "page.crafting";
+            case "visibility" -> "page.visibility";
+            default -> "page.personalize";
+        };
+        editor.text(InventoryElementId.TITLE, text(title));
+        Anchor content = new Anchor();
+        content.setHeight(Value.of(470));
+        editor.anchor(InventoryElementId.CONTENT_PANEL, content);
+        editor.padding(InventoryElementId.CONTENT_PANEL,
+                Value.ref("Pages/BackpackWorkbenchPage.ui", "WorkbenchContentPadding"));
+        editor.edit(InventoryElementId.NAVIGATION, cb -> {
+            cb.set("#CharacterCraftingButton.TooltipText", text(craftingWindow == null ? "tab.upgrades" : "tab.production"));
+            cb.set("#CharacterVisibilityButton.TooltipText", text("tab.visibility"));
+            cb.set("#CharacterPersonalizeButton.TooltipText", text("tab.personalize"));
+            cb.set("#CharacterCraftingActive.Visible", "crafting".equals(currentTab));
+            cb.set("#CharacterVisibilityActive.Visible", "visibility".equals(currentTab));
+            cb.set("#CharacterPersonalizeActive.Visible", "personalize".equals(currentTab));
+        });
+        if (craftingWindow != null) {
+            Anchor auxiliary = new Anchor();
+            auxiliary.setTop(Value.of(180));
+            auxiliary.setWidth(Value.ref("Pages/BackpackWorkbenchBench.ui", "BenchPanelWidth"));
+            auxiliary.setHeight(Value.ref("Pages/BackpackWorkbenchBench.ui", "BenchPanelHeight"));
+            editor.anchor(InventoryElementId.AUXILIARY_HOST, auxiliary);
+            editor.edit(InventoryElementId.AUXILIARY_HOST,
+                    cb -> updateBenchPanel(context.ref(), context.store(), cb));
+        }
+    }
+
+    private static ItemContainer inventory(Ref<EntityStore> ref, Store<EntityStore> store, boolean hotbar) {
+        var component = hotbar ? store.getComponent(ref, InventoryComponent.Hotbar.getComponentType())
+                : store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        return component == null ? null : component.getInventory();
+    }
+
+    private static UICommandBuilder scope(UICommandBuilder builder, String selector) {
+        return new InventoryCommands(builder, selector);
+    }
+
     @Override
-    public void build(@Nonnull Ref<EntityStore> ref, @Nonnull UICommandBuilder commandBuilder, @Nonnull UIEventBuilder eventBuilder, @Nonnull Store<EntityStore> store) {
-        commandBuilder.append("Pages/BackpackWorkbenchPage.ui");
-        commandBuilder.append("#PlayerPanelHost", "Pages/BackpackPlayerPanel.ui");
-        commandBuilder.append("#InventoryPanelHost", "Pages/BackpackInventoryPanel.ui");
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#InventorySortButton",
-                new EventData().append("Action", "SortInventory"));
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CharacterCraftingButton",
-                new EventData().append("Action", "Crafting"));
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CharacterVisibilityButton",
-                new EventData().append("Action", "TabVisibility"));
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CharacterPersonalizeButton",
-                new EventData().append("Action", "TabPersonalize"));
-        for (var slot : BackpackArmorVisibility.Slot.values()) {
-            eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, slot.selector,
-                    new EventData().append("Action", "ToggleArmorVisibility").append("Target", slot.name()));
-        }
-        for (var section : BackpackWorkbenchInventory.Section.values()) {
-            String grid = inventoryMount(section);
-            // The client adds slot and drag-source fields to ItemGrid events automatically.
-            eventBuilder.addEventBinding(CustomUIEventBindingType.SlotClicking, grid,
-                    new EventData().append("Action", "InventoryDragSource").append("Target", section.name()), false);
-            eventBuilder.addEventBinding(CustomUIEventBindingType.Dropped, grid,
-                    new EventData().append("Action", "InventoryDrop").append("Target", section.name()), false);
-            eventBuilder.addEventBinding(CustomUIEventBindingType.DragCancelled, grid,
-                    new EventData().append("Action", "CancelInventorySelection"), false);
-        }
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#BenchUpgradeButton",
-                new EventData().append("Action", "UpgradeBench").append("Target", ""));
+    public void build(InventoryContext context, UICommandBuilder commands,
+                      InventoryEventBindings events, String selector) {
+        activeContext = context;
+        contentSelector = selector;
+        ACTIVE.add(this);
+        renderedTab = null;
+        mountedRecipes = List.of();
+        mountedUpgrade = null;
+        commands.append(selector, "Pages/BackpackWorkbenchPage.ui");
+        refreshPage(context.ref(), context.store(), scope(commands, selector), events);
+        startBenchCheck();
+    }
 
-        eventBuilder.addEventBinding(
-                CustomUIEventBindingType.Activating,
-                "#WorkbenchPanel #CloseButton",
-                new EventData().append("Action", "Close").append("Target", "")
-        );
-
-        refreshPage(ref, store, commandBuilder, eventBuilder);
-        startStatsUpdates(ref, store);
+    @Override
+    public void refresh(InventoryContext context, UICommandBuilder commands,
+                        InventoryEventBindings events, String selector) {
+        activeContext = context;
+        if (benchPosition != null && !isBenchAvailable(context.ref(), context.store())) {
+            context.requestClose(); return;
+        }
+        var active = findActiveBackpack(context.ref(), context.store());
+        if ("personalize".equals(currentTab) && currentTab.equals(renderedTab) && active != null && sameEditedBackpack(active)) {
+            updateHeader(active, scope(commands, selector), playerRef.getLanguage());
+        } else refreshPage(context.ref(), context.store(), scope(commands, selector), events);
     }
 
     private void refreshPage(
             @Nonnull Ref<EntityStore> ref,
             @Nonnull Store<EntityStore> store,
             @Nonnull UICommandBuilder commandBuilder,
-            @Nonnull UIEventBuilder eventBuilder) {
+            @Nonnull InventoryEventBindings eventBuilder) {
 
         String lang = playerRef.getLanguage();
-
-        refreshInventoryPanels(ref, store, commandBuilder, eventBuilder);
-        updateBenchPanel(commandBuilder, lang);
-        // Localize the workbench title and side navigation.
-        String titleKey = switch (currentTab) {
-            case "crafting" -> craftingWindow == null ? "page.upgrades" : "page.crafting";
-            case "visibility" -> "page.visibility";
-            default -> "page.personalize";
-        };
-        commandBuilder.set("#PageTitle.Text", text(titleKey));
-
-        String visibilityLabel = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.tab.visibility");
-
-        commandBuilder.set("#CharacterCraftingButton.TooltipText", text(craftingWindow == null ? "tab.upgrades" : "tab.production"));
-        commandBuilder.set("#CharacterVisibilityButton.TooltipText", visibilityLabel);
-        commandBuilder.set("#CharacterPersonalizeButton.TooltipText", text("tab.personalize"));
-        commandBuilder.set("#CharacterCraftingActive.Visible", "crafting".equals(currentTab));
-        commandBuilder.set("#CharacterVisibilityActive.Visible", "visibility".equals(currentTab));
-        commandBuilder.set("#CharacterPersonalizeActive.Visible", "personalize".equals(currentTab));
+        boolean mount = !currentTab.equals(renderedTab) || "personalize".equals(currentTab);
+        renderedTab = currentTab;
 
         ActiveBackpack activeBp = findActiveBackpack(ref, store);
-        commandBuilder.clear("#WorkbenchList");
+        if (mount) {
+            commandBuilder.clear("#WorkbenchList");
+            mountedRecipes = List.of();
+            mountedUpgrade = null;
+        }
         updateHeader(activeBp, commandBuilder, lang);
 
         if ("crafting".equals(currentTab)) {
             commandBuilder.set("#LoadingContainer.Visible", false);
             commandBuilder.set("#WorkbenchList.Visible", true);
             commandBuilder.set("#BackpackHeader.Visible", false);
-            commandBuilder.append("#WorkbenchList", "Pages/BackpackProductionPanel.ui");
-            buildCraftingTab(ref, store, commandBuilder, eventBuilder, lang);
+            if (mount) commandBuilder.append("#WorkbenchList", "Pages/BackpackProductionPanel.ui");
+            buildCraftingTab(ref, store, commandBuilder, eventBuilder, lang, mount);
             boolean showUpgrade = upgradeSelected || craftingWindow == null;
             commandBuilder.set("#RecipeDetails.Visible", !showUpgrade && selectedRecipeId != null);
             commandBuilder.set("#UpgradeDetails.Visible", showUpgrade);
@@ -283,7 +312,13 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             if (activeBp != null) commandBuilder.set("#UpgradeChoiceIcon.ItemId", activeBp.stack().getItemId());
             eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#SelectUpgrade",
                     new EventData().append("Action", "SelectUpgrade"));
-            if (showUpgrade) buildUpgradeTab(ref, store, activeBp, commandBuilder, eventBuilder, lang);
+            if (showUpgrade) {
+                String upgrade = activeBp == null ? "empty" : activeBp.stack().getItemId() + ":" + BackpackItemFactory.getUpgradeLevel(activeBp.stack());
+                boolean mountUpgrade = !Objects.equals(mountedUpgrade, upgrade);
+                if (mountUpgrade) commandBuilder.clear("#UpgradeDetails");
+                buildUpgradeTab(ref, store, activeBp, commandBuilder, eventBuilder, lang, mountUpgrade);
+                mountedUpgrade = upgrade;
+            }
             if (craftingWindow != null) {
                 var data = craftingWindow.getData();
                 int queue = data.has("queueSize") ? data.get("queueSize").getAsInt() : 0;
@@ -297,8 +332,8 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             commandBuilder.set("#LoadingContainer.Visible", false);
             commandBuilder.set("#BackpackHeader.Visible", false);
             commandBuilder.set("#WorkbenchList.Visible", true);
-            commandBuilder.append("#WorkbenchList", "Pages/BackpackVisibilityPanel.ui");
-            buildVisibilityTab(ref, store, activeBp, commandBuilder, eventBuilder, lang);
+            if (mount) commandBuilder.append("#WorkbenchList", "Pages/BackpackVisibilityPanel.ui");
+            buildVisibilityTab(ref, store, activeBp, commandBuilder, eventBuilder, lang, mount);
             return;
         }
 
@@ -366,9 +401,9 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             @Nonnull Store<EntityStore> store,
             @Nullable ActiveBackpack activeBp,
             @Nonnull UICommandBuilder cb,
-            @Nonnull UIEventBuilder eb,
-            @Nullable String lang) {
-        cb.append("#UpgradeDetails", "Pages/BackpackUpgradeEntry.ui");
+            @Nonnull InventoryEventBindings eb,
+            @Nullable String lang, boolean mount) {
+        if (mount) cb.append("#UpgradeDetails", "Pages/BackpackUpgradeEntry.ui");
         cb.set("#UpgradeTitle.Text", text("flow.upgrade_existing"));
         cb.set("#UpgradeButton.Text", text("flow.apply_upgrade"));
         cb.set("#UpgradeButton.Disabled", true);
@@ -413,8 +448,8 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 "server.truebackpack.workbench.header.capacity", capacity));
         if (tier == null) cb.set("#UpgradeResultLabel.Text", text("flow.result") + " · " + text("level") + " " + nextLevel + "/2");
 
-        var hotbar = BackpackWorkbenchInventory.container(ref, store, BackpackWorkbenchInventory.Section.HOTBAR);
-        var storage = BackpackWorkbenchInventory.container(ref, store, BackpackWorkbenchInventory.Section.STORAGE);
+        var hotbar = inventory(ref, store, true);
+        var storage = inventory(ref, store, false);
         var materials = costs.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList();
         for (int i = 0; i < 3; i++) {
             cb.set("#UpgradeMaterialRow" + i + ".Visible", i < materials.size());
@@ -439,6 +474,9 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         if (!gate.unlocked()) {
             cb.set("#UpgradeResultLockedMarker.TooltipTextSpans", memoryTooltip(gate));
             cb.set("#UpgradeStatus.TooltipTextSpans", memoryTooltip(gate));
+        } else {
+            cb.set("#UpgradeResultLockedMarker.TooltipTextSpans", Message.raw(""));
+            cb.set("#UpgradeStatus.TooltipTextSpans", Message.raw(""));
         }
         eb.addEventBinding(CustomUIEventBindingType.Activating, "#UpgradeButton",
                 new EventData().append("Action", tier != null ? "UpgradeTier" : "UpgradeLevel")
@@ -454,98 +492,28 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         cb.set("#UpgradeStatus.Text", "");
     }
 
-    private void buildVisibilityTab(
-            @Nonnull Ref<EntityStore> ref,
-            @Nonnull Store<EntityStore> store,
-            @Nullable ActiveBackpack activeBp,
-            @Nonnull UICommandBuilder commandBuilder,
-            @Nonnull UIEventBuilder eventBuilder,
-            @Nullable String lang) {
-
-        // 1. Backpack Visibility
-        boolean bpVisible = CosmeticPreferenceUtils.isBackpackVisible(store, ref);
+    private void buildVisibilityTab(Ref<EntityStore> ref, Store<EntityStore> store,
+            @Nullable ActiveBackpack activeBp, UICommandBuilder cb, InventoryEventBindings events,
+            @Nullable String lang, boolean mount) {
         var activeEntry = activeBp == null ? null : BackpackRegistry.getByItem(activeBp.stack().getItemId());
-        String bpIcon = activeEntry != null && !activeEntry.isHelipack() ? activeBp.stack().getItemId() : "Utility_Leather_Backpack";
-        commandBuilder.append("#VisibilityEntries", "Pages/BackpackVisibilityEntry.ui");
-        String sel0 = "#VisibilityEntries[0]";
-        commandBuilder.set(sel0 + " #CosmeticIcon.ItemId", bpIcon);
-        commandBuilder.set(sel0 + " #CosmeticName.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.backpack.title"));
-        commandBuilder.set(sel0 + " #CosmeticDesc.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.backpack.desc"));
-        updateVisibilityState(commandBuilder, sel0, bpVisible);
-        if (bpVisible) {
-            commandBuilder.set(sel0 + " #ToggleButton.Visible", true);
-            commandBuilder.set(sel0 + " #ToggleHiddenButton.Visible", false);
-            commandBuilder.set(sel0 + " #ToggleButton.Text", text("visibility.hide"));
-            eventBuilder.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    sel0 + " #ToggleButton",
-                    new EventData().append("Action", "ToggleCosmetic").append("Target", "backpack")
-            );
-        } else {
-            commandBuilder.set(sel0 + " #ToggleButton.Visible", false);
-            commandBuilder.set(sel0 + " #ToggleHiddenButton.Visible", true);
-            commandBuilder.set(sel0 + " #ToggleHiddenButton.Text", text("visibility.show"));
-            eventBuilder.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    sel0 + " #ToggleHiddenButton",
-                    new EventData().append("Action", "ToggleCosmetic").append("Target", "backpack")
-            );
-        }
-
-        // 2. Arrow Belt / Quiver Visibility
-        boolean quiverVisible = CosmeticPreferenceUtils.isQuiverVisible(store, ref);
-        commandBuilder.append("#VisibilityEntries", "Pages/BackpackVisibilityEntry.ui");
-        String sel1 = "#VisibilityEntries[1]";
-        commandBuilder.set(sel1 + " #CosmeticIcon.ItemId", "Weapon_Arrow_Iron");
-        commandBuilder.set(sel1 + " #CosmeticName.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.quiver.title"));
-        commandBuilder.set(sel1 + " #CosmeticDesc.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.quiver.desc"));
-        updateVisibilityState(commandBuilder, sel1, quiverVisible);
-        if (quiverVisible) {
-            commandBuilder.set(sel1 + " #ToggleButton.Visible", true);
-            commandBuilder.set(sel1 + " #ToggleHiddenButton.Visible", false);
-            commandBuilder.set(sel1 + " #ToggleButton.Text", text("visibility.hide"));
-            eventBuilder.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    sel1 + " #ToggleButton",
-                    new EventData().append("Action", "ToggleCosmetic").append("Target", "quiver")
-            );
-        } else {
-            commandBuilder.set(sel1 + " #ToggleButton.Visible", false);
-            commandBuilder.set(sel1 + " #ToggleHiddenButton.Visible", true);
-            commandBuilder.set(sel1 + " #ToggleHiddenButton.Text", text("visibility.show"));
-            eventBuilder.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    sel1 + " #ToggleHiddenButton",
-                    new EventData().append("Action", "ToggleCosmetic").append("Target", "quiver")
-            );
-        }
-
-        // 3. Hat / Bandana Visibility
-        boolean hatVisible = CosmeticPreferenceUtils.isHatVisible(store, ref);
-        commandBuilder.append("#VisibilityEntries", "Pages/BackpackVisibilityEntry.ui");
-        String sel2 = "#VisibilityEntries[2]";
-        commandBuilder.set(sel2 + " #CosmeticIcon.ItemId", "Utility_Torch_Bandana");
-        commandBuilder.set(sel2 + " #CosmeticName.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.hat.title"));
-        commandBuilder.set(sel2 + " #CosmeticDesc.Text", I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.visibility.hat.desc"));
-        updateVisibilityState(commandBuilder, sel2, hatVisible);
-        if (hatVisible) {
-            commandBuilder.set(sel2 + " #ToggleButton.Visible", true);
-            commandBuilder.set(sel2 + " #ToggleHiddenButton.Visible", false);
-            commandBuilder.set(sel2 + " #ToggleButton.Text", text("visibility.hide"));
-            eventBuilder.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    sel2 + " #ToggleButton",
-                    new EventData().append("Action", "ToggleCosmetic").append("Target", "hat")
-            );
-        } else {
-            commandBuilder.set(sel2 + " #ToggleButton.Visible", false);
-            commandBuilder.set(sel2 + " #ToggleHiddenButton.Visible", true);
-            commandBuilder.set(sel2 + " #ToggleHiddenButton.Text", text("visibility.show"));
-            eventBuilder.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    sel2 + " #ToggleHiddenButton",
-                    new EventData().append("Action", "ToggleCosmetic").append("Target", "hat")
-            );
+        String backpackIcon = activeEntry != null && !activeEntry.isHelipack()
+                ? activeBp.stack().getItemId() : "Utility_Leather_Backpack";
+        String[] ids = {"backpack", "quiver", "hat"};
+        String[] icons = {backpackIcon, "Weapon_Arrow_Iron", "Utility_Torch_Bandana"};
+        boolean[] visible = {CosmeticPreferenceUtils.isBackpackVisible(store, ref),
+                CosmeticPreferenceUtils.isQuiverVisible(store, ref), CosmeticPreferenceUtils.isHatVisible(store, ref)};
+        for (int index = 0; index < ids.length; index++) {
+            if (mount) cb.append("#VisibilityEntries", "Pages/BackpackVisibilityEntry.ui");
+            String selector = "#VisibilityEntries[" + index + "]";
+            cb.set(selector + " #CosmeticIcon.ItemId", icons[index]);
+            cb.set(selector + " #CosmeticName.Text", I18nHelper.getOrFallback(lang,
+                    "server.truebackpack.workbench.visibility." + ids[index] + ".title"));
+            cb.set(selector + " #CosmeticDesc.Text", I18nHelper.getOrFallback(lang,
+                    "server.truebackpack.workbench.visibility." + ids[index] + ".desc"));
+            updateVisibilityState(cb, selector, visible[index]);
+            cb.set(selector + " #ToggleButton.Text", text(visible[index] ? "visibility.hide" : "visibility.show"));
+            events.addEventBinding(CustomUIEventBindingType.Activating, selector + " #ToggleButton",
+                    new EventData().append("Action", "ToggleCosmetic").append("Target", ids[index]));
         }
     }
 
@@ -555,39 +523,17 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
     }
 
     @Override
-    public void handleDataEvent(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store, @Nonnull PageData data) {
+    public void handleEvent(InventoryContext context, InventoryContentEvent event) {
+        var ref = context.ref(); var store = context.store();
+        handleDataEvent(ref, store, new PageData(event));
+    }
+
+    private void handleDataEvent(Ref<EntityStore> ref, Store<EntityStore> store, PageData data) {
         if (dismissed || data.action == null) return;
 
         if (benchPosition != null && !isBenchAvailable(ref, store)) {
             Player player = store.getComponent(ref, Player.getComponentType());
-            if (player != null) player.getPageManager().setPage(ref, store, Page.None);
-            return;
-        }
-        if ("InventoryDragSource".equals(data.action)) {
-            rememberInventoryDrag(ref, store, data);
-            return;
-        }
-        if ("InventoryDrop".equals(data.action)) {
-            handleInventoryDrop(ref, store, data);
-            sendInventoryRefresh(ref, store);
-            return;
-        }
-        if ("CancelInventorySelection".equals(data.action)) {
-            clearInventorySelection();
-            inventoryStatus = "";
-            sendInventoryRefresh(ref, store);
-            return;
-        }
-        if ("SortInventory".equals(data.action)) {
-            clearInventorySelection();
-            BackpackWorkbenchInventory.sortStorage(ref, store);
-            inventoryStatus = "";
-            sendInventoryRefresh(ref, store);
-            return;
-        }
-        if ("ToggleArmorVisibility".equals(data.action)) {
-            toggleArmorVisibility(ref, store, data.target);
-            sendInventoryRefresh(ref, store);
+            if (player != null) activeContext.requestClose();
             return;
         }
         if ("Crafting".equals(data.action)) {
@@ -614,7 +560,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             return;
         }
         if ("CraftRecipe".equals(data.action) && craftingWindow != null) {
-            var recipe = eligibleRecipes().stream().filter(r -> r.getId().equals(data.target)).findFirst().orElse(null);
+            var recipe = eligibleRecipes().stream().filter(r -> r.getId().equals(selectedRecipeId)).findFirst().orElse(null);
             if (recipe != null && recipeUnlocked(recipe, store)) {
                 var action = new com.hypixel.hytale.protocol.packets.window.CraftRecipeAction();
                 action.recipeId = recipe.getId();
@@ -635,7 +581,7 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         if ("Close".equalsIgnoreCase(data.action)) {
             Player player = store.getComponent(ref, Player.getComponentType());
             if (player != null) {
-                player.getPageManager().setPage(ref, store, Page.None);
+                activeContext.requestClose();
             }
             return;
         }
@@ -705,11 +651,11 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 && (editedBackpackId != null || Objects.equals(editedStack, bp.stack()));
     }
     private EventData customizationEvent(String action) {
-        return new EventData().append("Action", action).append("@Name", "#BackpackName.Value")
-                .append("@Skin", "#AppearanceSelect.Value").append("@Color", "#PaintPicker.Value")
-                .append("@UsePaint", "#UsePaint.Value");
+        return new EventData().append("Action", action).append("@Text", "#BackpackName.Value")
+                .append("@Choice", "#AppearanceSelect.Value").append("@Color", "#PaintPicker.Value")
+                .append("@Checked", "#UsePaint.Value");
     }
-    private void buildPersonalizeTab(Ref<EntityStore> ref, Store<EntityStore> store, ActiveBackpack bp, UICommandBuilder cb, UIEventBuilder eb) {
+    private void buildPersonalizeTab(Ref<EntityStore> ref, Store<EntityStore> store, ActiveBackpack bp, UICommandBuilder cb, InventoryEventBindings eb) {
         previewRevision++;
         if (pendingPreview != null) pendingPreview.cancel(false);
         if (!sameEditedBackpack(bp)) {
@@ -769,30 +715,31 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 String id = preview.prepare(draft, playerRef);
                 long delay = preview.remainingDelayMillis();
                 if (delay == 0) {
-                    var ready = new UICommandBuilder();
+                    var ready = new InventoryCommands(contentSelector);
                     attachNativePreview(id, ready);
-                    sendUpdate(ready, new UIEventBuilder(), false);
+                    activeContext.update(ready);
                 } else {
                     pendingPreview = PREVIEW_TIMER.schedule(() -> store.getExternalData().getWorld().execute(() -> {
                         if (!previewIsCurrent(ref, store, revision)) return;
-                        var ready = new UICommandBuilder();
+                        var ready = new InventoryCommands(contentSelector);
                         attachNativePreview(id, ready);
-                        sendUpdate(ready, new UIEventBuilder(), false);
+                        activeContext.update(ready);
                     }), delay, java.util.concurrent.TimeUnit.MILLISECONDS);
                 }
             } catch (java.io.IOException | RuntimeException e) {
-                var fallback = new UICommandBuilder();
+                var fallback = new InventoryCommands(contentSelector);
                 fallback.clear("#PaintPreviewHost");
                 fallback.append("#PaintPreviewHost", "Pages/BackpackNativePreview.ui");
                 fallback.set("#PaintPreview.ItemId", BackpackPaintService.visualEntry(draft).itemId());
                 fallback.set("#PreviewHint.Text", text("personalize.preview_failed"));
-                sendUpdate(fallback, new UIEventBuilder(), false);
+                activeContext.update(fallback);
                 java.util.logging.Logger.getLogger("TrueBackpack").warning("Native backpack preview failed: " + e.getMessage());
             }
         }), 500, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
     private boolean previewIsCurrent(Ref<EntityStore> ref, Store<EntityStore> store, long revision) {
-        if (dismissed || !ref.isValid() || revision != previewRevision || !"personalize".equals(currentTab)) return false;
+        if (dismissed || activeContext == null || !activeContext.isActive() || !ref.isValid()
+                || revision != previewRevision || !"personalize".equals(currentTab)) return false;
         var active = findActiveBackpack(ref, store);
         return active != null && sameEditedBackpack(active);
     }
@@ -831,10 +778,10 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 return;
             }
             if ("DraftName".equals(data.action)) return;
-            var selection = new UICommandBuilder();
+            var selection = new InventoryCommands(contentSelector);
             selection.set("#UsePaint.Value", draftUsePaint);
             updateNativePreview(ref, store, bp.stack(), selection);
-            sendUpdate(selection, new UIEventBuilder(), false);
+            activeContext.update(selection);
         } catch (RuntimeException e) {
             editedContainer = null;
             statusMessage = text("personalize.failed");
@@ -1013,313 +960,22 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         sendRefresh(ref, store);
     }
 
-    private void refreshInventoryPanels(Ref<EntityStore> ref, Store<EntityStore> store,
-            UICommandBuilder cb, UIEventBuilder eb) {
-        cb.set("#PlayerName.Text", playerRef.getUsername());
-        for (var entry : Map.ofEntries(
-                Map.entry("#StatsTitle.Text", "inventory.stats"),
-                Map.entry("#HealthLabel.Text", "inventory.health"),
-                Map.entry("#StaminaLabel.Text", "inventory.stamina"),
-                Map.entry("#ManaLabel.Text", "inventory.mana"),
-                Map.entry("#DefenseLabel.Text", "inventory.defense"),
-                Map.entry("#InventoryTitle.Text", "inventory.title"),
-                Map.entry("#InventorySortButton.TooltipText", "inventory.sort")).entrySet())
-            cb.set(entry.getKey(), text(entry.getValue()));
+    private void sendRefresh(Ref<EntityStore> ref, Store<EntityStore> store) {
+        if (activeContext != null) activeContext.requestRefresh();
+    }
 
-        if (selectedSection != null && (selectedContainer == null
-                || selectedContainer != BackpackWorkbenchInventory.container(ref, store, selectedSection)
-                || selectedSlot >= selectedContainer.getCapacity()
-                || !Objects.equals(selectedStack, selectedContainer.getItemStack(selectedSlot)))) {
-            // Keep the original drag snapshot so a refresh cannot substitute another item with the same ID.
-            inventoryDragInvalidated = true;
-            inventoryStatus = text("inventory.changed");
-        }
-
-        Set<ItemContainer> currentContainers = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (var section : BackpackWorkbenchInventory.Section.values()) {
-            ItemContainer container = BackpackWorkbenchInventory.container(ref, store, section);
-            int capacity = container == null ? 0 : container.getCapacity();
-            if (container != null) {
-                currentContainers.add(container);
-                inventoryListeners.computeIfAbsent(container,
-                        c -> c.registerChangeEvent(event -> scheduleRefresh(ref, store)));
+    private void startBenchCheck() {
+        if (benchPosition == null || pendingBenchCheck != null) return;
+        var context = activeContext;
+        var world = context.store().getExternalData().getWorld();
+        pendingBenchCheck = PREVIEW_TIMER.scheduleAtFixedRate(() -> {
+            try { world.execute(() -> {
+                if (dismissed || !context.isActive()) return;
+                if (!isBenchAvailable(context.ref(), context.store())) context.requestClose();
+            }); } catch (RuntimeException worldStopped) {
+                if (pendingBenchCheck != null) pendingBenchCheck.cancel(false);
             }
-            ItemGridSlot[] slots = new ItemGridSlot[capacity];
-            ItemStack[] snapshot = new ItemStack[capacity];
-            for (short slot = 0; slot < capacity; slot++) {
-                ItemStack stack = container.getItemStack(slot);
-                slots[slot] = inventoryGridSlot(stack);
-                if (!ItemStack.isEmpty(stack)) {
-                    snapshot[slot] = copyInventoryStack(stack);
-                }
-            }
-            displayedInventory.put(section, snapshot);
-            cb.set(inventoryMount(section) + ".Slots", slots);
-        }
-        inventoryListeners.entrySet().removeIf(entry -> {
-            if (currentContainers.contains(entry.getKey())) return false;
-            entry.getValue().unregister();
-            return true;
-        });
-        cb.set("#InventoryStatus.Text", inventoryStatus);
-        cb.set("#InventoryStatus.Visible", !inventoryStatus.isBlank());
-        updateActiveHotbarSlot(ref, store, cb);
-        updateArmorVisibility(ref, store, cb);
-        updatePlayerStats(ref, store, cb);
-    }
-
-    private String armorVisibilitySnapshot;
-
-    private void toggleArmorVisibility(Ref<EntityStore> ref, Store<EntityStore> store, String target) {
-        if (target == null) return;
-        final BackpackArmorVisibility.Slot slot;
-        try {
-            slot = BackpackArmorVisibility.Slot.valueOf(target);
-        } catch (IllegalArgumentException ignored) {
-            return;
-        }
-        var armor = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
-        if (armor == null || slot.ordinal() >= armor.getInventory().getCapacity()
-                || ItemStack.isEmpty(armor.getInventory().getItemStack((short) slot.ordinal()))) return;
-        PlayerSettings settings = store.getComponent(ref, PlayerSettings.getComponentType());
-        if (settings == null) settings = PlayerSettings.defaults();
-        var option = store.getExternalData().getWorld().getGameplayConfig().getPlayerConfig().getArmorVisibilityOption();
-        PlayerSettings updated = BackpackArmorVisibility.toggle(settings, slot, option);
-        if (updated == settings) return;
-        store.putComponent(ref, PlayerSettings.getComponentType(), updated);
-        // Match the native preference handler: settings alone do not resend rendered equipment.
-        armor.setOutdatedEquipment(true);
-    }
-
-    private void updateArmorVisibility(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder cb) {
-        PlayerSettings settings = store.getComponent(ref, PlayerSettings.getComponentType());
-        if (settings == null) settings = PlayerSettings.defaults();
-        var option = store.getExternalData().getWorld().getGameplayConfig().getPlayerConfig().getArmorVisibilityOption();
-        boolean[] hidden = {
-                option.canHideHelmet() && settings.hideHelmet(),
-                option.canHideCuirass() && settings.hideCuirass(),
-                option.canHideGauntlets() && settings.hideGauntlets(),
-                option.canHidePants() && settings.hidePants()
-        };
-        var armor = BackpackWorkbenchInventory.container(ref, store, BackpackWorkbenchInventory.Section.ARMOR);
-        boolean[] occupied = new boolean[4];
-        for (short slot = 0; slot < occupied.length; slot++)
-            occupied[slot] = armor != null && slot < armor.getCapacity() && !ItemStack.isEmpty(armor.getItemStack(slot));
-        String snapshot = playerRef.getLanguage() + option + Arrays.toString(hidden) + Arrays.toString(occupied);
-        if (snapshot.equals(armorVisibilitySnapshot)) return;
-        armorVisibilitySnapshot = snapshot;
-        for (var slot : BackpackArmorVisibility.Slot.values()) {
-            int index = slot.ordinal();
-            cb.set(slot.selector + ".Visible", occupied[index]);
-            cb.set(slot.selector + ".Disabled", !slot.allowed(option));
-            cb.set(slot.selector + " #Visible.Visible", !hidden[index]);
-            cb.set(slot.selector + " #Hidden.Visible", hidden[index]);
-            String state = !slot.allowed(option) ? "locked" : hidden[index] ? "hidden" : "visible";
-            cb.set(slot.selector + ".TooltipText", I18nHelper.getOrFallback(playerRef.getLanguage(),
-                    "server.truebackpack.workbench.inventory.armor_" + state, text(slot.nameKey)));
-        }
-    }
-
-    private void updateActiveHotbarSlot(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder cb) {
-        var hotbar = store.getComponent(ref, InventoryComponent.Hotbar.getComponentType());
-        int slot = hotbar == null ? -1 : hotbar.getActiveSlot();
-        if (slot == activeHotbarSlot) return;
-        activeHotbarSlot = slot;
-        boolean visible = hotbar != null && slot >= 0 && slot < hotbar.getInventory().getCapacity();
-        cb.set("#ActiveHotbarSlot.Visible", visible);
-        if (visible) {
-            // The native outline texture has a transparent margin and a diamond below the slot.
-            Anchor anchor = new Anchor();
-            anchor.setLeft(Value.of(slot * 76 - 19));
-            anchor.setTop(Value.of(-19));
-            anchor.setWidth(Value.of(112));
-            anchor.setHeight(Value.of(112));
-            cb.setObject("#ActiveHotbarSlot.Anchor", anchor);
-        }
-    }
-
-    private static String inventoryMount(BackpackWorkbenchInventory.Section section) {
-        return switch (section) {
-            case STORAGE -> "#StorageGrid";
-            case HOTBAR -> "#HotbarGrid";
-            case ARMOR -> "#ArmorGrid";
-            case UTILITY -> "#UtilityGrid";
-        };
-    }
-
-    private static ItemStack copyInventoryStack(ItemStack stack) {
-        return stack.withMetadata(stack.getMetadata() == null ? null : stack.getMetadata().clone());
-    }
-
-    static ItemGridSlot inventoryGridSlot(@Nullable ItemStack stack) {
-        ItemGridSlot slot = new ItemGridSlot();
-        slot.setActivatable(true);
-        if (!ItemStack.isEmpty(stack)) {
-            // CustomUI expects client display metadata, not the server's arbitrary BSON metadata.
-            // Keep full metadata in the real inventory and drag snapshot; send only a display copy here.
-            slot.setItemStack(stack.withMetadata((org.bson.BsonDocument) null));
-            String name = BackpackItemFactory.getCustomName(stack);
-            if (name != null) slot.setName(name);
-        }
-        return slot;
-    }
-
-    @Nullable
-    private static BackpackWorkbenchInventory.Section inventorySection(@Nullable String name) {
-        if (name == null) return null;
-        try {
-            return BackpackWorkbenchInventory.Section.valueOf(name);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
-    @Nullable
-    private static BackpackWorkbenchInventory.Section inventorySection(@Nullable Integer sectionId) {
-        if (sectionId == null) return null;
-        return switch (sectionId) {
-            case InventoryComponent.STORAGE_SECTION_ID -> BackpackWorkbenchInventory.Section.STORAGE;
-            case InventoryComponent.HOTBAR_SECTION_ID -> BackpackWorkbenchInventory.Section.HOTBAR;
-            case InventoryComponent.ARMOR_SECTION_ID -> BackpackWorkbenchInventory.Section.ARMOR;
-            case InventoryComponent.UTILITY_SECTION_ID -> BackpackWorkbenchInventory.Section.UTILITY;
-            default -> null;
-        };
-    }
-
-    private void rememberInventoryDrag(Ref<EntityStore> ref, Store<EntityStore> store, PageData data) {
-        var section = inventorySection(data.target);
-        ItemStack[] slots = displayedInventory.get(section);
-        if (slots == null || data.slotIndex == null || data.slotIndex < 0 || data.slotIndex >= slots.length) return;
-        ItemStack stack = slots[data.slotIndex];
-        if (ItemStack.isEmpty(stack)) return;
-        ItemContainer container = BackpackWorkbenchInventory.container(ref, store, section);
-        if (container == null) return;
-        selectedSection = section;
-        selectedSlot = data.slotIndex.shortValue();
-        selectedContainer = container;
-        // Dragging only carries a visual copy; the real stack remains in its container until a valid drop.
-        selectedStack = copyInventoryStack(stack);
-        inventoryDragInvalidated = false;
-    }
-
-    private void handleInventoryDrop(Ref<EntityStore> ref, Store<EntityStore> store, PageData data) {
-        var destination = inventorySection(data.target);
-        var source = inventorySection(data.sourceSectionId != null ? data.sourceSectionId : data.dragSourceSectionId);
-        Integer sourceSlot = data.sourceSlotId != null ? data.sourceSlotId : data.dragSourceSlotId;
-        if (source == null && sourceSlot == null) {
-            source = selectedSection;
-            sourceSlot = (int) selectedSlot;
-        }
-        ItemContainer target = destination == null ? null : BackpackWorkbenchInventory.container(ref, store, destination);
-        ItemStack[] sourceSlots = displayedInventory.get(source);
-        if (target == null || data.slotIndex == null || data.slotIndex < 0 || data.slotIndex >= target.getCapacity()
-                || sourceSlots == null || sourceSlot == null || sourceSlot < 0 || sourceSlot >= sourceSlots.length) {
-            inventoryStatus = text("inventory.blocked");
-            clearInventorySelection();
-            return;
-        }
-        ItemStack expected = source == selectedSection && sourceSlot == selectedSlot ? selectedStack : sourceSlots[sourceSlot];
-        String id = data.itemStackId != null ? data.itemStackId : data.dragItemStackId;
-        Integer quantity = data.itemStackQuantity != null ? data.itemStackQuantity : data.dragItemStackQuantity;
-        if ((inventoryDragInvalidated && source == selectedSection && sourceSlot == selectedSlot)
-                || ItemStack.isEmpty(expected) || (id != null && !id.equals(expected.getItemId()))) {
-            inventoryStatus = text("inventory.changed");
-        } else if (source == destination && sourceSlot.equals(data.slotIndex)) {
-            inventoryStatus = "";
-        } else {
-            boolean moved = BackpackWorkbenchInventory.move(ref, store, source, sourceSlot.shortValue(), destination,
-                    data.slotIndex.shortValue(), expected, quantity == null ? expected.getQuantity() : quantity);
-            inventoryStatus = moved ? "" : text("inventory.blocked");
-        }
-        clearInventorySelection();
-    }
-
-    private void clearInventorySelection() {
-        selectedSection = null;
-        selectedContainer = null;
-        selectedStack = null;
-        inventoryDragInvalidated = false;
-    }
-
-    private void startStatsUpdates(Ref<EntityStore> ref, Store<EntityStore> store) {
-        var world = store.getExternalData().getWorld();
-        pendingStats = PREVIEW_TIMER.scheduleAtFixedRate(() -> world.execute(() -> {
-            if (dismissed || !ref.isValid()) {
-                stopInventoryUpdates();
-                return;
-            }
-            var player = store.getComponent(ref, Player.getComponentType());
-            if (player == null || player.getPageManager().getCustomPage() != this) {
-                stopInventoryUpdates();
-                return;
-            }
-            if (benchPosition != null && !isBenchAvailable(ref, store)) {
-                player.getPageManager().setPage(ref, store, Page.None);
-                return;
-            }
-            var cb = new UICommandBuilder();
-            updatePlayerStats(ref, store, cb);
-            updateActiveHotbarSlot(ref, store, cb);
-            updateArmorVisibility(ref, store, cb);
-            if (cb.getCommands().length > 0) sendUpdate(cb, new UIEventBuilder(), false);
-        }), 1, 1, java.util.concurrent.TimeUnit.SECONDS);
-    }
-
-    private void stopInventoryUpdates() {
-        if (pendingStats != null) pendingStats.cancel(false);
-        inventoryListeners.values().forEach(EventRegistration::unregister);
-        inventoryListeners.clear();
-    }
-
-    private void updatePlayerStats(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder cb) {
-        var stats = store.getComponent(ref, com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap.getComponentType());
-        String health = statText(stats, com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes.getHealth());
-        String stamina = statText(stats, com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes.getStamina());
-        String mana = statText(stats, com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes.getMana());
-        String defense = "0%";
-        var armor = BackpackWorkbenchInventory.container(ref, store, BackpackWorkbenchInventory.Section.ARMOR);
-        if (armor != null) {
-            var physical = com.hypixel.hytale.server.core.modules.entity.damage.DamageCause.getAssetMap().getAsset("Physical");
-            var effects = store.getComponent(ref, com.hypixel.hytale.server.core.entity.effect.EffectControllerComponent.getComponentType());
-            var resistance = com.hypixel.hytale.server.core.modules.entity.damage.DamageSystems.ArmorDamageReduction
-                    .getResistanceModifiers(store.getExternalData().getWorld(), armor,
-                            com.hypixel.hytale.server.core.entity.ItemUtils.canApplyItemStackPenalties(ref, store), effects).get(physical);
-            if (resistance != null) defense = Math.round(Math.clamp(resistance.multiplierModifier * 100f, 0f, 100f)) + "%";
-        }
-        String snapshot = health + ":" + stamina + ":" + mana + ":" + defense;
-        if (snapshot.equals(statsSnapshot)) return;
-        statsSnapshot = snapshot;
-        cb.set("#StatHealth.Text", health);
-        cb.set("#StatStamina.Text", stamina);
-        cb.set("#StatMana.Text", mana);
-        cb.set("#StatDefense.Text", defense);
-    }
-
-    private static String statText(@Nullable com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap stats, int id) {
-        var stat = stats == null ? null : stats.get(id);
-        return stat == null ? "—" : Math.round(stat.get()) + " / " + Math.round(stat.getMax());
-    }
-
-    private void sendInventoryRefresh(Ref<EntityStore> ref, Store<EntityStore> store) {
-        var active = findActiveBackpack(ref, store);
-        if (!"personalize".equals(currentTab) || active == null || !sameEditedBackpack(active)) {
-            sendRefresh(ref, store);
-            return;
-        }
-        // Keep unsaved text, picker focus and the prepared model when another inventory slot changes.
-        var cb = new UICommandBuilder();
-        var eb = new UIEventBuilder();
-        refreshInventoryPanels(ref, store, cb, eb);
-        updateBenchPanel(cb, playerRef.getLanguage());
-        updateHeader(active, cb, playerRef.getLanguage());
-        sendUpdate(cb, eb, false);
-    }
-
-    private void sendRefresh(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
-        UICommandBuilder cb = new UICommandBuilder();
-        UIEventBuilder eb = new UIEventBuilder();
-        refreshPage(ref, store, cb, eb);
-        sendUpdate(cb, eb, false);
+        }, 1, 1, java.util.concurrent.TimeUnit.SECONDS);
     }
 
     private boolean isBenchAvailable(Ref<EntityStore> ref, Store<EntityStore> store) {
@@ -1370,33 +1026,41 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         window.onChanged(() -> scheduleRefresh(ref, store));
         window.registerCloseEvent(event -> {
             world.execute(() -> {
-                if (!dismissed && ref.isValid() && player.getPageManager().getCustomPage() == this)
-                    player.getPageManager().setPage(ref, store, Page.None);
+                if (!dismissed && activeContext != null && activeContext.isActive())
+                    activeContext.requestClose();
             });
         });
-        if (!player.getPageManager().openCustomPageWithWindows(ref, store, this, window)) {
-            bench.getWindows().remove(uuid, window);
+        try {
+            if (!CustomInventoryPlugin.get().openView(ref, store, playerRef, definition(), extension(), window)) {
+                abortCraftingSession(ref, store, player, bench, uuid, window);
+            }
+        } catch (RuntimeException | Error failure) {
+            abortCraftingSession(ref, store, player, bench, uuid, window);
+            throw failure;
         }
     }
 
+    private void abortCraftingSession(Ref<EntityStore> ref, Store<EntityStore> store, Player player,
+            com.hypixel.hytale.builtin.crafting.component.BenchBlock bench, UUID uuid, BackpackCraftingWindow window) {
+        window.onChanged(null);
+        bench.getWindows().remove(uuid, window);
+        var windows = player.getWindowManager();
+        if (window.getId() > 0 && windows.getWindow(window.getId()) == window) {
+            windows.closeWindow(ref, window.getId(), store);
+        }
+        if (activeContext != null) onDismiss(activeContext);
+    }
+
     private void scheduleRefresh(Ref<EntityStore> ref, Store<EntityStore> store) {
-        if (dismissed || !refreshQueued.compareAndSet(false, true)) return;
-        store.getExternalData().getWorld().execute(() -> {
-            refreshQueued.set(false);
-            if (dismissed || !ref.isValid()) return;
-            var player = store.getComponent(ref, Player.getComponentType());
-            if (player != null && player.getPageManager().getCustomPage() == this) {
-                if (benchPosition != null && !isBenchAvailable(ref, store)) player.getPageManager().setPage(ref, store, Page.None);
-                else sendInventoryRefresh(ref, store);
-            }
-        });
+        if (!dismissed && activeContext != null) activeContext.requestRefresh();
     }
 
     @Override
-    public void onDismiss(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
+    public void onDismiss(InventoryContext context) {
+        if (dismissed) return;
         dismissed = true;
-        stopInventoryUpdates();
-        clearInventorySelection();
+        ACTIVE.remove(this);
+        if (pendingBenchCheck != null) pendingBenchCheck.cancel(false);
         preview.close(playerRef);
         previewRevision++;
         if (pendingPreview != null) pendingPreview.cancel(false);
@@ -1406,6 +1070,10 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
             // races its CloseWindow packet and causes "Window id is invalid".
             craftingWindow.onChanged(null);
         }
+        activeContext = null;
+        contentSelector = null;
+        editedContainer = null;
+        editedStack = null;
     }
 
     private List<com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe> eligibleRecipes() {
@@ -1462,47 +1130,60 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         return material.getQuantity() + " × " + I18nHelper.resolveItemName(id, lang);
     }
 
-    private void updateBenchPanel(UICommandBuilder cb, String lang) {
+    private void updateBenchPanel(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder cb) {
         cb.set("#BenchPanel.Visible", craftingWindow != null);
         if (craftingWindow == null) return;
         cb.set("#BenchName.Text", text(craftingWindow.isMaster() ? "bench.master_name" : "bench.apprentice"));
-        cb.set("#BenchLevel.Text", text("level") + " " + (craftingWindow.isMaster() ? "2 / 2" : "1 / 2"));
-        cb.set("#BenchPreview.ItemId", craftingWindow.isMaster()
-                ? "Backpack_Workbench_Master" : "Backpack_Workbench_Apprentice");
-        cb.set("#BenchUpgradeButton.Text", text("bench.upgrade"));
+        cb.set("#BenchLevel.TextSpans", Message.translation("client.inventory.bench.tierLevelX")
+                .param("level", craftingWindow.tier()));
+        String benchItemId = craftingWindow.isMaster()
+                ? "Backpack_Workbench_Master" : "Backpack_Workbench_Apprentice";
+        cb.set("#BenchPreview.ItemId", benchItemId);
+        var benchItem = com.hypixel.hytale.server.core.asset.type.item.config.Item.getAssetMap().getAsset(benchItemId);
+        cb.set("#BenchInfoButton.TooltipTextSpans", benchItem == null
+                ? Message.raw("") : benchItem.getDescriptionTranslationMessage());
+        cb.set("#BenchInfoButton.Visible", benchItem != null);
         var requirement = craftingWindow.upgradeRequirement();
-        cb.set("#BenchUpgradeButton.Visible", requirement != null);
-        cb.set("#BenchRequirements.Visible", requirement != null);
-        // Anchor is one markup property; its fields cannot be addressed by nested Set selectors.
-        Anchor benchAnchor = new Anchor();
-        benchAnchor.setLeft(Value.of(1162));
-        benchAnchor.setTop(Value.of(0));
-        benchAnchor.setWidth(Value.of(320));
-        benchAnchor.setHeight(Value.of(requirement == null ? 320 : 460));
-        cb.setObject("#BenchPanel.Anchor", benchAnchor);
-        cb.set("#BenchMax.Text", requirement == null ? text("bench.master") : text("bench.cost"));
+        cb.set("#BenchTierUpgrade.Visible", requirement != null);
+        cb.set("#BenchMax.Visible", requirement == null);
+        cb.set("#BenchNextRequirements.TextSpans",
+                Message.translation("client.inventory.bench.tierLevelX.requirements")
+                        .param("level", craftingWindow.tier() + 1));
         cb.clear("#BenchRequirements");
+        boolean materialsReady = false;
         if (requirement != null) {
+            var inventory = new com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer(
+                    InventoryComponent.getCombined(store, ref, InventoryComponent.BACKPACK_STORAGE_HOTBAR),
+                    craftingWindow.getExtraResourcesSection().getItemContainer());
+            materialsReady = inventory.canRemoveMaterials(Arrays.asList(requirement.getInput()));
             for (int i = 0; i < requirement.getInput().length && i < 4; i++) {
                 cb.append("#BenchRequirements", "Pages/BackpackBenchMaterial.ui");
                 String selector = "#BenchRequirements[" + i + "]";
-                cb.set(selector + " #BenchMaterial.ItemId", materialIcon(requirement.getInput()[i]));
-                cb.set(selector + " #BenchCost.Text", "× " + requirement.getInput()[i].getQuantity());
+                var material = requirement.getInput()[i];
+                int owned = inventory.countRemovableMaterial(material);
+                cb.set(selector + " #BenchMaterial.ItemId", materialIcon(material));
+                cb.set(selector + " #BenchCost.Text", owned + "/" + material.getQuantity());
+                cb.set(selector + " #BenchCost.Style.TextColor",
+                        owned >= material.getQuantity() ? "#ccd3dd" : "#e54545");
             }
         }
         var data = craftingWindow.getData();
         int chestCount = data.has("nearbyChestCount") ? data.get("nearbyChestCount").getAsInt() : 0;
         int chestLimit = data.has("maxChestCount") ? data.get("maxChestCount").getAsInt() : 0;
-        cb.set("#BenchNearbyChests.Text", I18nHelper.getOrFallback(lang,
-                "server.truebackpack.workbench.bench.nearby_chests", chestCount, chestLimit));
+        cb.set("#BenchNearbyChests.Text", "× " + chestCount + "/" + chestLimit);
+        cb.set("#BenchChestInfoButton.TooltipTextSpans", Message.translation("client.inventory.bench.chestInfo")
+                .param("horizontalRadius", data.has("chestHorizontalRadius") ? data.get("chestHorizontalRadius").getAsInt() : 0)
+                .param("verticalRadius", data.has("chestVerticalRadius") ? data.get("chestVerticalRadius").getAsInt() : 0)
+                .param("maxChests", chestLimit));
         float progress = data.has("tierUpgradeProgress") ? data.get("tierUpgradeProgress").getAsFloat() : 0;
-        cb.set("#BenchProgressContainer.Visible", progress > 0 && requirement != null);
         cb.set("#BenchProgressBar.Value", Math.clamp(progress, 0f, 1f));
-        cb.set("#BenchUpgradeButton.Disabled", progress > 0);
+        var player = store.getComponent(ref, Player.getComponentType());
+        boolean creative = player != null && player.getGameMode() == com.hypixel.hytale.protocol.GameMode.Creative;
+        cb.set("#BenchUpgradeButton.Disabled", requirement == null || progress > 0 || !(creative || materialsReady));
     }
 
     private void buildCraftingTab(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder cb,
-            UIEventBuilder eb, String lang) {
+            InventoryEventBindings eb, String lang, boolean mount) {
         var inventory = craftingWindow == null ? null : new com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer(
                 InventoryComponent.getCombined(store, ref, InventoryComponent.BACKPACK_STORAGE_HOTBAR),
                 craftingWindow.getExtraResourcesSection().getItemContainer());
@@ -1513,11 +1194,18 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
         var recipes = eligibleRecipes();
         if (selectedRecipeId == null || recipes.stream().noneMatch(r -> r.getId().equals(selectedRecipeId) && recipeUnlocked(r, store)))
             selectedRecipeId = recipes.stream().filter(r -> recipeUnlocked(r, store)).map(r -> r.getId()).findFirst().orElse(null);
-        cb.append("#CraftingContent", "Pages/BackpackCraftingPanel.ui");
+        if (mount) cb.append("#CraftingContent", "Pages/BackpackCraftingPanel.ui");
+        // Rebind every mounted control together when the host advances its content event generation.
+        eb.addEventBinding(CustomUIEventBindingType.Activating, "#CraftButton",
+                new EventData().append("Action", "CraftRecipe"));
         cb.set("#RecipeDetails.Visible", selectedRecipeId != null);
         String grid = "#CraftingContent[0] #RecipeGrid";
+        var recipeIds = recipes.stream().map(recipe -> recipe.getId()).toList();
+        boolean mountRecipes = mount || !recipeIds.equals(mountedRecipes);
+        if (mountRecipes && !mount) cb.clear(grid);
+        mountedRecipes = recipeIds;
         for (int i = 0; i < recipes.size(); i++) {
-            if (i % 3 == 0) cb.append(grid, "Pages/BackpackRecipeGridRow.ui");
+            if (mountRecipes && i % 3 == 0) cb.append(grid, "Pages/BackpackRecipeGridRow.ui");
             String row = grid + "[" + (i / 3) + "]";
             int column = i % 3;
             var candidate = recipes.get(i);
@@ -1546,8 +1234,12 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                         store.getExternalData().getWorld().getGameplayConfig()));
                 cb.set(row + " #SelectRecipe" + column + ".TooltipTextSpans", tooltip);
                 cb.set(row + " #MemoryLocked" + column + ".TooltipTextSpans", tooltip);
+            } else {
+                // Text-span resets must use the formatted-message payload, not BSON null.
+                cb.set(row + " #SelectRecipe" + column + ".TooltipTextSpans", Message.raw(""));
+                cb.set(row + " #MemoryLocked" + column + ".TooltipTextSpans", Message.raw(""));
             }
-            if (memory) eb.addEventBinding(CustomUIEventBindingType.Activating, row + " #SelectRecipe" + column,
+            eb.addEventBinding(CustomUIEventBindingType.Activating, row + " #SelectRecipe" + column,
                     new EventData().append("Action", "SelectRecipe").append("Target", candidate.getId()));
         }
         int remainder = recipes.size() % 3;
@@ -1592,8 +1284,6 @@ public class BackpackWorkbenchPage extends InteractiveCustomUIPage<BackpackWorkb
                 cb.set(sel + " #MemoryLockLabel.Text", memoryLabel(gate));
             }
             cb.set(sel + " #RecipeStatus.Text", !known ? text("craft.unknown") : !materials && !creative ? text("craft.materials") : "");
-            eb.addEventBinding(CustomUIEventBindingType.Activating, sel + " #CraftButton",
-                    new EventData().append("Action", "CraftRecipe").append("Target", recipe.getId()));
         }
     }
 

@@ -1,127 +1,44 @@
 $C = "../Common.ui";
-
-@PanelTitleStyle = LabelStyle(FontSize: 14, RenderBold: true, RenderUppercase: true, TextColor: #bdcbd3, HorizontalAlignment: Start, VerticalAlignment: Center, ShrinkTextToFit: true);
-@BenchUpgradeLabelStyle = LabelStyle(...$C.@DefaultButtonLabelStyle, FontSize: 13);
-@BenchUpgradeButtonStyle = TextButtonStyle(
-  Default: (Background: $C.@DefaultButtonDefaultBackground, LabelStyle: @BenchUpgradeLabelStyle),
-  Hovered: (Background: $C.@DefaultButtonHoveredBackground, LabelStyle: @BenchUpgradeLabelStyle),
-  Pressed: (Background: $C.@DefaultButtonPressedBackground, LabelStyle: @BenchUpgradeLabelStyle),
-  Disabled: (Background: $C.@DefaultButtonDisabledBackground, LabelStyle: (...@BenchUpgradeLabelStyle, TextColor: $C.@ColorDisabled)),
-  Sounds: $C.@ButtonSounds
-);
-
-// Keep the workbench, equipment and inventory together throughout every tab.
-SceneBlur {}
-$C.@PageOverlay {}
-
-Group #WorkbenchRoot {
-  Anchor: (Width: 1482, Height: 938);
-
-  Group #CenterColumn {
-    Anchor: (Left: 426, Top: 0, Width: 720, Height: 938);
-    LayoutMode: Top;
-
-    $C.@Container #WorkbenchPanel {
-      Anchor: (Height: 470, Bottom: 14);
-      #Title {
-        Label #PageTitle {
-          Anchor: (Full: 0);
-          Padding: (Horizontal: 19);
-          Style: @PanelTitleStyle;
-          Text: "Backpack Workbench";
-        }
-      }
-      #Content {
-        LayoutMode: Top;
-        Padding: (Horizontal: 12, Vertical: 6);
-        Group #Main {
-          FlexWeight: 1;
-          LayoutMode: Top;
-          Group #BackpackHeader {
-            Anchor: (Height: 48, Bottom: 6);
-            Padding: (Full: 3);
-            LayoutMode: Left;
-            Background: #141c24(0.9);
-            ItemSlot #CurrentIcon {
-              Anchor: (Width: 42, Height: 42, Right: 10);
-              ShowQualityBackground: true;
-              ShowQuantity: false;
-            }
-            Group #HeaderDetails {
-              FlexWeight: 1;
-              Label #HeaderContext { Anchor: (Left: 0, Right: 160, Top: 0, Height: 16); Style: (FontSize: 11, RenderBold: true, RenderUppercase: true, TextColor: #96a9be, VerticalAlignment: Center, ShrinkTextToFit: true); }
-              Label #CurrentName { Anchor: (Left: 0, Right: 160, Top: 16, Height: 22); Style: (RenderBold: true, FontSize: 15, TextColor: #e6be65, HorizontalAlignment: Start, VerticalAlignment: Center, ShrinkTextToFit: true); }
-              Label #CurrentInfo { Anchor: (Right: 0, Top: 0, Width: 150, Height: 42); Style: (FontSize: 13, TextColor: #bdcbd3, HorizontalAlignment: End, VerticalAlignment: Center, ShrinkTextToFit: true); }
-            }
-          }
-          // Forms keep their footer visible; their long content owns its scrolling.
-          Group #WorkbenchList {
-            FlexWeight: 1;
-            LayoutMode: Top;
-            Padding: (Horizontal: 2, Vertical: 1);
-          }
-          Group #LoadingContainer {
-            FlexWeight: 1;
-            LayoutMode: MiddleCenter;
-            Visible: false;
-            Label #LoadingText {
-              Style: (FontSize: 18, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center, Wrap: true);
-              Text: "Loading...";
-            }
-          }
-          Label #StatusMessage {
-            Anchor: (Height: 28, Top: 4);
-            Padding: (Horizontal: 4);
-            Style: (FontSize: 12, TextColor: #62b78d, HorizontalAlignment: Start, VerticalAlignment: Center, ShrinkTextToFit: true);
-            Visible: false;
-          }
-        }
-      }
+@WorkbenchContentPadding = Padding(Horizontal: 12, Vertical: 6);
+Group #Main {
+  FlexWeight: 1;
+  LayoutMode: Top;
+  Group #BackpackHeader {
+    Anchor: (Height: 48, Bottom: 6);
+    Padding: (Full: 3);
+    LayoutMode: Left;
+    Background: #141c24(0.9);
+    ItemSlot #CurrentIcon {
+      Anchor: (Width: 42, Height: 42, Right: 10);
+      ShowQualityBackground: true;
+      ShowQuantity: false;
     }
-    Group #InventoryPanelHost { Anchor: (Height: 454); LayoutMode: Top; }
+    Group #HeaderDetails {
+      FlexWeight: 1;
+      Label #HeaderContext { Anchor: (Left: 0, Right: 160, Top: 0, Height: 16); Style: (FontSize: 11, RenderBold: true, RenderUppercase: true, TextColor: #96a9be, VerticalAlignment: Center, ShrinkTextToFit: true); }
+      Label #CurrentName { Anchor: (Left: 0, Right: 160, Top: 16, Height: 22); Style: (RenderBold: true, FontSize: 15, TextColor: #e6be65, HorizontalAlignment: Start, VerticalAlignment: Center, ShrinkTextToFit: true); }
+      Label #CurrentInfo { Anchor: (Right: 0, Top: 0, Width: 150, Height: 42); Style: (FontSize: 13, TextColor: #bdcbd3, HorizontalAlignment: End, VerticalAlignment: Center, ShrinkTextToFit: true); }
+    }
   }
-
-  Group #PlayerPanelHost { Anchor: (Left: 0, Top: 0, Width: 410, Height: 720); LayoutMode: Top; }
-
-  $C.@DecoratedContainer #BenchPanel {
-    Anchor: (Left: 1162, Top: 0, Width: 320, Height: 460);
-    #Title {
-      Label #BenchName { Anchor: (Full: 0); Padding: (Horizontal: 16); Style: (...@PanelTitleStyle, HorizontalAlignment: Center); }
+  // Forms keep their footer visible; their long content owns its scrolling.
+  Group #WorkbenchList {
+    FlexWeight: 1;
+    LayoutMode: Top;
+    Padding: (Horizontal: 2, Vertical: 1);
+  }
+  Group #LoadingContainer {
+    FlexWeight: 1;
+    LayoutMode: MiddleCenter;
+    Visible: false;
+    Label #LoadingText {
+      Style: (FontSize: 18, TextColor: #96a9be, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center, Wrap: true);
+      Text: "Loading...";
     }
-    #Content {
-      LayoutMode: Top;
-      Padding: (Horizontal: 12, Vertical: 12);
-      Label #BenchLevel { Anchor: (Height: 32); Style: (FontSize: 16, RenderBold: true, TextColor: #ccd3dd, HorizontalAlignment: Center, VerticalAlignment: Center); }
-      Group {
-        Anchor: (Height: 136, Top: 6);
-        LayoutMode: MiddleCenter;
-        ItemPreviewComponent #BenchPreview { Anchor: (Width: 150, Height: 132); ItemScale: 0.7; }
-      }
-      Label #BenchNearbyChests {
-        Anchor: (Height: 24, Top: 4);
-        Style: (FontSize: 12, TextColor: #ccd3dd, HorizontalAlignment: Center, VerticalAlignment: Center, ShrinkTextToFit: true);
-      }
-      Label #BenchMax {
-        Anchor: (Height: 30, Top: 10);
-        Background: #0c151e(0.55);
-        Style: (FontSize: 12, RenderBold: true, RenderUppercase: true, TextColor: #bdcbd3, HorizontalAlignment: Center, VerticalAlignment: Center, ShrinkTextToFit: true);
-      }
-      Group #BenchRequirements { Anchor: (Height: 80, Top: 6); LayoutMode: Left; }
-      TextButton #BenchUpgradeButton { Anchor: (Height: 38, Top: 8); Text: "Upgrade"; Style: @BenchUpgradeButtonStyle; }
-      Group #BenchProgressContainer {
-        Anchor: (Height: 10, Top: 6);
-        Visible: false;
-        ProgressBar #BenchProgressBar {
-          Anchor: (Full: 0);
-          Value: 0;
-          Background: "../Common/ProgressBar.png";
-          BarTexturePath: "../Common/ProgressBarFill.png";
-          EffectTexturePath: "../Common/ProgressBarEffect.png";
-          EffectWidth: 53;
-          EffectHeight: 30;
-          EffectOffset: 38;
-        }
-      }
-    }
+  }
+  Label #StatusMessage {
+    Anchor: (Height: 28, Top: 4);
+    Padding: (Horizontal: 4);
+    Style: (FontSize: 12, TextColor: #62b78d, HorizontalAlignment: Start, VerticalAlignment: Center, ShrinkTextToFit: true);
+    Visible: false;
   }
 }

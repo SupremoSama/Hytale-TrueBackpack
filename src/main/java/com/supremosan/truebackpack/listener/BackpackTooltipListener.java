@@ -27,8 +27,17 @@ public class BackpackTooltipListener {
     private static final ThreadLocal<Boolean> PROCESSING =
             ThreadLocal.withInitial(() -> false);
 
-    public static void register() {
-        PacketAdapters.registerOutbound(BackpackTooltipListener::onOutbound);
+    private static com.hypixel.hytale.server.core.io.adapter.PacketFilter registration;
+
+    public static synchronized void register() {
+        if (registration == null) registration = PacketAdapters.registerOutbound(BackpackTooltipListener::onOutbound);
+    }
+
+    public static synchronized void unregister() {
+        if (registration != null) {
+            PacketAdapters.deregisterOutbound(registration);
+            registration = null;
+        }
     }
 
     private static void onOutbound(@Nonnull PlayerRef playerRef,

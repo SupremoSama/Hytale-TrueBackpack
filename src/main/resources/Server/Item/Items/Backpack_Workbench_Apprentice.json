@@ -135,18 +135,12 @@
     ],
     "BenchRequirement": [
       {
-        "Id": "Fieldcraft",
-        "Type": "Crafting",
-        "Categories": [
-          "Tools"
-        ]
-      },
-      {
         "Id": "Workbench",
         "Type": "Crafting",
         "Categories": [
           "Workbench_Crafting"
-        ]
+        ],
+        "RequiredTierLevel": 2
       }
     ]
   },

@@ -1,0 +1,26 @@
+$C = "../Common.ui";
+@CharacterPanelButtonStyle = ButtonStyle(Default: (Background: "../BackpackNative/CharacterPanelButton.png"), Sounds: $C.@ButtonSounds);
+Group #BackpackWorkbenchNavigation {
+  Anchor: (Full: 0);
+  Button #CharacterCraftingButton {
+    Anchor: (Left: 1, Top: 4, Width: 70, Height: 70);
+    Style: @CharacterPanelButtonStyle;
+    TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+    Group #CharacterCraftingActive { Anchor: (Full: 0); Background: "../BackpackNative/CharacterPanelButtonActive.png"; Visible: false; HitTestVisible: false; }
+    Group { Anchor: (Width: 48, Height: 48); Background: "../BackpackNative/PocketCraftingIcon.png"; HitTestVisible: false; }
+  }
+  Button #CharacterVisibilityButton {
+    Anchor: (Left: 1, Top: 71, Width: 70, Height: 70);
+    Style: @CharacterPanelButtonStyle;
+    TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+    Group #CharacterVisibilityActive { Anchor: (Full: 0); Background: "../BackpackNative/CharacterPanelButtonActive.png"; Visible: false; HitTestVisible: false; }
+    Group { Anchor: (Width: 32, Height: 32); Background: "../BackpackNative/ArmorVisibilityOn.png"; HitTestVisible: false; }
+  }
+  Button #CharacterPersonalizeButton {
+    Anchor: (Left: 1, Top: 138, Width: 70, Height: 70);
+    Style: @CharacterPanelButtonStyle;
+    TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+    Group #CharacterPersonalizeActive { Anchor: (Full: 0); Background: "../BackpackNative/CharacterPanelButtonActive.png"; Visible: false; HitTestVisible: false; }
+    Group { Anchor: (Width: 50, Height: 50); Background: "../BackpackNative/BackpackIcon.png"; HitTestVisible: false; }
+  }
+}

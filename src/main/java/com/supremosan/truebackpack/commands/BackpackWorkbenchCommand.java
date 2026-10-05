@@ -32,6 +32,6 @@ public class BackpackWorkbenchCommand extends AbstractPlayerCommand {
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player == null) return;
 
-        player.getPageManager().openCustomPage(ref, store, new BackpackWorkbenchPage(playerRef));
+        BackpackWorkbenchPage.open(ref, store, playerRef);
     }
 }

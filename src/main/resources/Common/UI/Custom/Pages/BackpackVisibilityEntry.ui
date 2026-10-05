@@ -51,11 +51,5 @@ Group #VisibilityEntry {
       Style: @VisibilityButtonStyle;
     }
 
-    TextButton #ToggleHiddenButton {
-      Anchor: (Height: 42);
-      Text: "Show";
-      Visible: false;
-      Style: @VisibilityButtonStyle;
-    }
   }
 }

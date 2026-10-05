@@ -13,3 +13,6 @@ plugins {
 }
 
 rootProject.name = "TrueBackpack"
+
+// Build the reusable dependency from this workspace without publishing it.
+includeBuild("../Hytale-CustomInventory")

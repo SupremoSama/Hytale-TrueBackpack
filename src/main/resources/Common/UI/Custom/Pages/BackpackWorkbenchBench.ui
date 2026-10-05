@@ -1,0 +1,99 @@
+$C = "../Common.ui";
+
+// BenchInfoPanel.ui dimensions; the host supplies its native Top: 180 placement.
+@BenchPanelWidth = 410;
+@BenchPanelHeight = 600;
+
+$C.@DecoratedContainer #BenchPanel {
+  Anchor: (Left: 0, Top: 0, Width: @BenchPanelWidth, Height: @BenchPanelHeight);
+  #Title {
+    $C.@Title #BenchName {}
+  }
+  #Content {
+    Label #BenchLevel {
+      Anchor: (Height: 24);
+      Style: (FontSize: 17, RenderBold: true, TextColor: #ccd3dd, HorizontalAlignment: Center, VerticalAlignment: Center);
+    }
+    Group { FlexWeight: 1; }
+    ItemPreviewComponent #BenchPreview {
+      Anchor: (Height: 200);
+      Padding: (Full: 10);
+      Button #BenchInfoButton {
+        Anchor: (Width: 24, Height: 24, Top: 0, Right: 0);
+        Background: "../BackpackNative/InfoIcon.png";
+        TextTooltipStyle: (...$C.@DefaultTextTooltipStyle, Alignment: TopLeft);
+      }
+    }
+    Group #BenchNearbyChestGroup {
+      Anchor: (Height: 24, Top: 5);
+      LayoutMode: MiddleCenter;
+      Group {
+        Anchor: (Height: 24);
+        LayoutMode: Left;
+        Group {
+          Anchor: (Width: 16, Height: 16, Top: 4);
+          Background: "../BackpackNative/Chest.png";
+        }
+        Label #BenchNearbyChests {
+          Anchor: (Height: 24, Right: 4);
+          Style: (FontSize: 14, TextColor: #ccd3dd, VerticalAlignment: Center);
+        }
+        Button #BenchChestInfoButton {
+          Anchor: (Width: 16, Height: 16, Top: 4);
+          Background: "../BackpackNative/InfoIcon.png";
+          TextTooltipStyle: (...$C.@DefaultTextTooltipStyle, Alignment: TopLeft);
+        }
+      }
+    }
+    Group { FlexWeight: 1; }
+    Group #BenchTierUpgrade {
+      Anchor: (Height: 250, Top: 10);
+      LayoutMode: Top;
+      Background: (TexturePath: "../Common/ContainerPanelPatch.png", Border: 4);
+      Label #BenchNextRequirements {
+        Anchor: (Height: 35, Horizontal: 8);
+        Style: (FontSize: 15, RenderBold: true, RenderUppercase: true, TextColor: #ccd3dd, HorizontalAlignment: Center, VerticalAlignment: Center);
+      }
+      Group { Anchor: (Height: 2, Bottom: 10); Background: #1b2533; }
+      Group {
+        FlexWeight: 1;
+        LayoutMode: MiddleCenter;
+        Group {
+          Anchor: (Height: 98);
+          Padding: 8;
+          Background: (TexturePath: "../Common/ContainerPanelPatch.png", Border: 4);
+          LayoutMode: MiddleCenter;
+          Group #BenchRequirements { Anchor: (Height: 82); LayoutMode: Left; }
+        }
+      }
+      Group { Anchor: (Height: 1); Background: #1b2533; }
+      Group {
+        Anchor: (Height: 104);
+        Padding: 10;
+        Group #BenchProgressContainer {
+          Anchor: (Height: 10, Top: 2);
+          Background: "../Common/ProgressBar.png";
+          ProgressBar #BenchProgressBar {
+            Anchor: (Height: 10, Width: 350);
+            Value: 0;
+            BarTexturePath: "../Common/ProgressBarFill.png";
+            EffectTexturePath: "../Common/ProgressBarEffect.png";
+            EffectWidth: 53;
+            EffectHeight: 30;
+            EffectOffset: 38;
+          }
+        }
+        $C.@TextButton #BenchUpgradeButton {
+          @Text = %client.inventory.bench.tier.button.upgrade;
+          @Anchor = Anchor(Top: 30, Width: 244, Bottom: 10);
+        }
+      }
+    }
+    $C.@TextButton #BenchMax {
+      @Text = %client.inventory.bench.tier.max;
+      @Anchor = Anchor(Top: 50, Width: 244);
+      Disabled: true;
+      Visible: false;
+    }
+  }
+}

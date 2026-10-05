@@ -48,6 +48,8 @@ public class TrueBackpack extends JavaPlugin {
 
     @Override
     protected void setup() {
+        // Dependency metadata orders setup; fail clearly if a partial load violates it.
+        com.supremosan.custominventory.CustomInventoryPlugin.get();
         try {
             BackpackConfigService.reloadAndRegister(JUL);
             HatConfigService.reloadAndRegister(JUL);
@@ -96,6 +98,12 @@ public class TrueBackpack extends JavaPlugin {
                 com.supremosan.truebackpack.interactions.BackpackWorkbenchInteraction.CODEC);
 
         LOGGER.atInfo().log("[TrueBackpack] Setup complete");
+    }
+
+    @Override
+    protected void shutdown() {
+        try { com.supremosan.truebackpack.ui.BackpackWorkbenchPage.closeAll(); }
+        finally { BackpackTooltipListener.unregister(); }
     }
 
     @Override

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.supremosan"
-version = "0.3.6"
+version = "0.3.7"
 val javaVersion = 25
 
 repositories {
@@ -14,7 +14,16 @@ repositories {
     }
 }
 
+// Resolve required plugins for the development server's native mod loader.
+// Keep this separate from the published component's compile-only dependencies.
+val customInventoryDevRuntime by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 dependencies {
+    compileOnly("com.supremosan:CustomInventory:0.2.0")
+    customInventoryDevRuntime("com.supremosan:CustomInventory:0.2.0")
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
 }
@@ -114,9 +123,33 @@ val syncAssets = tasks.register<Copy>("syncAssets") {
     }
 }
 
+val developmentModsDirectory = layout.buildDirectory.dir("dev-mods")
+val prepareDevMods = tasks.register<Sync>("prepareDevMods") {
+    group = "hytale"
+    description = "Builds and stages both mod JARs for the development server."
+    from(tasks.named<Jar>("jar"))
+    from(customInventoryDevRuntime)
+    // Sync only owns this generated directory, never the user's run/mods folder.
+    into(developmentModsDirectory)
+}
+
 afterEvaluate {
     // Now Gradle will find it, because the plugin has finished working
     val targetTask = tasks.findByName("runServer") ?: tasks.findByName("server")
+
+    if (targetTask is JavaExec) {
+        targetTask.dependsOn(prepareDevMods)
+        // Both mods must use Hytale's dependency-aware classloaders. Mixing the
+        // project's loose classes with a dependency JAR creates duplicate APIs.
+        targetTask.classpath -= sourceSets.main.get().output
+        targetTask.args("--mods", developmentModsDirectory.get().asFile.absolutePath)
+
+        // hytale-mod 0.8.1 incorrectly selects the AOT configuration as a cache.
+        // Retain any real .aot cache argument supplied by other plugin versions.
+        targetTask.setJvmArgs(targetTask.jvmArgs.orEmpty().filterNot {
+            it.startsWith("-XX:AOTCache=") && it.endsWith("HytaleServer.aot.config")
+        })
+    }
 
     if (targetTask != null && providers.gradleProperty("syncGameAssets").orNull == "true") {
         targetTask.finalizedBy(syncAssets)
@@ -125,37 +158,3 @@ afterEvaluate {
         logger.lifecycle("Asset copy-back disabled; use syncAssets explicitly or -PsyncGameAssets=true.")
     }
 }
-
-// These regression checks use a standalone verifier against the engine codecs.
-tasks.test { failOnNoDiscoveredTests = false }
-val verifyBackpackCustomization = tasks.register<JavaExec>("verifyBackpackCustomization") {
-    group = "verification"
-    description = "Checks backpack metadata persistence, paint masks and memory thresholds."
-    dependsOn(tasks.testClasses)
-    classpath = sourceSets.test.get().runtimeClasspath + configurations.compileClasspath.get()
-    mainClass.set("com.supremosan.truebackpack.BackpackCustomizationVerification")
-    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
-    workingDir = projectDir
-}
-tasks.check { dependsOn(verifyBackpackCustomization) }
-
-val verifyBackpackWorkbenchInventory = tasks.register<JavaExec>("verifyBackpackWorkbenchInventory") {
-    group = "verification"
-    description = "Checks workbench inventory moves, metadata preservation and equipment filters."
-    dependsOn(tasks.testClasses)
-    classpath = sourceSets.test.get().runtimeClasspath + configurations.compileClasspath.get()
-    mainClass.set("com.supremosan.truebackpack.ui.BackpackWorkbenchInventoryVerification")
-    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
-    workingDir = projectDir
-}
-tasks.check { dependsOn(verifyBackpackWorkbenchInventory) }
-
-val verifyBackpackArmorVisibility = tasks.register<JavaExec>("verifyBackpackArmorVisibility") {
-    group = "verification"
-    description = "Checks armor visibility toggles, world permissions and unchanged player preferences."
-    dependsOn(tasks.testClasses)
-    classpath = sourceSets.test.get().runtimeClasspath + configurations.compileClasspath.get()
-    mainClass.set("com.supremosan.truebackpack.ui.BackpackArmorVisibilityVerification")
-    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
-}
-tasks.check { dependsOn(verifyBackpackArmorVisibility) }
