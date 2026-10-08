@@ -22,8 +22,8 @@ val customInventoryDevRuntime by configurations.creating {
 }
 
 dependencies {
-    compileOnly("com.supremosan:CustomInventory:0.2.0")
-    customInventoryDevRuntime("com.supremosan:CustomInventory:0.2.0")
+    compileOnly("com.supremosan:CustomInventory:0.1.0")
+    customInventoryDevRuntime("com.supremosan:CustomInventory:0.1.0")
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
 }
@@ -139,6 +139,9 @@ afterEvaluate {
 
     if (targetTask is JavaExec) {
         targetTask.dependsOn(prepareDevMods)
+        providers.gradleProperty("inventoryGestureTrace").orNull?.let {
+            targetTask.systemProperty("custominventory.traceGestures", it)
+        }
         // Both mods must use Hytale's dependency-aware classloaders. Mixing the
         // project's loose classes with a dependency JAR creates duplicate APIs.
         targetTask.classpath -= sourceSets.main.get().output

@@ -239,6 +239,11 @@ public class BackpackWorkbenchPage implements InventoryContent {
         return component == null ? null : component.getInventory();
     }
 
+    private static ItemContainer backpackInventory(Ref<EntityStore> ref, Store<EntityStore> store) {
+        var backpack = store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
+        return backpack != null ? backpack.getInventory() : null;
+    }
+
     private static UICommandBuilder scope(UICommandBuilder builder, String selector) {
         return new InventoryCommands(builder, selector);
     }
@@ -267,6 +272,7 @@ public class BackpackWorkbenchPage implements InventoryContent {
         var active = findActiveBackpack(context.ref(), context.store());
         if ("personalize".equals(currentTab) && currentTab.equals(renderedTab) && active != null && sameEditedBackpack(active)) {
             updateHeader(active, scope(commands, selector), playerRef.getLanguage());
+            applyInputHints(scope(commands, selector));
         } else refreshPage(context.ref(), context.store(), scope(commands, selector), events);
     }
 
@@ -450,13 +456,15 @@ public class BackpackWorkbenchPage implements InventoryContent {
 
         var hotbar = inventory(ref, store, true);
         var storage = inventory(ref, store, false);
+        var backpack = backpackInventory(ref, store);
         var materials = costs.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList();
         for (int i = 0; i < 3; i++) {
             cb.set("#UpgradeMaterialRow" + i + ".Visible", i < materials.size());
             if (i >= materials.size()) continue;
             var material = materials.get(i);
             int count = (hotbar == null ? 0 : countItem(hotbar, material.getKey()))
-                    + (storage == null ? 0 : countItem(storage, material.getKey()));
+                    + (storage == null ? 0 : countItem(storage, material.getKey()))
+                    + (backpack == null ? 0 : countItem(backpack, material.getKey()));
             cb.set("#UpgradeMaterialIcon" + i + ".ItemId", "Wood_Trunk".equals(material.getKey()) ? "Wood_Oak_Trunk" : material.getKey());
             cb.set("#UpgradeMaterial" + i + ".Text", count + " / " + material.getValue() + " × "
                     + ("Wood_Trunk".equals(material.getKey()) ? text("flow.any_trunk") : I18nHelper.resolveItemName(material.getKey(), lang)));
@@ -674,6 +682,7 @@ public class BackpackWorkbenchPage implements InventoryContent {
                 "#PaintExcluded.Text", "personalize.excluded", "#SaveCustomization.Text", "personalize.save_all",
                 "#PreviewTitle.Text", "personalize.preview", "#PreviewHint.Text", "personalize.native_hint").entrySet())
             cb.set(entry.getKey(), text(entry.getValue()));
+        applyInputHints(cb);
         var entries = new ArrayList<com.hypixel.hytale.server.core.ui.DropdownEntryInfo>();
         boolean heli = BackpackRegistry.getByItem(bp.stack().getItemId()).isHelipack();
         for (SkinOption skin : AVAILABLE_SKINS) {
@@ -748,7 +757,17 @@ public class BackpackWorkbenchPage implements InventoryContent {
         cb.clear("#PaintPreviewHost");
         cb.append("#PaintPreviewHost", "Pages/BackpackNativePreview.ui");
         cb.set("#PaintPreview.ItemId", id);
-        cb.set("#PreviewHint.Text", text("personalize.native_hint"));
+        cb.set("#PreviewHint.Text", text(hintKey()));
+    }
+
+    private String hintKey() {
+        return "personalize.native_hint";
+    }
+
+    /** Personalize prompts follow CustomInventory's keyboard/controller mode. */
+    private void applyInputHints(UICommandBuilder cb) {
+        if (!"personalize".equals(renderedTab)) return;
+        cb.set("#PreviewHint.Text", text(hintKey()));
     }
     private static String pickerColor(String value) {
         if (value != null && value.matches("#[0-9a-fA-F]{8}")) value = value.substring(0, 7);
@@ -852,7 +871,15 @@ public class BackpackWorkbenchPage implements InventoryContent {
         }
 
         // Preserve all saved contents!
-        List<ItemStack> contents = BackpackItemFactory.loadContents(oldStack);
+        List<ItemStack> contents;
+        InventoryComponent.Backpack bpComp = store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
+        if (activeBp.isEquippedArmor() && bpComp != null) {
+            contents = new ArrayList<>();
+            var bp = bpComp.getInventory();
+            for (short s = 0; s < bp.getCapacity(); s++) contents.add(bp.getItemStack(s));
+        } else {
+            contents = BackpackItemFactory.loadContents(oldStack);
+        }
         upgraded = BackpackItemFactory.saveContents(upgraded, contents);
 
         // Preserve transmog skin if present
@@ -1184,9 +1211,12 @@ public class BackpackWorkbenchPage implements InventoryContent {
 
     private void buildCraftingTab(Ref<EntityStore> ref, Store<EntityStore> store, UICommandBuilder cb,
             InventoryEventBindings eb, String lang, boolean mount) {
-        var inventory = craftingWindow == null ? null : new com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer(
-                InventoryComponent.getCombined(store, ref, InventoryComponent.BACKPACK_STORAGE_HOTBAR),
-                craftingWindow.getExtraResourcesSection().getItemContainer());
+        var combined = InventoryComponent.getCombined(store, ref, InventoryComponent.BACKPACK_STORAGE_HOTBAR);
+        var extra = craftingWindow != null && craftingWindow.getExtraResourcesSection() != null
+                ? craftingWindow.getExtraResourcesSection().getItemContainer() : null;
+        var inventory = extra != null
+                ? new com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer(combined, extra)
+                : combined;
         var player = store.getComponent(ref, Player.getComponentType());
         boolean creative = player != null && player.getGameMode() == com.hypixel.hytale.protocol.GameMode.Creative;
         int memories = com.hypixel.hytale.builtin.adventure.memories.MemoriesPlugin.get()
@@ -1227,20 +1257,19 @@ public class BackpackWorkbenchPage implements InventoryContent {
             // explain the unlock condition in its native localized tooltip.
             cb.set(row + " #RecipeIcon" + column + ".Visible", memory);
             cb.set(row + " #MemoryLocked" + column + ".Visible", !memory);
-            cb.set(row + " #SelectRecipe" + column + ".Disabled", !memory);
             cb.set(row + " #Unavailable" + column + ".Visible", memory && !allowed);
             if (!memory) {
                 var tooltip = memoryTooltip(BackpackProgression.gate(candidate.getRequiredMemoriesLevel(),
                         store.getExternalData().getWorld().getGameplayConfig()));
-                cb.set(row + " #SelectRecipe" + column + ".TooltipTextSpans", tooltip);
                 cb.set(row + " #MemoryLocked" + column + ".TooltipTextSpans", tooltip);
             } else {
                 // Text-span resets must use the formatted-message payload, not BSON null.
-                cb.set(row + " #SelectRecipe" + column + ".TooltipTextSpans", Message.raw(""));
                 cb.set(row + " #MemoryLocked" + column + ".TooltipTextSpans", Message.raw(""));
             }
-            eb.addEventBinding(CustomUIEventBindingType.Activating, row + " #SelectRecipe" + column,
-                    new EventData().append("Action", "SelectRecipe").append("Target", candidate.getId()));
+            if (memory) {
+                eb.addEventBinding(CustomUIEventBindingType.Activating, row + " #SelectRecipe" + column,
+                        new EventData().append("Action", "SelectRecipe").append("Target", candidate.getId()));
+            }
         }
         int remainder = recipes.size() % 3;
         if (remainder != 0) {
@@ -1344,12 +1373,15 @@ public class BackpackWorkbenchPage implements InventoryContent {
 
         InventoryComponent.Hotbar hotbar = store.getComponent(ref, InventoryComponent.Hotbar.getComponentType());
         InventoryComponent.Storage storage = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        InventoryComponent.Backpack backpackComp = store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
+        ItemContainer backpack = backpackComp != null ? backpackComp.getInventory() : null;
 
         for (Map.Entry<String, Integer> entry : costs.entrySet()) {
             String requiredId = entry.getKey();
             int requiredQty = entry.getValue();
             int count = countItem(hotbar != null ? hotbar.getInventory() : null, requiredId)
-                    + countItem(storage != null ? storage.getInventory() : null, requiredId);
+                    + countItem(storage != null ? storage.getInventory() : null, requiredId)
+                    + countItem(backpack, requiredId);
             if (count < requiredQty) return false;
         }
         return true;
@@ -1364,6 +1396,8 @@ public class BackpackWorkbenchPage implements InventoryContent {
 
         InventoryComponent.Hotbar hotbar = store.getComponent(ref, InventoryComponent.Hotbar.getComponentType());
         InventoryComponent.Storage storage = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        InventoryComponent.Backpack backpackComp = store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
+        ItemContainer backpack = backpackComp != null ? backpackComp.getInventory() : null;
 
         for (Map.Entry<String, Integer> entry : costs.entrySet()) {
             String requiredId = entry.getKey();
@@ -1374,6 +1408,9 @@ public class BackpackWorkbenchPage implements InventoryContent {
             }
             if (toRemove > 0 && storage != null) {
                 toRemove = removeItem(storage.getInventory(), requiredId, toRemove);
+            }
+            if (toRemove > 0 && backpack != null) {
+                toRemove = removeItem(backpack, requiredId, toRemove);
             }
         }
         return true;

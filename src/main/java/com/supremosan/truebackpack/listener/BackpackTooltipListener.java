@@ -6,17 +6,24 @@ import com.hypixel.hytale.protocol.ItemWithAllMetadata;
 import com.hypixel.hytale.protocol.packets.inventory.UpdatePlayerInventory;
 import com.hypixel.hytale.server.core.asset.type.item.config.metadata.ItemDisplayMetadata;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.supremosan.truebackpack.data.BackpackDataStorage;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.ui.BackpackTooltipProvider;
+import com.supremosan.custominventory.CustomInventoryPlugin;
+import com.supremosan.custominventory.api.InventoryItemTooltipContext;
+import com.supremosan.custominventory.api.InventoryItemTooltipDefinition;
+import com.supremosan.custominventory.api.InventoryRegistry;
+import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,16 +35,44 @@ public class BackpackTooltipListener {
             ThreadLocal.withInitial(() -> false);
 
     private static com.hypixel.hytale.server.core.io.adapter.PacketFilter registration;
+    private static InventoryRegistry.Registration customInventoryRegistration;
 
     public static synchronized void register() {
         if (registration == null) registration = PacketAdapters.registerOutbound(BackpackTooltipListener::onOutbound);
+        if (customInventoryRegistration == null) {
+            customInventoryRegistration = CustomInventoryPlugin.get().getInventoryRegistry().registerItemTooltip(
+                    new InventoryItemTooltipDefinition("truebackpack:contents", 0, BackpackTooltipListener::customInventoryTooltip));
+        }
     }
 
     public static synchronized void unregister() {
+        if (customInventoryRegistration != null) {
+            customInventoryRegistration.close();
+            customInventoryRegistration = null;
+        }
         if (registration != null) {
             PacketAdapters.deregisterOutbound(registration);
             registration = null;
         }
+    }
+
+    /** Custom grids read authoritative stacks, so native outbound inventory metadata is not their source. */
+    private static String customInventoryTooltip(InventoryItemTooltipContext item) {
+        ItemStack stack = item.stack();
+        String language = item.inventory().playerRef().getLanguage();
+        if ("ARMOR".equals(item.sectionId()) && item.slot() == 1) {
+            short capacity = BackpackItemFactory.getTotalCapacity(stack);
+            if (capacity == 0) return null;
+            var backpack = item.inventory().store().getComponent(item.inventory().ref(), InventoryComponent.Backpack.getComponentType());
+            List<ItemStack> contents = new ArrayList<>();
+            if (backpack != null) {
+                var container = backpack.getInventory();
+                for (short slot = 0; slot < container.getCapacity(); slot++) contents.add(container.getItemStack(slot));
+            }
+            return BackpackTooltipProvider.buildTooltipFromLiveContents(contents, capacity, language,
+                    BackpackTooltipProvider.buildExtraInfo(stack, language));
+        }
+        return BackpackRegistry.isBackpack(stack.getItemId()) ? BackpackTooltipProvider.buildTooltip(stack, language) : null;
     }
 
     private static void onOutbound(@Nonnull PlayerRef playerRef,
