@@ -108,6 +108,7 @@ public class TrueBackpack extends JavaPlugin {
 
     @Override
     protected void start() {
+        com.supremosan.truebackpack.system.ExtraEquipmentIntegration.register(this);
         this.getEntityStoreRegistry().registerSystem(new HelipackFlySystem(
                 Player.getComponentType(),
                 MovementStatesComponent.getComponentType()

@@ -52,7 +52,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
                     SimpleInstantInteraction.CODEC)
             .build();
 
-    private static final short STORAGE_SLOT = 0;
+    private static final short STORAGE_SLOT = com.supremosan.custominventory.api.ExtraEquipment.BACKPACK;
 
     @Override
     protected void firstRun(
@@ -161,20 +161,17 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             @Nonnull ItemStack heldItem,
             @Nonnull InventoryComponent.Hotbar hotbar) {
 
-        InventoryComponent.Storage storageComp = store.getComponent(owningEntity, InventoryComponent.Storage.getComponentType());
+        var storageComp = com.supremosan.custominventory.api.ExtraEquipment.ensure(owningEntity, store);
         if (storageComp == null) {
             context.getState().state = InteractionState.Failed;
             return;
         }
 
         ItemContainer targetContainer = storageComp.getInventory();
-        ItemStack existing = targetContainer.getItemStack(STORAGE_SLOT);
         short heldSlot = context.getHeldItemSlot();
-
-        targetContainer.setItemStackForSlot(STORAGE_SLOT, heldItem);
-        hotbar.getInventory().setItemStackForSlot(heldSlot, (existing != null && !existing.isEmpty()) ? existing : ItemStack.EMPTY);
-
-        context.getState().state = InteractionState.Finished;
+        var transaction = hotbar.getInventory().moveItemStackFromSlotToSlot(
+                heldSlot, heldItem.getQuantity(), targetContainer, STORAGE_SLOT);
+        context.getState().state = transaction.succeeded() ? InteractionState.Finished : InteractionState.Failed;
     }
 
     private void handleSecondary(

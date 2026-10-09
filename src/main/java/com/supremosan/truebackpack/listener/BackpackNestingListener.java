@@ -82,18 +82,9 @@ public class BackpackNestingListener extends EntityEventSystem<EntityStore, Inve
 
     @Nullable
     private String resolveEquippedFuelItemId(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
-        InventoryComponent.Armor armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
-        if (armorComp != null) {
-            ItemStack chestStack = armorComp.getInventory().getItemStack((short) 1);
-            if (chestStack != null && !chestStack.isEmpty()) {
-                String fuelId = getFuelItemId(chestStack.getItemId());
-                if (fuelId != null) return fuelId;
-            }
-        }
-
-        InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        var storageComp = store.getComponent(ref, com.supremosan.custominventory.api.ExtraEquipment.TYPE);
         if (storageComp != null) {
-            ItemStack storageStack = storageComp.getInventory().getItemStack((short) 0);
+            ItemStack storageStack = storageComp.getInventory().getItemStack(com.supremosan.custominventory.api.ExtraEquipment.BACKPACK);
             if (storageStack != null && !storageStack.isEmpty()) {
                 return getFuelItemId(storageStack.getItemId());
             }

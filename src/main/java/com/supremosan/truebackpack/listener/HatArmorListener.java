@@ -10,6 +10,7 @@ import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.InventoryChangeEvent;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
+import com.supremosan.custominventory.api.ExtraEquipment;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.modules.entity.component.DynamicLight;
@@ -29,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryChangeEvent> {
     private static final String ATTACHMENT_SLOT_KEY = "truebackpack:hat";
-    private static final short HEAD_SLOT = 1;
+    private static final short HEAD_SLOT = ExtraEquipment.HAT;
 
     private static final Map<String, String> LAST_KNOWN_EQUIPPED = new ConcurrentHashMap<>();
     private static final Set<String> PROCESSING_EQUIP = ConcurrentHashMap.newKeySet();
@@ -52,7 +53,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
     @Nullable
     public Query<EntityStore> getQuery() {
         if (QUERY == null) {
-            QUERY = Query.or(InventoryComponent.Storage.getComponentType());
+            QUERY = Query.or(ExtraEquipment.getComponentType());
         }
         return QUERY;
     }
@@ -64,7 +65,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
             @Nonnull Store<EntityStore> store,
             @Nonnull CommandBuffer<EntityStore> commandBuffer,
             @Nonnull InventoryChangeEvent event) {
-        if (event.getComponentType() != InventoryComponent.Storage.getComponentType()) return;
+        if (event.getComponentType() != ExtraEquipment.getComponentType()) return;
         if (!event.getTransaction().wasSlotModified(HEAD_SLOT)) return;
 
         UUIDComponent uuidComp = archetypeChunk.getComponent(index, UUIDComponent.getComponentType());
@@ -73,7 +74,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
         Player entity = archetypeChunk.getComponent(index, Player.getComponentType());
         if (entity == null) return;
 
-        InventoryComponent.Storage storageComp = archetypeChunk.getComponent(index, InventoryComponent.Storage.getComponentType());
+        ExtraEquipment storageComp = archetypeChunk.getComponent(index, ExtraEquipment.getComponentType());
         if (storageComp == null) return;
 
         Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
@@ -87,7 +88,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
             @Nonnull Ref<EntityStore> ref,
             @Nonnull Store<EntityStore> store,
             @Nonnull CommandBuffer<EntityStore> commandBuffer,
-            @Nonnull InventoryComponent.Storage storageComp,
+            @Nonnull ExtraEquipment storageComp,
             @Nonnull String playerUuid) {
         if (!PROCESSING_EQUIP.add(playerUuid)) return;
 
@@ -123,7 +124,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
         }
     }
 
-    private static void clearEquippedFlag(@Nonnull InventoryComponent.Storage storageComp, @Nonnull String instanceId) {
+    private static void clearEquippedFlag(@Nonnull ExtraEquipment storageComp, @Nonnull String instanceId) {
         ItemContainer container = storageComp.getInventory();
         for (short slot = 0; slot < container.getCapacity(); slot++) {
             ItemStack candidate = container.getItemStack(slot);
@@ -221,7 +222,7 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
         if (!LAST_KNOWN_EQUIPPED.containsKey(playerUuid)) return;
         if (!CosmeticPreferenceUtils.isHatVisible(store, ref)) return;
 
-        InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        ExtraEquipment storageComp = store.getComponent(ref, ExtraEquipment.getComponentType());
         if (storageComp == null) return;
 
         ItemStack hat = storageComp.getInventory().getItemStack(HEAD_SLOT);

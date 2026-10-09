@@ -1330,8 +1330,8 @@ public class BackpackWorkbenchPage implements InventoryContent {
             }
         }
 
-        // 2. Equipped armor chest slot 1
-        InventoryComponent.Armor armor = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
+        // 2. Dedicated backpack equipment slot
+        var armor = store.getComponent(ref, com.supremosan.custominventory.api.ExtraEquipment.TYPE);
         if (armor != null) {
             ItemStack chest = armor.getInventory().getItemStack((short) 1);
             if (chest != null && BackpackRegistry.isBackpack(chest.getItemId())) {

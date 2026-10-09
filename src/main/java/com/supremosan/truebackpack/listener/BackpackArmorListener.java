@@ -8,6 +8,7 @@ import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.InventoryChangeEvent;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
+import com.supremosan.custominventory.api.ExtraEquipment;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.filter.FilterActionType;
@@ -39,13 +40,14 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     private static final List<EquipChangeListener> EQUIP_CHANGE_LISTENERS = new CopyOnWriteArrayList<>();
 
     private static final short CHEST_SLOT = 1;
-    private static final short STORAGE_SLOT = 0;
+    private static final short STORAGE_SLOT = ExtraEquipment.BACKPACK;
 
     private static final Map<String, String> LAST_KNOWN_EQUIPPED = new ConcurrentHashMap<>();
     private static final Map<String, String> LAST_KNOWN_EQUIPPED_ITEM_ID = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> PROCESSING_EQUIP = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> PROCESSING_CONTAINER = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> REFRESH_UI = new ConcurrentHashMap<>();
+    private static final Map<String, com.hypixel.hytale.event.EventRegistration<Void, ItemContainer.ItemContainerChangeEvent>> CONTENT_LISTENERS = new ConcurrentHashMap<>();
 
     private static volatile Query<EntityStore> QUERY;
 
@@ -80,7 +82,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         if (QUERY == null) {
             QUERY = Query.or(
                     InventoryComponent.Armor.getComponentType(),
-                    InventoryComponent.Storage.getComponentType(),
+                    ExtraEquipment.getComponentType(),
                     InventoryComponent.Backpack.getComponentType()
             );
         }
@@ -106,7 +108,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         if (CosmeticListener.isProcessing()) return;
 
         InventoryComponent.Armor armorComp = archetypeChunk.getComponent(index, InventoryComponent.Armor.getComponentType());
-        InventoryComponent.Storage storageComp = archetypeChunk.getComponent(index, InventoryComponent.Storage.getComponentType());
+        ExtraEquipment storageComp = archetypeChunk.getComponent(index, ExtraEquipment.getComponentType());
         InventoryComponent.Backpack backpackComp = archetypeChunk.getComponent(index, InventoryComponent.Backpack.getComponentType());
         InventoryComponent.Hotbar hotbarComp = archetypeChunk.getComponent(index, InventoryComponent.Hotbar.getComponentType());
 
@@ -114,7 +116,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
 
         boolean isBackpackEvent = event.getComponentType() == InventoryComponent.Backpack.getComponentType();
         boolean isArmorEvent = event.getComponentType() == InventoryComponent.Armor.getComponentType();
-        boolean isStorageEvent = event.getComponentType() == InventoryComponent.Storage.getComponentType();
+        boolean isStorageEvent = event.getComponentType() == ExtraEquipment.getComponentType();
 
         if (isBackpackEvent) {
             handleBackpackContainerChange(armorComp, storageComp, backpackComp, hotbarComp, playerUuid);
@@ -143,6 +145,8 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     }
 
     public static void onPlayerRemove(@Nonnull String playerUuid) {
+        var listener = CONTENT_LISTENERS.remove(playerUuid);
+        if (listener != null) listener.unregister();
         LAST_KNOWN_EQUIPPED.remove(playerUuid);
         LAST_KNOWN_EQUIPPED_ITEM_ID.remove(playerUuid);
         PROCESSING_EQUIP.remove(playerUuid);
@@ -154,7 +158,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
 
     private void handleBackpackContainerChange(
             @Nonnull InventoryComponent.Armor armorComp,
-            @Nonnull InventoryComponent.Storage storageComp,
+            @Nonnull ExtraEquipment storageComp,
             @Nullable InventoryComponent.Backpack backpackComp,
             @Nullable InventoryComponent.Hotbar hotbarComp,
             @Nonnull String playerUuid) {
@@ -195,13 +199,13 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             @Nonnull Ref<EntityStore> ref,
             @Nonnull Store<EntityStore> store,
             @Nonnull InventoryComponent.Armor armorComp,
-            @Nonnull InventoryComponent.Storage storageComp,
+            @Nonnull ExtraEquipment storageComp,
             @Nullable InventoryComponent.Backpack backpackComp,
             @Nullable InventoryComponent.Hotbar hotbarComp,
             @Nonnull String playerUuid) {
         if (Boolean.TRUE.equals(PROCESSING_EQUIP.get(playerUuid))) return;
 
-        ItemStack liveArmor = armorComp.getInventory().getItemStack(CHEST_SLOT);
+        ItemStack liveArmor = null;
         ItemStack liveStorage = storageComp.getInventory().getItemStack(STORAGE_SLOT);
 
         ItemStack currentEquipped = resolveEquipped(liveArmor, liveStorage);
@@ -289,7 +293,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             @Nonnull Ref<EntityStore> ref,
             @Nonnull Store<EntityStore> store,
             @Nonnull InventoryComponent.Armor armorComp,
-            @Nonnull InventoryComponent.Storage storageComp,
+            @Nonnull ExtraEquipment storageComp,
             @Nullable InventoryComponent.Backpack backpackComp,
             @Nullable InventoryComponent.Hotbar hotbarComp,
             @Nonnull String playerUuid,
@@ -302,10 +306,8 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             short equipSlot = resolveEquipSlot(armorComp, storageComp, newItem);
 
             if (equipContainer == null || equipSlot < 0) {
-                equipContainer = bonus(armorComp.getInventory().getItemStack(CHEST_SLOT)) > 0
-                        ? armorComp.getInventory()
-                        : storageComp.getInventory();
-                equipSlot = equipContainer == armorComp.getInventory() ? CHEST_SLOT : STORAGE_SLOT;
+                equipContainer = storageComp.getInventory();
+                equipSlot = STORAGE_SLOT;
             }
 
             if (lastKnownId != null) {
@@ -334,7 +336,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
 
     private static void clearEquippedFlagByInstanceId(
             @Nonnull InventoryComponent.Armor armorComp,
-            @Nonnull InventoryComponent.Storage storageComp,
+            @Nonnull ExtraEquipment storageComp,
             @Nullable InventoryComponent.Backpack backpackComp,
             @Nullable InventoryComponent.Hotbar hotbarComp,
             @Nonnull String instanceId) {
@@ -369,6 +371,8 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         PROCESSING_CONTAINER.put(playerUuid, Boolean.TRUE);
         try {
             if (backpackComp == null) return;
+            var oldListener = CONTENT_LISTENERS.remove(playerUuid);
+            if (oldListener != null) oldListener.unregister();
 
             backpackComp.resize(newBonus, new ObjectArrayList<>());
 
@@ -399,6 +403,18 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
                 }
 
                 BackpackDataStorage.setLiveContents(playerUuid, getAllBackpackContents(bp));
+                // Persist synchronously: unequipping later in the same tick must carry
+                // the latest contents, before queued InventoryChangeEvents are dispatched.
+                CONTENT_LISTENERS.put(playerUuid, bp.registerChangeEvent(change -> {
+                    if (Boolean.TRUE.equals(PROCESSING_CONTAINER.get(playerUuid))) return;
+                    var equipped = equipContainer.getItemStack(STORAGE_SLOT);
+                    if (ItemStack.isEmpty(equipped) || !BackpackRegistry.isBackpack(equipped.getItemId())) return;
+                    var contents = getAllBackpackContents(bp);
+                    BackpackDataStorage.setLiveContents(playerUuid, contents);
+                    if (!contentsEqual(BackpackItemFactory.loadContents(equipped), contents)) {
+                        equipContainer.setItemStackForSlot(STORAGE_SLOT, BackpackItemFactory.saveContents(equipped, contents));
+                    }
+                }));
             } else {
                 BackpackDataStorage.clearActiveItem(playerUuid);
             }
@@ -452,7 +468,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
         if (LAST_KNOWN_EQUIPPED.get(playerUuid) == null) return;
 
         InventoryComponent.Armor armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
-        InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        ExtraEquipment storageComp = store.getComponent(ref, ExtraEquipment.getComponentType());
         if (armorComp == null || storageComp == null) return;
 
         ItemStack equipped = findEquippedItem(armorComp, storageComp);
@@ -468,20 +484,15 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     @Nullable
     private static ItemContainer resolveEquipContainer(
             @Nonnull InventoryComponent.Armor armorComp,
-            @Nonnull InventoryComponent.Storage storageComp,
+            @Nonnull ExtraEquipment storageComp,
             @Nonnull ItemStack item) {
-        ItemContainer armorContainer = armorComp.getInventory();
         ItemContainer storageContainer = storageComp.getInventory();
         String id = BackpackItemFactory.getInstanceId(item);
         if (id == null) {
-            ItemStack armor = armorContainer.getItemStack(CHEST_SLOT);
-            if (!ItemStack.isEmpty(armor) && item.getItemId().equals(armor.getItemId())) return armorContainer;
             ItemStack storage = storageContainer.getItemStack(STORAGE_SLOT);
             if (!ItemStack.isEmpty(storage) && item.getItemId().equals(storage.getItemId())) return storageContainer;
             return null;
         }
-        ItemStack armor = armorContainer.getItemStack(CHEST_SLOT);
-        if (!ItemStack.isEmpty(armor) && id.equals(BackpackItemFactory.getInstanceId(armor))) return armorContainer;
         ItemStack storage = storageContainer.getItemStack(STORAGE_SLOT);
         if (!ItemStack.isEmpty(storage) && id.equals(BackpackItemFactory.getInstanceId(storage))) return storageContainer;
         return null;
@@ -489,16 +500,15 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
 
     private static short resolveEquipSlot(
             @Nonnull InventoryComponent.Armor armorComp,
-            @Nonnull InventoryComponent.Storage storageComp,
+            @Nonnull ExtraEquipment storageComp,
             @Nonnull ItemStack item) {
         ItemContainer container = resolveEquipContainer(armorComp, storageComp, item);
         if (container == null) return -1;
-        return container == armorComp.getInventory() ? CHEST_SLOT : STORAGE_SLOT;
+        return STORAGE_SLOT;
     }
 
     @Nullable
     private static ItemStack resolveEquipped(@Nullable ItemStack armorChest, @Nullable ItemStack storageSlot0) {
-        if (!ItemStack.isEmpty(armorChest) && bonus(armorChest) > 0) return armorChest;
         if (!ItemStack.isEmpty(storageSlot0) && bonus(storageSlot0) > 0) return storageSlot0;
         return null;
     }
@@ -506,7 +516,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     @Nullable
     private static ItemStack findByInstanceId(
             @Nonnull InventoryComponent.Armor armorComp,
-            @Nonnull InventoryComponent.Storage storageComp,
+            @Nonnull ExtraEquipment storageComp,
             @Nullable InventoryComponent.Backpack backpackComp,
             @Nullable InventoryComponent.Hotbar hotbarComp,
             @Nonnull String targetId) {
@@ -589,9 +599,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     @Nullable
     private static ItemStack findEquippedItem(
             @Nonnull InventoryComponent.Armor armorComp,
-            @Nonnull InventoryComponent.Storage storageComp) {
-        ItemStack chest = armorComp.getInventory().getItemStack(CHEST_SLOT);
-        if (!ItemStack.isEmpty(chest) && bonus(chest) > 0) return chest;
+            @Nonnull ExtraEquipment storageComp) {
         ItemStack storage = storageComp.getInventory().getItemStack(STORAGE_SLOT);
         if (!ItemStack.isEmpty(storage) && bonus(storage) > 0) return storage;
         return null;
@@ -600,7 +608,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
     @Nullable
     private static String findEquippedItemId(
             @Nonnull InventoryComponent.Armor armorComp,
-            @Nonnull InventoryComponent.Storage storageComp) {
+            @Nonnull ExtraEquipment storageComp) {
         ItemStack item = findEquippedItem(armorComp, storageComp);
         return item != null ? item.getItemId() : null;
     }

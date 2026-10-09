@@ -6,6 +6,7 @@ import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
+import com.supremosan.custominventory.api.ExtraEquipment;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.component.DynamicLight;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -22,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class HatDurabilitySystem extends EntityTickingSystem<EntityStore> {
 
-    private static final short HEAD_SLOT = 1;
+    private static final short HEAD_SLOT = ExtraEquipment.HAT;
 
     private static final Map<String, Integer> TICK_COUNTERS = new ConcurrentHashMap<>();
 
@@ -36,7 +37,7 @@ public class HatDurabilitySystem extends EntityTickingSystem<EntityStore> {
     @Nullable
     public Query<EntityStore> getQuery() {
         if (QUERY == null) {
-            QUERY = Query.or(InventoryComponent.Storage.getComponentType());
+            QUERY = Query.or(ExtraEquipment.getComponentType());
         }
         return QUERY;
     }
@@ -57,7 +58,7 @@ public class HatDurabilitySystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        InventoryComponent.Storage storageComp = archetypeChunk.getComponent(index, InventoryComponent.Storage.getComponentType());
+        ExtraEquipment storageComp = archetypeChunk.getComponent(index, ExtraEquipment.getComponentType());
         if (storageComp == null) return;
 
         ItemStack hat = storageComp.getInventory().getItemStack(HEAD_SLOT);
@@ -87,7 +88,7 @@ public class HatDurabilitySystem extends EntityTickingSystem<EntityStore> {
     }
 
     private static void onHatBreak(
-            @Nonnull InventoryComponent.Storage storageComp,
+            @Nonnull ExtraEquipment storageComp,
             @Nonnull String playerUuid,
             @Nonnull ArchetypeChunk<EntityStore> archetypeChunk,
             int index,

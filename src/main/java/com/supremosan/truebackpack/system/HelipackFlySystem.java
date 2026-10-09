@@ -22,6 +22,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
+import com.supremosan.custominventory.api.ExtraEquipment;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -50,7 +51,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
     private static final float FALLBACK_ANIM_DURATION = 0.5f;
 
     private static final short CHEST_SLOT = 1;
-    private static final short STORAGE_SLOT = 0;
+    private static final short STORAGE_SLOT = ExtraEquipment.BACKPACK;
 
     private final ComponentType<EntityStore, Player> playerComponentType;
     private final ComponentType<EntityStore, MovementStatesComponent> movementStatesComponentType;
@@ -149,7 +150,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
         if (config == null) return;
 
         InventoryComponent.Armor armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
-        InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        ExtraEquipment storageComp = store.getComponent(ref, ExtraEquipment.getComponentType());
         InventoryComponent.Backpack backpackComp = store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
 
         MovementStates current = movementStatesComponent.getMovementStates();
@@ -284,7 +285,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
         if (config == null) return;
 
         InventoryComponent.Armor armorComp = store.getComponent(ref, InventoryComponent.Armor.getComponentType());
-        InventoryComponent.Storage storageComp = store.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        ExtraEquipment storageComp = store.getComponent(ref, ExtraEquipment.getComponentType());
         InventoryComponent.Backpack backpackComp = store.getComponent(ref, InventoryComponent.Backpack.getComponentType());
 
         syncFlyMode(uuid, playerRef, mm, config, armorComp, storageComp, backpackComp);
@@ -296,7 +297,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
             @Nonnull MovementManager movementManager,
             @Nonnull HelipackConfig config,
             @Nullable InventoryComponent.Armor armorComp,
-            @Nullable InventoryComponent.Storage storageComp,
+            @Nullable ExtraEquipment storageComp,
             @Nullable InventoryComponent.Backpack backpackComp
     ) {
         float savedFuelTime = readSavedFuelTime(armorComp, storageComp, uuid.toString());
@@ -450,17 +451,10 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
     @Nullable
     private EquipLocation findEquipLocation(
             @Nullable InventoryComponent.Armor armorComp,
-            @Nullable InventoryComponent.Storage storageComp,
+            @Nullable ExtraEquipment storageComp,
             @Nonnull String playerUuid) {
         String equippedItemId = BackpackArmorListener.getEquippedItemId(playerUuid);
         if (equippedItemId == null) return null;
-
-        if (armorComp != null) {
-            ItemStack stack = armorComp.getInventory().getItemStack(CHEST_SLOT);
-            if (stack != null && !stack.isEmpty() && equippedItemId.equals(stack.getItemId())) {
-                return new EquipLocation(armorComp.getInventory(), CHEST_SLOT, stack);
-            }
-        }
 
         if (storageComp != null) {
             ItemStack stack = storageComp.getInventory().getItemStack(STORAGE_SLOT);
@@ -474,7 +468,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
 
     private float readSavedFuelTime(
             @Nullable InventoryComponent.Armor armorComp,
-            @Nullable InventoryComponent.Storage storageComp,
+            @Nullable ExtraEquipment storageComp,
             @Nonnull String playerUuid) {
         EquipLocation loc = findEquipLocation(armorComp, storageComp, playerUuid);
         if (loc == null) return 0f;
@@ -483,7 +477,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
 
     private void writeSavedFuelTime(
             @Nullable InventoryComponent.Armor armorComp,
-            @Nullable InventoryComponent.Storage storageComp,
+            @Nullable ExtraEquipment storageComp,
             @Nonnull String playerUuid,
             float seconds) {
         EquipLocation loc = findEquipLocation(armorComp, storageComp, playerUuid);
@@ -493,7 +487,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
 
     private void clearSavedFuelTime(
             @Nullable InventoryComponent.Armor armorComp,
-            @Nullable InventoryComponent.Storage storageComp,
+            @Nullable ExtraEquipment storageComp,
             @Nonnull String playerUuid) {
         writeSavedFuelTime(armorComp, storageComp, playerUuid, 0f);
     }
@@ -504,7 +498,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
             Ref<EntityStore> ref,
             JumpState jumpState,
             @Nullable InventoryComponent.Armor armorComp,
-            @Nullable InventoryComponent.Storage storageComp,
+            @Nullable ExtraEquipment storageComp,
             @Nullable InventoryComponent.Backpack backpackComp,
             HelipackConfig config
     ) {
@@ -546,7 +540,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
             MovementStatesComponent movementStatesComponent,
             JumpState jumpState,
             @Nullable InventoryComponent.Armor armorComp,
-            @Nullable InventoryComponent.Storage storageComp,
+            @Nullable ExtraEquipment storageComp,
             @Nullable InventoryComponent.Backpack backpackComp,
             HelipackConfig config
     ) {

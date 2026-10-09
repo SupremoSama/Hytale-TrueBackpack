@@ -59,7 +59,11 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
 
     @Override
     public @Nonnull Set<Dependency<EntityStore>> getDependencies() {
-        return Set.of();
+        return Set.of(new com.hypixel.hytale.component.dependency.SystemDependency<>(
+                com.hypixel.hytale.component.dependency.Order.BEFORE,
+                com.supremosan.custominventory.inventory.ExtraEquipmentDeathSystem.class),
+                new com.hypixel.hytale.component.dependency.SystemDependency<>(
+                com.hypixel.hytale.component.dependency.Order.BEFORE, DeathSystems.DropPlayerDeathItems.class));
     }
 
     @Override
@@ -91,7 +95,8 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         String playerUuid = uuidComp != null ? uuidComp.getUuid().toString() : null;
 
         List<BackpackEntry> backpacks = collectAndRemoveBackpacks(
-                armorComp, storageComp, hotbarComp, backpackComp, playerUuid);
+                armorComp, storageComp, hotbarComp, backpackComp, playerUuid,
+                store.getComponent(ref, com.supremosan.custominventory.api.ExtraEquipment.TYPE));
 
         if (backpacks.isEmpty()) return;
 
@@ -246,11 +251,13 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
             @Nullable InventoryComponent.Storage storageComp,
             @Nullable InventoryComponent.Hotbar hotbarComp,
             @Nullable InventoryComponent.Backpack backpackComp,
-            @Nullable String playerUuid) {
+            @Nullable String playerUuid,
+            @Nullable com.supremosan.custominventory.api.ExtraEquipment equipment) {
 
         List<BackpackEntry> found = new ArrayList<>();
 
         ItemContainer[] containers = {
+                equipment != null ? equipment.getInventory() : null,
                 armorComp != null ? armorComp.getInventory() : null,
                 storageComp != null ? storageComp.getInventory() : null,
                 hotbarComp != null ? hotbarComp.getInventory() : null,
@@ -268,7 +275,8 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
                 if (registry == null || registry.blockId().isEmpty()) continue;
 
                 List<ItemStack> contents;
-                boolean isEquipped = BackpackItemFactory.isEquipped(item)
+                boolean isEquipped = equipment != null && container == equipment.getInventory()
+                        && slot == com.supremosan.custominventory.api.ExtraEquipment.BACKPACK
                         && backpackComp != null
                         && playerUuid != null;
 
