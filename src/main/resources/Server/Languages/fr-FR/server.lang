@@ -11,15 +11,12 @@ truebackpack.tooltip.empty=Vide
 truebackpack.tooltip.equipped=Équipé
 truebackpack.tooltip.slots=emplacements
 truebackpack.tooltip.items=objets
-truebackpack.tooltip.upgrade=Amélioration: Niveau {0}/2
+truebackpack.tooltip.upgrade=Amélioration: Niveau {0}/7
 truebackpack.tooltip.appearance=Apparence: {0}
-truebackpack.toggle.backpack.visible=Votre sac à dos est maintenant visible
-truebackpack.toggle.backpack.hidden=Votre sac à dos est maintenant masqué
 truebackpack.toggle.quiver.visible=Votre carquois est maintenant visible
 truebackpack.toggle.quiver.hidden=Votre carquois est maintenant masqué
-truebackpack.toggle.hat.visible=Votre chapeau est maintenant visible
-truebackpack.toggle.hat.hidden=Votre chapeau est maintenant masqué
-truebackpack.toggle.unknown=Option invalide, choisissez 'backpack', 'quiver' ou 'hat'
+truebackpack.toggle.use_gear_eye=La visibilité du sac à dos et du chapeau se règle désormais avec l’œil à côté de chaque emplacement d’Équipement de l’inventaire.
+truebackpack.toggle.unknown=Option invalide, choisissez 'quiver'
 truebackpack.item.Utility_Helipack.description=Alimentez ce sac à dos avec du charbon de bois pour planer dans les cieux. Effectuez un double saut pour activer le mode de vol et répétez l'action pour le désactiver.
 
 # Crafting Materials
@@ -38,7 +35,6 @@ truebackpack.items.Ingredient_Leather_Storm.name=Cuir de tempête
 truebackpack.workbench.title=Établi de Sac à Dos
 truebackpack.workbench.tab.transmog=Transmutation
 truebackpack.workbench.tab.upgrades=Améliorations
-truebackpack.workbench.tab.visibility=Visibilité
 truebackpack.workbench.no_backpack.title=Aucun sac à dos détecté
 truebackpack.workbench.no_backpack.desc=Équipez un sac à dos sur votre torse ou tenez-en un en main.
 truebackpack.workbench.no_backpack.status=Veuillez tenir ou équiper un sac à dos pour utiliser l'établi.
@@ -59,16 +55,6 @@ truebackpack.workbench.btn.active=Actif
 truebackpack.workbench.btn.upgrade=Améliorer
 truebackpack.workbench.btn.need_items=Objets requis
 truebackpack.workbench.btn.maxed=Maximum
-truebackpack.workbench.btn.visible=Visible
-truebackpack.workbench.btn.hidden=Masqué
-
-# Visibility Entries
-truebackpack.workbench.visibility.backpack.title=Modèle de sac à dos
-truebackpack.workbench.visibility.backpack.desc=Afficher ou masquer le modèle du sac à dos sur votre dos
-truebackpack.workbench.visibility.quiver.title=Carquois / Ceinture de flèches
-truebackpack.workbench.visibility.quiver.desc=Afficher ou masquer le carquois lorsque vous portez des flèches
-truebackpack.workbench.visibility.hat.title=Chapeau / Bandana
-truebackpack.workbench.visibility.hat.desc=Afficher ou masquer le chapeau cosmétique ou le bandana torche
 
 # Transmog Skins
 truebackpack.workbench.skin.default.name=Apparence par défaut
@@ -87,19 +73,19 @@ truebackpack.workbench.status.skin_reverted=Apparence par défaut restaurée !
 # Upgrade Entries & Statuses
 truebackpack.workbench.tier.title=Amélioration de palier: {0}
 truebackpack.workbench.tier.benefit=Étend la capacité à {0} emplacements (conserve tous les objets !)
-truebackpack.workbench.level.title=Amélioration de capacité: Niveau {0}/2
+truebackpack.workbench.level.title=Amélioration de capacité: Niveau {0}/7
 truebackpack.workbench.level.benefit=+{0} Emplacements (passe de {1} à {2} emplacements)
-truebackpack.workbench.level.max_title=Capacité: Niveau 2/2 (MAX)
-truebackpack.workbench.level.max_benefit=Capacité maximale atteinte (54 emplacements) !
+truebackpack.workbench.level.max_title=Capacité: Niveau 7/7 (MAX)
+truebackpack.workbench.level.max_benefit=Capacité maximale atteinte (99 emplacements) !
 truebackpack.workbench.level.max_cost=Aucune autre amélioration possible.
 truebackpack.workbench.cost=Coût: {0}
 truebackpack.workbench.cost.none=Aucun
 truebackpack.workbench.status.tier_upgraded=Amélioré avec succès vers {0} !
-truebackpack.workbench.status.level_upgraded=Amélioration réussie ! Niveau {0}/2 ({1} emplacements)
+truebackpack.workbench.status.level_upgraded=Amélioration réussie ! Niveau {0}/7 ({1} emplacements)
 truebackpack.workbench.status.invalid_tier=Amélioration de palier invalide !
 truebackpack.workbench.status.missing_tier_materials=Matériaux requis manquants pour le palier !
 truebackpack.workbench.status.only_extra_big_level=Seul le très grand sac à dos peut recevoir des améliorations de niveau !
-truebackpack.workbench.status.already_max_level=Le sac à dos a déjà atteint le niveau maximum 2 !
+truebackpack.workbench.status.already_max_level=Le sac à dos a déjà atteint le niveau maximum 7 !
 truebackpack.workbench.status.missing_level_materials=Matériaux requis manquants pour le niveau {0} !
 truebackpack.workbench.status.no_backpack=Aucun sac à dos détecté !
 
@@ -148,5 +134,3 @@ truebackpack.workbench.memories.find=Trouvez le
 truebackpack.workbench.memories.temple=Temple oublié
 truebackpack.workbench.memories.restore=et restaurez {0} Souvenirs pour débloquer cette recette !
 truebackpack.workbench.personalize.preview_loading=Mise à jour de l’aperçu…
-truebackpack.workbench.visibility.show=Afficher
-truebackpack.workbench.visibility.hide=Masquer

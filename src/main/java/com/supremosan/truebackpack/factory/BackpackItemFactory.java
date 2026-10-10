@@ -72,7 +72,7 @@ public final class BackpackItemFactory {
     }
     public static ItemStack setPaintColor(ItemStack stack, String color) { return stack.withMetadata(PAINT_COLOR_CODEC, normalizeColor(color)); }
 
-    public static final int MAX_UPGRADE_LEVEL = 2;
+    public static final int MAX_UPGRADE_LEVEL = 7; // 36 + 7 * 9 = 99 slots
     public static final int SLOTS_PER_UPGRADE_LEVEL = 9;
 
     private static final String CONTENTS_KEY = "Backpack_contents";

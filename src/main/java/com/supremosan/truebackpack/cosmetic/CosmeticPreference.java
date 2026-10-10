@@ -10,6 +10,10 @@ import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nonnull;
 
+/**
+ * TrueBackpack-only cosmetic preferences. Backpack and hat visibility moved to CustomInventory's
+ * per-slot equipment visibility; ShowBackpack/ShowHat are read once to migrate older saves.
+ */
 public final class CosmeticPreference implements Component<com.hypixel.hytale.server.core.universe.world.storage.EntityStore> {
 
     public static ComponentType<com.hypixel.hytale.server.core.universe.world.storage.EntityStore, CosmeticPreference> TYPE;
@@ -31,21 +35,30 @@ public final class CosmeticPreference implements Component<com.hypixel.hytale.se
                             (p, v) -> p.showHat = v,
                             (p) -> p.showHat
                     ).add()
+                    .append(
+                            new KeyedCodec<>("EquipmentVisibilityMigrated", Codec.BOOLEAN),
+                            (p, v) -> p.equipmentVisibilityMigrated = v,
+                            (p) -> p.equipmentVisibilityMigrated
+                    ).add()
                     .build();
 
     private boolean showBackpack = true;
     private boolean showQuiver = true;
     private boolean showHat = true;
+    private boolean equipmentVisibilityMigrated;
 
     public CosmeticPreference() {
     }
 
-    private CosmeticPreference(boolean showBackpack, boolean showQuiver, boolean showHat) {
+    private CosmeticPreference(boolean showBackpack, boolean showQuiver, boolean showHat,
+                               boolean equipmentVisibilityMigrated) {
         this.showBackpack = showBackpack;
         this.showQuiver = showQuiver;
         this.showHat = showHat;
+        this.equipmentVisibilityMigrated = equipmentVisibilityMigrated;
     }
 
+    /** Legacy value; only read by the CustomInventory migration. */
     public boolean isShowBackpack() {
         return showBackpack;
     }
@@ -54,25 +67,29 @@ public final class CosmeticPreference implements Component<com.hypixel.hytale.se
         return showQuiver;
     }
 
+    /** Legacy value; only read by the CustomInventory migration. */
     public boolean isShowHat() {
         return showHat;
     }
 
-    public void setShowBackpack(boolean showBackpack) {
-        this.showBackpack = showBackpack;
+    public boolean isEquipmentVisibilityMigrated() {
+        return equipmentVisibilityMigrated;
     }
 
     public void setShowQuiver(boolean showQuiver) {
         this.showQuiver = showQuiver;
     }
 
-    public void setShowHat(boolean showHat) {
-        this.showHat = showHat;
+    /** Resets the legacy values so a repeated migration cannot hide anything again. */
+    public void markEquipmentVisibilityMigrated() {
+        this.showBackpack = true;
+        this.showHat = true;
+        this.equipmentVisibilityMigrated = true;
     }
 
     @Override
     public @NonNull Component<com.hypixel.hytale.server.core.universe.world.storage.EntityStore> clone() {
-        return new CosmeticPreference(showBackpack, showQuiver, showHat);
+        return new CosmeticPreference(showBackpack, showQuiver, showHat, equipmentVisibilityMigrated);
     }
 
     public static void register(@Nonnull TrueBackpack plugin) {

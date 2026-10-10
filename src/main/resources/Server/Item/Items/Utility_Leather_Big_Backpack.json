@@ -10,16 +10,16 @@
     "TimeSeconds": 2,
     "Input": [
       {
-        "ItemId": "Ingredient_Voidheart",
-        "Quantity": 1
+        "ItemId": "Ingredient_Leather_Heavy",
+        "Quantity": 16
+      },
+      {
+        "ItemId": "Ingredient_Fabric_Scrap_Cindercloth",
+        "Quantity": 16
       },
       {
         "ItemId": "Ingredient_Bar_Adamantite",
         "Quantity": 8
-      },
-      {
-        "ItemId": "Ingredient_Leather_Storm",
-        "Quantity": 16
       }
     ],
     "BenchRequirement": [

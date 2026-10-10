@@ -11,15 +11,12 @@ truebackpack.tooltip.empty=Vacío
 truebackpack.tooltip.equipped=Equipado
 truebackpack.tooltip.slots=ranuras
 truebackpack.tooltip.items=objetos
-truebackpack.tooltip.upgrade=Mejora: Nivel {0}/2
+truebackpack.tooltip.upgrade=Mejora: Nivel {0}/7
 truebackpack.tooltip.appearance=Apariencia: {0}
-truebackpack.toggle.backpack.visible=Tu mochila ahora es visible
-truebackpack.toggle.backpack.hidden=Tu mochila ahora está oculta
 truebackpack.toggle.quiver.visible=Tu carcaj ahora es visible
 truebackpack.toggle.quiver.hidden=Tu carcaj ahora está oculto
-truebackpack.toggle.hat.visible=Tu sombrero ahora es visible
-truebackpack.toggle.hat.hidden=Tu sombrero ahora está oculto
-truebackpack.toggle.unknown=Esa no es una opción válida, elige 'backpack', 'quiver' o 'hat'
+truebackpack.toggle.use_gear_eye=La visibilidad de la mochila y el sombrero ahora se ajusta con el ojo junto a cada espacio de Equipo del inventario.
+truebackpack.toggle.unknown=Esa no es una opción válida, elige 'quiver'
 truebackpack.item.Utility_Helipack.description=Abastece esta mochila con carbón vegetal y vuela por los cielos. Da un doble salto para activar el modo de vuelo y repite la acción para desactivarlo.
 
 # Crafting Materials
@@ -38,7 +35,6 @@ truebackpack.items.Ingredient_Leather_Storm.name=Cuero de tormenta
 truebackpack.workbench.title=Mesa de Mochilas
 truebackpack.workbench.tab.transmog=Transmutar
 truebackpack.workbench.tab.upgrades=Mejoras
-truebackpack.workbench.tab.visibility=Visibilidad
 truebackpack.workbench.no_backpack.title=Ninguna mochila detectada
 truebackpack.workbench.no_backpack.desc=Equípate una mochila en el pecho o sostenla en la mano.
 truebackpack.workbench.no_backpack.status=Por favor, sostén o equípate una mochila para usar la mesa.
@@ -59,16 +55,6 @@ truebackpack.workbench.btn.active=Activo
 truebackpack.workbench.btn.upgrade=Mejorar
 truebackpack.workbench.btn.need_items=Faltan objetos
 truebackpack.workbench.btn.maxed=Al máximo
-truebackpack.workbench.btn.visible=Visible
-truebackpack.workbench.btn.hidden=Oculto
-
-# Visibility Entries
-truebackpack.workbench.visibility.backpack.title=Modelo de mochila
-truebackpack.workbench.visibility.backpack.desc=Mostrar u ocultar el modelo de la mochila en tu espalda
-truebackpack.workbench.visibility.quiver.title=Carcaj / Cinturón de flechas
-truebackpack.workbench.visibility.quiver.desc=Mostrar u ocultar el carcaj al llevar flechas
-truebackpack.workbench.visibility.hat.title=Sombrero / Bandana
-truebackpack.workbench.visibility.hat.desc=Mostrar u ocultar el sombrero cosmético o la bandana
 
 # Transmog Skins
 truebackpack.workbench.skin.default.name=Apariencia predeterminada
@@ -87,19 +73,19 @@ truebackpack.workbench.status.skin_reverted=¡Apariencia original restaurada!
 # Upgrade Entries & Statuses
 truebackpack.workbench.tier.title=Mejora de categoría: {0}
 truebackpack.workbench.tier.benefit=Amplía la capacidad a {0} ranuras (¡conserva todos los objetos!)
-truebackpack.workbench.level.title=Mejora de capacidad: Nivel {0}/2
+truebackpack.workbench.level.title=Mejora de capacidad: Nivel {0}/7
 truebackpack.workbench.level.benefit=+{0} ranuras (amplía de {1} a {2} ranuras)
-truebackpack.workbench.level.max_title=Capacidad: Nivel 2/2 (MÁX)
-truebackpack.workbench.level.max_benefit=¡Capacidad máxima alcanzada (54 ranuras)!
+truebackpack.workbench.level.max_title=Capacidad: Nivel 7/7 (MÁX)
+truebackpack.workbench.level.max_benefit=¡Capacidad máxima alcanzada (99 ranuras)!
 truebackpack.workbench.level.max_cost=No hay más mejoras disponibles.
 truebackpack.workbench.cost=Coste: {0}
 truebackpack.workbench.cost.none=Ninguno
 truebackpack.workbench.status.tier_upgraded=¡Mejora con éxito a {0}!
-truebackpack.workbench.status.level_upgraded=¡Mejora exitosa! Nivel {0}/2 ({1} ranuras)
+truebackpack.workbench.status.level_upgraded=¡Mejora exitosa! Nivel {0}/7 ({1} ranuras)
 truebackpack.workbench.status.invalid_tier=¡Mejora de categoría no válida!
 truebackpack.workbench.status.missing_tier_materials=¡Faltan materiales para la mejora de categoría!
 truebackpack.workbench.status.only_extra_big_level=¡Solo la mochila gigante puede recibir mejoras de nivel!
-truebackpack.workbench.status.already_max_level=¡La mochila ya ha alcanzado el nivel máximo 2!
+truebackpack.workbench.status.already_max_level=¡La mochila ya ha alcanzado el nivel máximo 7!
 truebackpack.workbench.status.missing_level_materials=¡Faltan materiales requeridos para el nivel {0}!
 truebackpack.workbench.status.no_backpack=¡Ninguna mochila detectada!
 
@@ -148,5 +134,3 @@ truebackpack.workbench.memories.find=Encuentra el
 truebackpack.workbench.memories.temple=Templo Olvidado
 truebackpack.workbench.memories.restore=y restaura {0} Recuerdos para desbloquear esta receta.
 truebackpack.workbench.personalize.preview_loading=Actualizando vista previa…
-truebackpack.workbench.visibility.show=Mostrar
-truebackpack.workbench.visibility.hide=Ocultar

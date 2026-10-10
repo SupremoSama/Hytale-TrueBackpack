@@ -16,13 +16,7 @@ import com.supremosan.custominventory.CustomInventoryPlugin;
 import com.supremosan.custominventory.api.*;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.core.entity.UUIDComponent;
-import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
-import com.supremosan.truebackpack.listener.BackpackArmorListener;
-import com.supremosan.truebackpack.listener.CosmeticListener;
-import com.supremosan.truebackpack.listener.HatArmorListener;
-import com.supremosan.truebackpack.listener.QuiverListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.util.BlockPlacementUtil;
 import com.supremosan.truebackpack.util.BackpackPaintService;
@@ -99,44 +93,61 @@ public class BackpackWorkbenchPage implements InventoryContent {
             new SkinOption("Utility_Leather_Extra_Big_Backpack", "server.truebackpack.workbench.skin.Utility_Leather_Extra_Big_Backpack.desc", "Utility_Leather_Extra_Big_Backpack")
     );
 
+    // Tier upgrades trade in the current backpack, so they cost less than crafting the target from
+    // scratch (see its item recipe), except Extra Big, whose recipe already consumes a Big Backpack. Materials follow the base-game armor ladder: Copper/Linen -> Iron/Medium leather -> Cobalt/Shadoweave -> Adamantite/Cindercloth.
     private static final Map<String, TierUpgrade> TIER_UPGRADES = new LinkedHashMap<>();
     static {
         TIER_UPGRADES.put("Utility_Fibre_Side_Bag", new TierUpgrade(
                 "Utility_Fibre_Side_Bag",
                 "Utility_Leather_Side_Backpack",
                 (short) 6,
-                Map.of("Ingredient_Leather_Medium", 4, "Ingredient_Bar_Iron", 1)
+                Map.of("Ingredient_Leather_Light", 4, "Ingredient_Fabric_Scrap_Linen", 2, "Ingredient_Bar_Copper", 1)
         ));
         TIER_UPGRADES.put("Utility_Leather_Side_Backpack", new TierUpgrade(
                 "Utility_Leather_Side_Backpack",
                 "Utility_Leather_Backpack",
                 (short) 9,
-                Map.of("Ingredient_Leather_Medium", 16, "Ingredient_Bar_Iron", 8)
+                Map.of("Ingredient_Leather_Medium", 8, "Ingredient_Fabric_Scrap_Linen", 4, "Ingredient_Bar_Iron", 3)
         ));
         TIER_UPGRADES.put("Utility_Leather_Backpack", new TierUpgrade(
                 "Utility_Leather_Backpack",
                 "Utility_Leather_Medium_Backpack",
                 (short) 18,
-                Map.of("Ingredient_Fabric_Scrap_Cindercloth", 40, "Ingredient_Leather_Heavy", 24, "Ingredient_Bar_Cobalt", 8)
+                Map.of("Ingredient_Leather_Heavy", 9, "Ingredient_Fabric_Scrap_Shadoweave", 6, "Ingredient_Bar_Cobalt", 4)
         ));
         TIER_UPGRADES.put("Utility_Leather_Medium_Backpack", new TierUpgrade(
                 "Utility_Leather_Medium_Backpack",
                 "Utility_Leather_Big_Backpack",
                 (short) 27,
-                Map.of("Ingredient_Leather_Storm", 16, "Ingredient_Bar_Adamantite", 8, "Ingredient_Voidheart", 1)
+                Map.of("Ingredient_Leather_Heavy", 12, "Ingredient_Fabric_Scrap_Cindercloth", 10, "Ingredient_Bar_Adamantite", 6)
         ));
         TIER_UPGRADES.put("Utility_Leather_Big_Backpack", new TierUpgrade(
                 "Utility_Leather_Big_Backpack",
                 "Utility_Leather_Extra_Big_Backpack",
                 (short) 36,
-                Map.of("Ingredient_Fibre", 16, "Wood_Trunk", 8)
+                Map.of("Ingredient_Fabric_Scrap_Cindercloth", 18, "Furniture_Crude_Chest_Small", 1)
         ));
     }
 
+    // Extra Big Backpack capacity levels: 36 base + 9 slots per level, capped at 99 (level 7).
+    // Levels 1-3 stay on Zone 4 materials; levels 4-7 add Void materials on top of Adamantite.
+    private static final short EXTRA_BIG_BASE_CAPACITY = 36;
     private static final Map<Integer, LevelUpgrade> LEVEL_UPGRADES = new LinkedHashMap<>();
     static {
-        LEVEL_UPGRADES.put(1, new LevelUpgrade(1, (short) 45, Map.of("Ingredient_Fibre", 16, "Wood_Trunk", 8)));
-        LEVEL_UPGRADES.put(2, new LevelUpgrade(2, (short) 54, Map.of("Ingredient_Leather_Heavy", 8, "Ingredient_Bar_Iron", 4)));
+        addLevel(1, Map.of("Ingredient_Leather_Heavy", 12, "Ingredient_Fabric_Scrap_Cindercloth", 12, "Ingredient_Bar_Adamantite", 4));
+        addLevel(2, Map.of("Ingredient_Leather_Heavy", 16, "Ingredient_Fabric_Scrap_Cindercloth", 16, "Ingredient_Bar_Adamantite", 8));
+        addLevel(3, Map.of("Ingredient_Leather_Heavy", 20, "Ingredient_Fabric_Scrap_Cindercloth", 20, "Ingredient_Bar_Adamantite", 12));
+        addLevel(4, Map.of("Ingredient_Leather_Heavy", 20, "Ingredient_Bar_Adamantite", 16, "Ingredient_Void_Essence", 20));
+        addLevel(5, Map.of("Ingredient_Leather_Heavy", 24, "Ingredient_Bar_Adamantite", 20, "Ingredient_Void_Essence", 40));
+        addLevel(6, Map.of("Ingredient_Bar_Adamantite", 24, "Ingredient_Void_Essence", 60, "Ingredient_Voidheart", 1));
+        addLevel(7, Map.of("Ingredient_Bar_Adamantite", 28, "Ingredient_Void_Essence", 80, "Ingredient_Voidheart", 2));
+        if (LEVEL_UPGRADES.size() != BackpackItemFactory.MAX_UPGRADE_LEVEL)
+            throw new IllegalStateException("Every Extra Big Backpack level needs an upgrade recipe");
+    }
+
+    private static void addLevel(int level, Map<String, Integer> costs) {
+        short capacity = (short) (EXTRA_BIG_BASE_CAPACITY + level * BackpackItemFactory.SLOTS_PER_UPGRADE_LEVEL);
+        LEVEL_UPGRADES.put(level, new LevelUpgrade(level, capacity, costs));
     }
 
     private BackpackCraftingWindow craftingWindow;
@@ -184,8 +195,6 @@ public class BackpackWorkbenchPage implements InventoryContent {
                 editor.bind(CustomUIEventBindingType.Activating, InventoryElementId.NAVIGATION,
                         "#CharacterCraftingButton", "Crafting", "", true);
                 editor.bind(CustomUIEventBindingType.Activating, InventoryElementId.NAVIGATION,
-                        "#CharacterVisibilityButton", "TabVisibility", "", true);
-                editor.bind(CustomUIEventBindingType.Activating, InventoryElementId.NAVIGATION,
                         "#CharacterPersonalizeButton", "TabPersonalize", "", true);
                 if (craftingWindow != null) {
                     editor.append(InventoryElementId.AUXILIARY_HOST, "Pages/BackpackWorkbenchBench.ui");
@@ -205,7 +214,6 @@ public class BackpackWorkbenchPage implements InventoryContent {
     private void applyPresentation(InventoryContext context, InventoryUiEditor editor) {
         String title = switch (currentTab) {
             case "crafting" -> craftingWindow == null ? "page.upgrades" : "page.crafting";
-            case "visibility" -> "page.visibility";
             default -> "page.personalize";
         };
         editor.text(InventoryElementId.TITLE, text(title));
@@ -216,10 +224,8 @@ public class BackpackWorkbenchPage implements InventoryContent {
                 Value.ref("Pages/BackpackWorkbenchPage.ui", "WorkbenchContentPadding"));
         editor.edit(InventoryElementId.NAVIGATION, cb -> {
             cb.set("#CharacterCraftingButton.TooltipText", text(craftingWindow == null ? "tab.upgrades" : "tab.production"));
-            cb.set("#CharacterVisibilityButton.TooltipText", text("tab.visibility"));
             cb.set("#CharacterPersonalizeButton.TooltipText", text("tab.personalize"));
             cb.set("#CharacterCraftingActive.Visible", "crafting".equals(currentTab));
-            cb.set("#CharacterVisibilityActive.Visible", "visibility".equals(currentTab));
             cb.set("#CharacterPersonalizeActive.Visible", "personalize".equals(currentTab));
         });
         if (craftingWindow != null) {
@@ -334,15 +340,6 @@ public class BackpackWorkbenchPage implements InventoryContent {
             return;
         }
 
-        if ("visibility".equalsIgnoreCase(currentTab)) {
-            commandBuilder.set("#LoadingContainer.Visible", false);
-            commandBuilder.set("#BackpackHeader.Visible", false);
-            commandBuilder.set("#WorkbenchList.Visible", true);
-            if (mount) commandBuilder.append("#WorkbenchList", "Pages/BackpackVisibilityPanel.ui");
-            buildVisibilityTab(ref, store, activeBp, commandBuilder, eventBuilder, lang, mount);
-            return;
-        }
-
         if (activeBp == null) {
             // Hide all content inside the UI and make only the text appear
             commandBuilder.set("#BackpackHeader.Visible", false);
@@ -452,7 +449,7 @@ public class BackpackWorkbenchPage implements InventoryContent {
         cb.set("#UpgradeResultName.Text", gate.unlocked() ? I18nHelper.resolveItemName(target, lang) : text("flow.locked_upgrade"));
         cb.set("#UpgradeResultCapacity.Text", I18nHelper.getOrFallback(lang,
                 "server.truebackpack.workbench.header.capacity", capacity));
-        if (tier == null) cb.set("#UpgradeResultLabel.Text", text("flow.result") + " · " + text("level") + " " + nextLevel + "/2");
+        if (tier == null) cb.set("#UpgradeResultLabel.Text", text("flow.result") + " · " + text("level") + " " + nextLevel + "/" + BackpackItemFactory.MAX_UPGRADE_LEVEL);
 
         var hotbar = inventory(ref, store, true);
         var storage = inventory(ref, store, false);
@@ -498,36 +495,6 @@ public class BackpackWorkbenchPage implements InventoryContent {
         cb.set("#UpgradeEmptyText.Text", explanation);
         cb.set("#UpgradePreservationNote.Visible", false);
         cb.set("#UpgradeStatus.Text", "");
-    }
-
-    private void buildVisibilityTab(Ref<EntityStore> ref, Store<EntityStore> store,
-            @Nullable ActiveBackpack activeBp, UICommandBuilder cb, InventoryEventBindings events,
-            @Nullable String lang, boolean mount) {
-        var activeEntry = activeBp == null ? null : BackpackRegistry.getByItem(activeBp.stack().getItemId());
-        String backpackIcon = activeEntry != null && !activeEntry.isHelipack()
-                ? activeBp.stack().getItemId() : "Utility_Leather_Backpack";
-        String[] ids = {"backpack", "quiver", "hat"};
-        String[] icons = {backpackIcon, "Weapon_Arrow_Iron", "Utility_Torch_Bandana"};
-        boolean[] visible = {CosmeticPreferenceUtils.isBackpackVisible(store, ref),
-                CosmeticPreferenceUtils.isQuiverVisible(store, ref), CosmeticPreferenceUtils.isHatVisible(store, ref)};
-        for (int index = 0; index < ids.length; index++) {
-            if (mount) cb.append("#VisibilityEntries", "Pages/BackpackVisibilityEntry.ui");
-            String selector = "#VisibilityEntries[" + index + "]";
-            cb.set(selector + " #CosmeticIcon.ItemId", icons[index]);
-            cb.set(selector + " #CosmeticName.Text", I18nHelper.getOrFallback(lang,
-                    "server.truebackpack.workbench.visibility." + ids[index] + ".title"));
-            cb.set(selector + " #CosmeticDesc.Text", I18nHelper.getOrFallback(lang,
-                    "server.truebackpack.workbench.visibility." + ids[index] + ".desc"));
-            updateVisibilityState(cb, selector, visible[index]);
-            cb.set(selector + " #ToggleButton.Text", text(visible[index] ? "visibility.hide" : "visibility.show"));
-            events.addEventBinding(CustomUIEventBindingType.Activating, selector + " #ToggleButton",
-                    new EventData().append("Action", "ToggleCosmetic").append("Target", ids[index]));
-        }
-    }
-
-    private void updateVisibilityState(UICommandBuilder cb, String selector, boolean visible) {
-        cb.set(selector + " #VisibilityState.Text", text(visible ? "btn.visible" : "btn.hidden"));
-        cb.set(selector + " #VisibilityState.Style.TextColor", visible ? "#91e9c2" : "#c5d1dd");
     }
 
     @Override
@@ -600,19 +567,8 @@ public class BackpackWorkbenchPage implements InventoryContent {
             sendRefresh(ref, store);
             return;
         }
-        if ("TabVisibility".equalsIgnoreCase(data.action)) {
-            currentTab = "visibility";
-            statusMessage = "";
-            sendRefresh(ref, store);
-            return;
-        }
 
         String lang = playerRef.getLanguage();
-
-        if ("ToggleCosmetic".equalsIgnoreCase(data.action)) {
-            handleToggleCosmetic(ref, store, data.target, lang);
-            return;
-        }
 
         ActiveBackpack activeBp = findActiveBackpack(ref, store);
         if (activeBp == null) {
@@ -807,12 +763,9 @@ public class BackpackWorkbenchPage implements InventoryContent {
             sendRefresh(ref, store);
         }
     }
+    /** The equipped backpack's paint or skin changed; CustomInventory re-renders its model. */
     private void rebuildBackpack(Ref<EntityStore> ref, Store<EntityStore> store) {
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player == null) return;
-        String uuid = playerRef.getUuid().toString();
-        BackpackArmorListener.syncBackpackAttachment(uuid, store, ref);
-        CosmeticListener.scheduleAttachmentRebuild(player, store, ref, uuid);
+        PlayerModel.requestRebuild(ref, store);
     }
     private BackpackProgression.Gate memoryGate(String itemId, Store<EntityStore> store) {
         return BackpackProgression.gate(itemId, store.getExternalData().getWorld().getGameplayConfig());
@@ -944,46 +897,6 @@ public class BackpackWorkbenchPage implements InventoryContent {
         }
 
         statusMessage = I18nHelper.getOrFallback(lang, "server.truebackpack.workbench.status.level_upgraded", nextLevel, upgrade.newCapacity());
-        sendRefresh(ref, store);
-    }
-
-    private void handleToggleCosmetic(
-            @Nonnull Ref<EntityStore> ref,
-            @Nonnull Store<EntityStore> store,
-            @Nullable String target,
-            @Nullable String lang) {
-
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player == null) return;
-        UUIDComponent uuidComp = store.getComponent(ref, UUIDComponent.getComponentType());
-        if (uuidComp == null) return;
-        String playerUuid = uuidComp.getUuid().toString();
-
-        if ("backpack".equalsIgnoreCase(target)) {
-            boolean nowVisible = CosmeticPreferenceUtils.toggleBackpack(store, ref);
-            BackpackArmorListener.syncBackpackAttachment(playerUuid, store, ref);
-            CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
-            statusMessage = I18nHelper.getOrFallback(lang, nowVisible ? "server.truebackpack.toggle.backpack.visible" : "server.truebackpack.toggle.backpack.hidden");
-        } else if ("quiver".equalsIgnoreCase(target)) {
-            boolean nowVisible = CosmeticPreferenceUtils.toggleQuiver(store, ref);
-            if (nowVisible) {
-                QuiverListener.syncQuiverAttachment(playerUuid, player, store, ref);
-            } else {
-                CosmeticListener.removeAttachment(playerUuid, "truebackpack:quiver");
-            }
-            CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
-            statusMessage = I18nHelper.getOrFallback(lang, nowVisible ? "server.truebackpack.toggle.quiver.visible" : "server.truebackpack.toggle.quiver.hidden");
-        } else if ("hat".equalsIgnoreCase(target)) {
-            boolean nowVisible = CosmeticPreferenceUtils.toggleHat(store, ref);
-            if (nowVisible) {
-                HatArmorListener.syncHatAttachment(playerUuid, store, ref);
-            } else {
-                CosmeticListener.removeAttachment(playerUuid, "truebackpack:hat");
-            }
-            CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
-            statusMessage = I18nHelper.getOrFallback(lang, nowVisible ? "server.truebackpack.toggle.hat.visible" : "server.truebackpack.toggle.hat.hidden");
-        }
-
         sendRefresh(ref, store);
     }
 

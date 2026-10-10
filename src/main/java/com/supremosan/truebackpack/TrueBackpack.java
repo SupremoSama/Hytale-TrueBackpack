@@ -26,7 +26,6 @@ import com.supremosan.truebackpack.interactions.BackpackInteraction;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.listener.BackpackNestingListener;
 import com.supremosan.truebackpack.listener.BackpackTooltipListener;
-import com.supremosan.truebackpack.listener.CosmeticListener;
 import com.supremosan.truebackpack.listener.HatArmorListener;
 import com.supremosan.truebackpack.listener.QuiverListener;
 import com.supremosan.truebackpack.system.BackpackContainerSystem;
@@ -71,7 +70,6 @@ public class TrueBackpack extends JavaPlugin {
 
         BackpackContainerState.setComponentType(type);
 
-        CosmeticListener.register(this);
         CosmeticPreference.register(this);
 
         BackpackTooltipListener.register();
@@ -88,7 +86,6 @@ public class TrueBackpack extends JavaPlugin {
             String uuidStr = uuid.toString();
 
             BackpackArmorListener.onPlayerRemove(uuidStr);
-            CosmeticListener.onPlayerLeave(uuidStr);
             HatArmorListener.onPlayerRemove(uuidStr);
             HatDurabilitySystem.onPlayerRemove(uuidStr);
         });
@@ -103,7 +100,10 @@ public class TrueBackpack extends JavaPlugin {
     @Override
     protected void shutdown() {
         try { com.supremosan.truebackpack.ui.BackpackWorkbenchPage.closeAll(); }
-        finally { BackpackTooltipListener.unregister(); }
+        finally {
+            BackpackTooltipListener.unregister();
+            com.supremosan.truebackpack.system.ExtraEquipmentIntegration.unregister();
+        }
     }
 
     @Override
@@ -122,7 +122,6 @@ public class TrueBackpack extends JavaPlugin {
         BackpackArmorListener.register(this);
         QuiverListener.register(this);
         BackpackNestingListener.register(this);
-        HatArmorListener.register(this);
 
         LOGGER.atInfo().log("[TrueBackpack] Ready");
     }

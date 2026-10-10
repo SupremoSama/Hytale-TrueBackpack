@@ -7,23 +7,43 @@ import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.supremosan.custominventory.api.EquipmentManager;
 import com.supremosan.custominventory.api.ExtraEquipment;
+import com.supremosan.custominventory.api.InventoryRegistry;
 import com.supremosan.truebackpack.TrueBackpack;
+import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
+import com.supremosan.truebackpack.listener.BackpackArmorListener;
+import com.supremosan.truebackpack.listener.HatArmorListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.registries.HatRegistry;
 
-/** Connects TrueBackpack item types to the dedicated accessory inventory. */
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+/**
+ * Connects TrueBackpack item types to CustomInventory's equipment slots. CustomInventory reports
+ * equip changes and owns each slot's visibility; TrueBackpack applies the item-specific effects.
+ */
 public final class ExtraEquipmentIntegration {
+    private static final List<InventoryRegistry.Registration> REGISTRATIONS = new CopyOnWriteArrayList<>();
+
     private ExtraEquipmentIntegration() { }
     public static void register(TrueBackpack plugin) {
         ExtraEquipment.registerItems(ExtraEquipment.HAT, item -> HatRegistry.isHat(item.getItemId()));
         ExtraEquipment.registerItems(ExtraEquipment.BACKPACK, item -> BackpackRegistry.isBackpack(item.getItemId()));
+        REGISTRATIONS.add(EquipmentManager.addListener(ExtraEquipment.HAT, HatArmorListener.INSTANCE));
+        REGISTRATIONS.add(EquipmentManager.addListener(ExtraEquipment.BACKPACK, BackpackArmorListener.SLOT_LISTENER));
         plugin.getEntityStoreRegistry().registerSystem(new ClearUnequippedFlags());
         plugin.getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {
             var ref = event.getPlayerRef();
             var store = ref.getStore();
             store.getExternalData().getWorld().execute(() -> initialize(ref, store));
         });
+    }
+
+    public static void unregister() {
+        for (var registration : REGISTRATIONS) registration.close();
+        REGISTRATIONS.clear();
     }
 
     /** Equipment metadata follows the slot, including swaps, shift-clicks and hotbar use. */
@@ -47,6 +67,7 @@ public final class ExtraEquipmentIntegration {
         }
     }
 
+    /** CustomInventory re-announces occupied slots on ready; this only migrates older saves. */
     private static void initialize(Ref<EntityStore> ref, Store<EntityStore> store) {
         if (!ref.isValid() || ref.getStore() != store) return;
         var equipment = ExtraEquipment.ensure(ref, store);
@@ -60,11 +81,7 @@ public final class ExtraEquipmentIntegration {
             }
             equipment.markLegacyTrueBackpackMigrated();
         }
-        // Re-establish visuals, light and capacity after loading a saved player.
-        for (short slot = 0; slot < 2; slot++) {
-            ItemStack item = equipment.getInventory().getItemStack(slot);
-            if (!ItemStack.isEmpty(item)) equipment.getInventory().setItemStackForSlot(slot, item);
-        }
+        CosmeticPreferenceUtils.migrateEquipmentVisibility(store, ref);
     }
 
     private static void migrate(ItemContainer source, short sourceSlot, ExtraEquipment equipment, short targetSlot) {

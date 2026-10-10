@@ -13,16 +13,16 @@
     "TimeSeconds": 2,
     "Input": [
       {
-        "ItemId": "Ingredient_Fabric_Scrap_Cindercloth",
-        "Quantity": 40
+        "ItemId": "Ingredient_Leather_Heavy",
+        "Quantity": 12
+      },
+      {
+        "ItemId": "Ingredient_Fabric_Scrap_Shadoweave",
+        "Quantity": 10
       },
       {
         "ItemId": "Ingredient_Bar_Cobalt",
-        "Quantity": 8
-      },
-      {
-        "ItemId": "Ingredient_Leather_Heavy",
-        "Quantity": 24
+        "Quantity": 6
       }
     ],
     "BenchRequirement": [

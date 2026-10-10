@@ -11,15 +11,12 @@ truebackpack.tooltip.empty=Порожньо
 truebackpack.tooltip.equipped=Екіпіровано
 truebackpack.tooltip.slots=слотів
 truebackpack.tooltip.items=предметів
-truebackpack.tooltip.upgrade=Поліпшення: Рівень {0}/2
+truebackpack.tooltip.upgrade=Поліпшення: Рівень {0}/7
 truebackpack.tooltip.appearance=Вигляд: {0}
-truebackpack.toggle.backpack.visible=Ваш рюкзак тепер видимий
-truebackpack.toggle.backpack.hidden=Ваш рюкзак тепер прихований
 truebackpack.toggle.quiver.visible=Ваш сагайдак тепер видимий
 truebackpack.toggle.quiver.hidden=Ваш сагайдак тепер прихований
-truebackpack.toggle.hat.visible=Ваш капелюх тепер видимий
-truebackpack.toggle.hat.hidden=Ваш капелюх тепер прихований
-truebackpack.toggle.unknown=Це недійсний варіант, виберіть 'backpack', 'quiver' або 'hat'
+truebackpack.toggle.use_gear_eye=Видимість рюкзака й капелюха тепер налаштовується оком біля кожної комірки Спорядження в інвентарі.
+truebackpack.toggle.unknown=Це недійсний варіант, виберіть 'quiver'
 truebackpack.item.Utility_Helipack.description=Заправте цей рюкзак деревним вугіллям і злітайте в небо. Зробіть подвійний стрибок, щоб активувати режим польоту, і повторіть дію, щоб його вимкнути.
 
 # Crafting Materials
@@ -38,7 +35,6 @@ truebackpack.items.Ingredient_Leather_Storm.name=Грозова шкіра
 truebackpack.workbench.title=Верстат рюкзаків
 truebackpack.workbench.tab.transmog=Трансмог
 truebackpack.workbench.tab.upgrades=Поліпшення
-truebackpack.workbench.tab.visibility=Видимість
 truebackpack.workbench.no_backpack.title=Рюкзак не виявлено
 truebackpack.workbench.no_backpack.desc=Екіпіруйте рюкзак у нагрудний слот або тримайте його в руці.
 truebackpack.workbench.no_backpack.status=Будь ласка, тримайте або екіпіруйте рюкзак для використання верстата.
@@ -59,16 +55,6 @@ truebackpack.workbench.btn.active=Активно
 truebackpack.workbench.btn.upgrade=Поліпшити
 truebackpack.workbench.btn.need_items=Потрібні предмети
 truebackpack.workbench.btn.maxed=Максимум
-truebackpack.workbench.btn.visible=Видимий
-truebackpack.workbench.btn.hidden=Прихований
-
-# Visibility Entries
-truebackpack.workbench.visibility.backpack.title=Модель рюкзака
-truebackpack.workbench.visibility.backpack.desc=Показати або приховати 3D-модель рюкзака на персонажі
-truebackpack.workbench.visibility.quiver.title=Сагайдак / Пояс для стріл
-truebackpack.workbench.visibility.quiver.desc=Показати або приховати сагайдак при наявності стріл
-truebackpack.workbench.visibility.hat.title=Капелюх / Бандана
-truebackpack.workbench.visibility.hat.desc=Показати або приховати капелюх чи бандану зі смолоскипом
 
 # Transmog Skins
 truebackpack.workbench.skin.default.name=Стандартний вигляд
@@ -87,19 +73,19 @@ truebackpack.workbench.status.skin_reverted=Відновлено стандар�
 # Upgrade Entries & Statuses
 truebackpack.workbench.tier.title=Поліпшення рангу: {0}
 truebackpack.workbench.tier.benefit=Розширює місткість до {0} слотів (зберігає всі предмети!)
-truebackpack.workbench.level.title=Збільшення місткості: Рівень {0}/2
+truebackpack.workbench.level.title=Збільшення місткості: Рівень {0}/7
 truebackpack.workbench.level.benefit=+{0} Слотів (розширює з {1} до {2} слотів)
-truebackpack.workbench.level.max_title=Місткість: Рівень 2/2 (МАКС)
-truebackpack.workbench.level.max_benefit=Досягнуто максимальної місткості (54 слоти)!
+truebackpack.workbench.level.max_title=Місткість: Рівень 7/7 (МАКС)
+truebackpack.workbench.level.max_benefit=Досягнуто максимальної місткості (99 слоти)!
 truebackpack.workbench.level.max_cost=Подальші поліпшення неможливі.
 truebackpack.workbench.cost=Вартість: {0}
 truebackpack.workbench.cost.none=Немає
 truebackpack.workbench.status.tier_upgraded=Успішно поліпшено до {0}!
-truebackpack.workbench.status.level_upgraded=Поліпшення успішне! Рівень {0}/2 ({1} слотів)
+truebackpack.workbench.status.level_upgraded=Поліпшення успішне! Рівень {0}/7 ({1} слотів)
 truebackpack.workbench.status.invalid_tier=Недійсне поліпшення рангу!
 truebackpack.workbench.status.missing_tier_materials=Не вистачає матеріалів для поліпшення рангу!
 truebackpack.workbench.status.only_extra_big_level=Тільки Величезний рюкзак може отримувати поліпшення рівня!
-truebackpack.workbench.status.already_max_level=Рюкзак уже досяг максимального рівня 2!
+truebackpack.workbench.status.already_max_level=Рюкзак уже досяг максимального рівня 7!
 truebackpack.workbench.status.missing_level_materials=Не вистачає матеріалів для рівня {0}!
 truebackpack.workbench.status.no_backpack=Рюкзак не виявлено!
 
@@ -148,5 +134,3 @@ truebackpack.workbench.memories.find=Знайдіть
 truebackpack.workbench.memories.temple=Забутий храм
 truebackpack.workbench.memories.restore=і відновіть {0} Спогадів, щоб розблокувати цей рецепт!
 truebackpack.workbench.personalize.preview_loading=Оновлення попереднього перегляду…
-truebackpack.workbench.visibility.show=Показати
-truebackpack.workbench.visibility.hide=Приховати

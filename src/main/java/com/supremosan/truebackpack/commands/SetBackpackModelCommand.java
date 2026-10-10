@@ -2,7 +2,6 @@ package com.supremosan.truebackpack.commands;
 
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.NameMatching;
-import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
@@ -11,7 +10,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.supremosan.truebackpack.cosmetic.BackpackVisualOverride;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
-import com.supremosan.truebackpack.listener.CosmeticListener;
+import com.supremosan.custominventory.api.PlayerModel;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,7 +22,6 @@ import java.util.logging.Logger;
 public class SetBackpackModelCommand extends AbstractCommand {
 
     private static final Logger LOGGER = Logger.getLogger("TrueBackpack");
-    private static final String ATTACHMENT_SLOT_KEY = "truebackpack:backpack";
 
     private final RequiredArg<String> playerArg;
     private final RequiredArg<String> modelArg;
@@ -56,11 +54,8 @@ public class SetBackpackModelCommand extends AbstractCommand {
 
         BackpackVisualOverride.set(uuid, model, texture);
 
-        if (BackpackArmorListener.hasEquippedBackpack(uuidStr)) {
-            ModelAttachment attachment = new ModelAttachment(model, texture, null, null, 1.0);
-            CosmeticListener.putAttachment(uuidStr, ATTACHMENT_SLOT_KEY, attachment);
-            CosmeticListener.scheduleRebuildForUuid(uuidStr);
-        }
+        // The override replaces the model only; a hidden backpack slot stays hidden.
+        if (BackpackArmorListener.hasEquippedBackpack(uuidStr)) PlayerModel.requestRebuild(uuid);
 
         context.sendMessage(Message.raw("[TrueBackpack] Model override set for " + target.getUsername() + " (" + uuidStr + ")."));
         LOGGER.log(Level.INFO, "[TrueBackpack] Model override set for " + uuidStr + ": model=" + model + ", texture=" + texture);
@@ -101,17 +96,7 @@ public class SetBackpackModelCommand extends AbstractCommand {
 
             BackpackVisualOverride.remove(uuid);
 
-            if (BackpackArmorListener.hasEquippedBackpack(uuidStr)) {
-                var ref = target.getReference();
-                if (ref != null && ref.isValid()) {
-                    var store = ref.getStore();
-                    store.getExternalData().getWorld().execute(() -> {
-                        if (!ref.isValid()) return;
-                        BackpackArmorListener.syncBackpackAttachment(uuidStr, store, ref);
-                        CosmeticListener.scheduleRebuildForUuid(uuidStr);
-                    });
-                }
-            }
+            if (BackpackArmorListener.hasEquippedBackpack(uuidStr)) PlayerModel.requestRebuild(uuid);
 
             context.sendMessage(Message.raw("[TrueBackpack] Model override cleared for " + target.getUsername() + " (" + uuidStr + ")."));
             return CompletableFuture.completedFuture(null);

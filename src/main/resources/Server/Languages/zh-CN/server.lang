@@ -11,15 +11,12 @@ truebackpack.tooltip.empty=空
 truebackpack.tooltip.equipped=已装备
 truebackpack.tooltip.slots=格
 truebackpack.tooltip.items=物品
-truebackpack.tooltip.upgrade=升级: 等级 {0}/2
+truebackpack.tooltip.upgrade=升级: 等级 {0}/7
 truebackpack.tooltip.appearance=外观: {0}
-truebackpack.toggle.backpack.visible=背包现在已可见
-truebackpack.toggle.backpack.hidden=背包现在已隐藏
 truebackpack.toggle.quiver.visible=箭袋现在已可见
 truebackpack.toggle.quiver.hidden=箭袋现在已隐藏
-truebackpack.toggle.hat.visible=帽子现在已可见
-truebackpack.toggle.hat.hidden=帽子现在已隐藏
-truebackpack.toggle.unknown=无效选项，请选择 'backpack'、'quiver' 或 'hat'
+truebackpack.toggle.use_gear_eye=背包和帽子的显示现在由物品栏中每个装备栏位旁的眼睛图标控制。
+truebackpack.toggle.unknown=无效选项，请选择 'quiver'
 truebackpack.item.Utility_Helipack.description=使用木炭为此背包充能并在空中翱翔。双击跳跃可激活飞行模式，再次操作可退出飞行。
 
 # Crafting Materials
@@ -38,7 +35,6 @@ truebackpack.items.Ingredient_Leather_Storm.name=风暴皮革
 truebackpack.workbench.title=背包工作台
 truebackpack.workbench.tab.transmog=幻化
 truebackpack.workbench.tab.upgrades=升级
-truebackpack.workbench.tab.visibility=可见性
 truebackpack.workbench.no_backpack.title=未检测到背包
 truebackpack.workbench.no_backpack.desc=在胸部装备背包或手持背包。
 truebackpack.workbench.no_backpack.status=请手持或装备背包以使用工作台。
@@ -59,16 +55,6 @@ truebackpack.workbench.btn.active=生效中
 truebackpack.workbench.btn.upgrade=升级
 truebackpack.workbench.btn.need_items=材料不足
 truebackpack.workbench.btn.maxed=已满级
-truebackpack.workbench.btn.visible=显示
-truebackpack.workbench.btn.hidden=隐藏
-
-# Visibility Entries
-truebackpack.workbench.visibility.backpack.title=背包模型
-truebackpack.workbench.visibility.backpack.desc=显示或隐藏角色背部的背包3D模型
-truebackpack.workbench.visibility.quiver.title=箭袋 / 箭矢腰带
-truebackpack.workbench.visibility.quiver.desc=携带箭矢时显示或隐藏箭袋
-truebackpack.workbench.visibility.hat.title=帽子 / 头巾
-truebackpack.workbench.visibility.hat.desc=显示或隐藏装饰帽子或火把头巾
 
 # Transmog Skins
 truebackpack.workbench.skin.default.name=默认外观
@@ -87,19 +73,19 @@ truebackpack.workbench.status.skin_reverted=已恢复为默认外观！
 # Upgrade Entries & Statuses
 truebackpack.workbench.tier.title=品级升级: {0}
 truebackpack.workbench.tier.benefit=容量提升至 {0} 格（保留所有物品！）
-truebackpack.workbench.level.title=容量升级: 等级 {0}/2
+truebackpack.workbench.level.title=容量升级: 等级 {0}/7
 truebackpack.workbench.level.benefit=+{0} 格（从 {1} 格扩展至 {2} 格）
-truebackpack.workbench.level.max_title=容量: 等级 2/2（最高）
-truebackpack.workbench.level.max_benefit=已达到最大容量（54 格）！
+truebackpack.workbench.level.max_title=容量: 等级 7/7（最高）
+truebackpack.workbench.level.max_benefit=已达到最大容量（99 格）！
 truebackpack.workbench.level.max_cost=已无可用的升级。
 truebackpack.workbench.cost=花费: {0}
 truebackpack.workbench.cost.none=无
 truebackpack.workbench.status.tier_upgraded=成功升级为 {0}！
-truebackpack.workbench.status.level_upgraded=升级成功！等级 {0}/2（{1} 格）
+truebackpack.workbench.status.level_upgraded=升级成功！等级 {0}/7（{1} 格）
 truebackpack.workbench.status.invalid_tier=无效的品级升级！
 truebackpack.workbench.status.missing_tier_materials=缺少品级升级所需的材料！
 truebackpack.workbench.status.only_extra_big_level=只有超大背包可以进行等级升级！
-truebackpack.workbench.status.already_max_level=背包已达到最高等级 2！
+truebackpack.workbench.status.already_max_level=背包已达到最高等级 7！
 truebackpack.workbench.status.missing_level_materials=缺少升至等级 {0} 所需的材料！
 truebackpack.workbench.status.no_backpack=未检测到背包！
 
@@ -148,5 +134,3 @@ truebackpack.workbench.memories.find=找到
 truebackpack.workbench.memories.temple=遗忘神殿
 truebackpack.workbench.memories.restore=并恢复 {0} 个记忆以解锁此配方！
 truebackpack.workbench.personalize.preview_loading=正在更新预览…
-truebackpack.workbench.visibility.show=显示
-truebackpack.workbench.visibility.hide=隐藏

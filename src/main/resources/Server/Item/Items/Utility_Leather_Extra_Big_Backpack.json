@@ -14,12 +14,12 @@
         "Quantity": 1
       },
       {
-        "Quantity": 16,
-        "ItemId": "Ingredient_Fibre"
+        "ItemId": "Ingredient_Fabric_Scrap_Cindercloth",
+        "Quantity": 18
       },
       {
-        "ResourceTypeId": "Wood_Trunk",
-        "Quantity": 8
+        "ItemId": "Furniture_Crude_Chest_Small",
+        "Quantity": 1
       }
     ],
     "BenchRequirement": [

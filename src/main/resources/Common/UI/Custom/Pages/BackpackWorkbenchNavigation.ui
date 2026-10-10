@@ -9,15 +9,9 @@ Group #BackpackWorkbenchNavigation {
     Group #CharacterCraftingActive { Anchor: (Full: 0); Background: "../BackpackNative/CharacterPanelButtonActive.png"; Visible: false; HitTestVisible: false; }
     Group { Anchor: (Width: 48, Height: 48); Background: "../BackpackNative/PocketCraftingIcon.png"; HitTestVisible: false; }
   }
-  Button #CharacterVisibilityButton {
-    Anchor: (Left: 1, Top: 71, Width: 70, Height: 70);
-    Style: @CharacterPanelButtonStyle;
-    TextTooltipStyle: $C.@DefaultTextTooltipStyle;
-    Group #CharacterVisibilityActive { Anchor: (Full: 0); Background: "../BackpackNative/CharacterPanelButtonActive.png"; Visible: false; HitTestVisible: false; }
-    Group { Anchor: (Width: 32, Height: 32); Background: "../BackpackNative/ArmorVisibilityOn.png"; HitTestVisible: false; }
-  }
+  // Equipment visibility lives on the eyes beside CustomInventory's Gear slots.
   Button #CharacterPersonalizeButton {
-    Anchor: (Left: 1, Top: 138, Width: 70, Height: 70);
+    Anchor: (Left: 1, Top: 71, Width: 70, Height: 70);
     Style: @CharacterPanelButtonStyle;
     TextTooltipStyle: $C.@DefaultTextTooltipStyle;
     Group #CharacterPersonalizeActive { Anchor: (Full: 0); Background: "../BackpackNative/CharacterPanelButtonActive.png"; Visible: false; HitTestVisible: false; }

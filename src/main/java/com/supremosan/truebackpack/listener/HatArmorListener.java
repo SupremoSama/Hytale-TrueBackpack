@@ -1,23 +1,18 @@
 package com.supremosan.truebackpack.listener;
 
 import com.hypixel.hytale.component.*;
-import com.hypixel.hytale.component.query.Query;
-import com.hypixel.hytale.component.system.EntityEventSystem;
 import com.hypixel.hytale.protocol.ColorLight;
 import com.hypixel.hytale.protocol.DynamicLightUpdate;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAttachment;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.event.events.ecs.InventoryChangeEvent;
-import com.hypixel.hytale.server.core.inventory.InventoryComponent;
+import com.supremosan.custominventory.api.EquipmentManager;
 import com.supremosan.custominventory.api.ExtraEquipment;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.modules.entity.component.DynamicLight;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.supremosan.truebackpack.TrueBackpack;
-import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 import com.supremosan.truebackpack.factory.HatItemFactory;
 import com.supremosan.truebackpack.registries.HatRegistry;
 import com.supremosan.truebackpack.registries.HatRegistry.HatEntry;
@@ -28,21 +23,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryChangeEvent> {
-    private static final String ATTACHMENT_SLOT_KEY = "truebackpack:hat";
+/**
+ * Hat model and light for CustomInventory's hat slot. CustomInventory reports slot changes and
+ * renders {@link #attachment} while the slot's eye is open; this class adds the hat specifics.
+ */
+public final class HatArmorListener implements EquipmentManager.Listener {
     private static final short HEAD_SLOT = ExtraEquipment.HAT;
 
     private static final Map<String, String> LAST_KNOWN_EQUIPPED = new ConcurrentHashMap<>();
     private static final Set<String> PROCESSING_EQUIP = ConcurrentHashMap.newKeySet();
 
-    private static volatile Query<EntityStore> QUERY;
+    public static final HatArmorListener INSTANCE = new HatArmorListener();
 
-    public HatArmorListener() {
-        super(InventoryChangeEvent.class);
-    }
-
-    public static void register(@Nonnull TrueBackpack plugin) {
-        plugin.getEntityStoreRegistry().registerSystem(new HatArmorListener());
+    private HatArmorListener() {
     }
 
     public static boolean hasEquippedHat(@Nonnull String playerUuid) {
@@ -50,41 +43,29 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
     }
 
     @Override
-    @Nullable
-    public Query<EntityStore> getQuery() {
-        if (QUERY == null) {
-            QUERY = Query.or(ExtraEquipment.getComponentType());
-        }
-        return QUERY;
+    public void onEquipmentChanged(@Nonnull EquipmentManager.Change change) {
+        Ref<EntityStore> ref = change.ref();
+        Store<EntityStore> store = change.store();
+
+        UUIDComponent uuidComp = store.getComponent(ref, UUIDComponent.getComponentType());
+        if (uuidComp == null) return;
+
+        if (store.getComponent(ref, Player.getComponentType()) == null) return;
+
+        ExtraEquipment storageComp = store.getComponent(ref, ExtraEquipment.getComponentType());
+        if (storageComp == null) return;
+
+        handleEquipChange(ref, store, change.commands(), storageComp, uuidComp.getUuid().toString());
     }
 
     @Override
-    public void handle(
-            int index,
-            @Nonnull ArchetypeChunk<EntityStore> archetypeChunk,
-            @Nonnull Store<EntityStore> store,
-            @Nonnull CommandBuffer<EntityStore> commandBuffer,
-            @Nonnull InventoryChangeEvent event) {
-        if (event.getComponentType() != ExtraEquipment.getComponentType()) return;
-        if (!event.getTransaction().wasSlotModified(HEAD_SLOT)) return;
-
-        UUIDComponent uuidComp = archetypeChunk.getComponent(index, UUIDComponent.getComponentType());
-        if (uuidComp == null) return;
-
-        Player entity = archetypeChunk.getComponent(index, Player.getComponentType());
-        if (entity == null) return;
-
-        ExtraEquipment storageComp = archetypeChunk.getComponent(index, ExtraEquipment.getComponentType());
-        if (storageComp == null) return;
-
-        Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
-        String playerUuid = uuidComp.getUuid().toString();
-
-        handleEquipChange(entity, ref, store, commandBuffer, storageComp, playerUuid);
+    @Nullable
+    public ModelAttachment attachment(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store,
+                                      @Nonnull ItemStack equipped) {
+        return resolveVisual(equipped.getItemId());
     }
 
     private void handleEquipChange(
-            @Nonnull Player entity,
             @Nonnull Ref<EntityStore> ref,
             @Nonnull Store<EntityStore> store,
             @Nonnull CommandBuffer<EntityStore> commandBuffer,
@@ -109,14 +90,12 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
                 currentEquipped = ensureInstanceId(currentEquipped, storageComp.getInventory());
                 String newInstanceId = HatItemFactory.getInstanceId(currentEquipped);
                 LAST_KNOWN_EQUIPPED.put(playerUuid, newInstanceId);
-                updateVisual(entity, store, ref, playerUuid, currentEquipped);
                 updateDynamicLight(ref, commandBuffer, store, currentEquipped);
             } else {
                 if (lastInstanceId == null) return;
 
                 clearEquippedFlag(storageComp, lastInstanceId);
                 LAST_KNOWN_EQUIPPED.remove(playerUuid);
-                updateVisual(entity, store, ref, playerUuid, null);
                 removeDynamicLight(ref, commandBuffer);
             }
         } finally {
@@ -153,25 +132,6 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
         }
         if (changed) container.setItemStackForSlot(HEAD_SLOT, item);
         return item;
-    }
-
-    private static void updateVisual(
-            @Nonnull Player entity,
-            @Nonnull Store<EntityStore> store,
-            @Nonnull Ref<EntityStore> ref,
-            @Nonnull String playerUuid,
-            @Nullable ItemStack equippedItem) {
-        if (equippedItem != null && CosmeticPreferenceUtils.isHatVisible(store, ref)) {
-            ModelAttachment visual = resolveVisual(equippedItem.getItemId());
-            if (visual != null) {
-                CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);
-            } else {
-                CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
-            }
-        } else {
-            CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
-        }
-        CosmeticListener.scheduleAttachmentRebuild(entity, store, ref, playerUuid);
     }
 
     private static void updateDynamicLight(
@@ -212,25 +172,6 @@ public class HatArmorListener extends EntityEventSystem<EntityStore, InventoryCh
         DynamicLightUpdate update = new DynamicLightUpdate(light);
         for (EntityTrackerSystems.EntityViewer viewer : visible.visibleTo.values()) {
             viewer.queueUpdate(ref, update);
-        }
-    }
-
-    public static void syncHatAttachment(
-            @Nonnull String playerUuid,
-            @Nonnull Store<EntityStore> store,
-            @Nonnull Ref<EntityStore> ref) {
-        if (!LAST_KNOWN_EQUIPPED.containsKey(playerUuid)) return;
-        if (!CosmeticPreferenceUtils.isHatVisible(store, ref)) return;
-
-        ExtraEquipment storageComp = store.getComponent(ref, ExtraEquipment.getComponentType());
-        if (storageComp == null) return;
-
-        ItemStack hat = storageComp.getInventory().getItemStack(HEAD_SLOT);
-        if (hat == null || hat.isEmpty() || !HatRegistry.isHat(hat.getItemId())) return;
-
-        ModelAttachment visual = resolveVisual(hat.getItemId());
-        if (visual != null) {
-            CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, visual);
         }
     }
 

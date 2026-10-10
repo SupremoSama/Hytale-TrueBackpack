@@ -147,7 +147,7 @@ public class BackpackInteraction extends SimpleInstantInteraction {
                     return;
                 }
             }
-            handleEquipFromHotbar(context, store, owningEntity, heldItem, hotbar);
+            handleEquipFromHotbar(context, store, owningEntity, hotbar);
             return;
         }
 
@@ -158,20 +158,12 @@ public class BackpackInteraction extends SimpleInstantInteraction {
             @Nonnull InteractionContext context,
             @Nonnull Store<EntityStore> store,
             @Nonnull Ref<EntityStore> owningEntity,
-            @Nonnull ItemStack heldItem,
             @Nonnull InventoryComponent.Hotbar hotbar) {
 
-        var storageComp = com.supremosan.custominventory.api.ExtraEquipment.ensure(owningEntity, store);
-        if (storageComp == null) {
-            context.getState().state = InteractionState.Failed;
-            return;
-        }
-
-        ItemContainer targetContainer = storageComp.getInventory();
-        short heldSlot = context.getHeldItemSlot();
-        var transaction = hotbar.getInventory().moveItemStackFromSlotToSlot(
-                heldSlot, heldItem.getQuantity(), targetContainer, STORAGE_SLOT);
-        context.getState().state = transaction.succeeded() ? InteractionState.Finished : InteractionState.Failed;
+        // CustomInventory owns the slot rules; an equipped backpack swaps into the hand.
+        boolean equipped = com.supremosan.custominventory.api.EquipmentManager.equip(
+                owningEntity, store, STORAGE_SLOT, hotbar.getInventory(), (short) context.getHeldItemSlot());
+        context.getState().state = equipped ? InteractionState.Finished : InteractionState.Failed;
     }
 
     private void handleSecondary(

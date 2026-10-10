@@ -11,7 +11,6 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.component.DynamicLight;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.factory.HatItemFactory;
-import com.supremosan.truebackpack.listener.CosmeticListener;
 import com.supremosan.truebackpack.listener.HatArmorListener;
 import com.supremosan.truebackpack.registries.HatRegistry;
 import com.supremosan.truebackpack.registries.HatRegistry.HatEntry;
@@ -100,9 +99,8 @@ public class HatDurabilitySystem extends EntityTickingSystem<EntityStore> {
         Player entity = archetypeChunk.getComponent(index, Player.getComponentType());
         if (entity != null) {
             Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
+            // Emptying the slot makes CustomInventory remove the hat model.
             HatArmorListener.onPlayerRemove(playerUuid);
-            CosmeticListener.removeAttachment(playerUuid, "truebackpack:hat");
-            CosmeticListener.scheduleAttachmentRebuild(entity, store, ref, playerUuid);
 
             if (commandBuffer.getComponent(ref, DynamicLight.getComponentType()) != null) {
                 commandBuffer.removeComponent(ref, DynamicLight.getComponentType());

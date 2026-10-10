@@ -18,14 +18,17 @@ import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.supremosan.custominventory.api.PlayerModel;
 import com.supremosan.truebackpack.TrueBackpack;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreferenceUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/** The quiver is not an equipment slot, so it is a free-form CustomInventory model attachment. */
 public class QuiverListener {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
@@ -61,7 +64,7 @@ public class QuiverListener {
         boolean hasArrow = hasArrowInInventory(hotbarComp, storageComp, backpackComp);
         PLAYER_HAS_ARROW.put(playerUuid, hasArrow);
 
-        updateQuiver(playerUuid, player, store, ref, hasArrow);
+        updateQuiver(playerUuid, store, ref, hasArrow);
     }
 
     private static void onBackpackEquipChange(@Nonnull String playerUuid,
@@ -69,7 +72,7 @@ public class QuiverListener {
                                               @Nonnull Store<EntityStore> store,
                                               @Nonnull Ref<EntityStore> ref) {
         boolean hasArrow = PLAYER_HAS_ARROW.getOrDefault(playerUuid, false);
-        updateQuiver(playerUuid, player, store, ref, hasArrow);
+        updateQuiver(playerUuid, store, ref, hasArrow);
     }
 
     private static void handleInventoryChange(@Nonnull Ref<EntityStore> ref,
@@ -78,7 +81,7 @@ public class QuiverListener {
         if (uuidComponent == null) return;
 
         String playerUuid = uuidComponent.getUuid().toString();
-        if (CosmeticListener.isProcessing()) return;
+        if (PlayerModel.isRebuilding()) return;
 
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player == null) return;
@@ -93,34 +96,27 @@ public class QuiverListener {
         if (hasArrowNow == hadArrowBefore) return;
 
         PLAYER_HAS_ARROW.put(playerUuid, hasArrowNow);
-        updateQuiver(playerUuid, player, store, ref, hasArrowNow);
+        updateQuiver(playerUuid, store, ref, hasArrowNow);
     }
 
     private static void updateQuiver(@Nonnull String playerUuid,
-                                     @Nonnull Player player,
                                      @Nonnull Store<EntityStore> store,
                                      @Nonnull Ref<EntityStore> ref,
                                      boolean hasArrow) {
         boolean visible = CosmeticPreferenceUtils.isQuiverVisible(store, ref);
         boolean shouldHave = hasArrow && visible;
+        UUID uuid = UUID.fromString(playerUuid);
 
+        // PlayerModel re-renders on every effective put/remove.
         if (!shouldHave) {
-            if (!CosmeticListener.hasAttachment(playerUuid, ATTACHMENT_SLOT_KEY)) return;
-            CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
-            CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
+            PlayerModel.removeAttachment(uuid, ATTACHMENT_SLOT_KEY);
             return;
         }
 
         ModelAttachment correct = BackpackArmorListener.hasEquippedBackpack(playerUuid)
                 ? QUIVER_BACKPACK_ATTACHMENT
                 : QUIVER_ATTACHMENT;
-
-        ModelAttachment current = CosmeticListener.getAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
-
-        if (correct.equals(current)) return;
-
-        CosmeticListener.putAttachment(playerUuid, ATTACHMENT_SLOT_KEY, correct);
-        CosmeticListener.scheduleAttachmentRebuild(player, store, ref, playerUuid);
+        PlayerModel.putAttachment(uuid, ATTACHMENT_SLOT_KEY, correct);
     }
 
     private static boolean hasArrowInInventory(
@@ -185,9 +181,8 @@ public class QuiverListener {
             UUIDComponent uuidComp = store.getComponent(ref, UUIDComponent.getComponentType());
             if (uuidComp == null) return;
 
-            String playerUuid = uuidComp.getUuid().toString();
-            PLAYER_HAS_ARROW.remove(playerUuid);
-            CosmeticListener.removeAttachment(playerUuid, ATTACHMENT_SLOT_KEY);
+            PLAYER_HAS_ARROW.remove(uuidComp.getUuid().toString());
+            PlayerModel.removeAttachment(uuidComp.getUuid(), ATTACHMENT_SLOT_KEY);
         }
 
         @Nullable

@@ -23,6 +23,7 @@ import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementMa
 import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.inventory.InventoryComponent;
 import com.supremosan.custominventory.api.ExtraEquipment;
+import com.supremosan.custominventory.api.PlayerModel;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -30,7 +31,6 @@ import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
-import com.supremosan.truebackpack.listener.CosmeticListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.BackpackEntry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.HelipackConfig;
@@ -39,7 +39,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implements BackpackArmorListener.EquipChangeListener {
 
@@ -58,6 +60,8 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
     private Query<EntityStore> query;
 
     private final Map<UUID, JumpState> jumpStates = new HashMap<>();
+    /** Flying players whose model CustomInventory replaced, which stops the running animation. */
+    private final Set<UUID> rebuiltModels = ConcurrentHashMap.newKeySet();
 
     public HelipackFlySystem(
             ComponentType<EntityStore, Player> playerComponentType,
@@ -67,6 +71,10 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
         this.movementStatesComponentType = movementStatesComponentType;
         registerHelipackAnimations();
         BackpackArmorListener.addEquipChangeListener(this);
+        PlayerModel.addRebuildListener((ref, store) -> {
+            UUIDComponent uuid = store.getComponent(ref, UUIDComponent.getComponentType());
+            if (uuid != null && jumpStates.containsKey(uuid.getUuid())) rebuiltModels.add(uuid.getUuid());
+        });
     }
 
     private static void registerHelipackAnimations() {
@@ -84,13 +92,13 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
                 -2f, 0.2f, false, 1f, new int[0], null);
 
         Rangef delay = new Rangef(0, 0);
-        CosmeticListener.registerExtraAnimations(ANIM_IDLE,
+        PlayerModel.registerAnimationSet(ANIM_IDLE,
                 new ModelAsset.AnimationSet(new ModelAsset.Animation[]{idle}, delay));
-        CosmeticListener.registerExtraAnimations(ANIM_DEPLOY,
+        PlayerModel.registerAnimationSet(ANIM_DEPLOY,
                 new ModelAsset.AnimationSet(new ModelAsset.Animation[]{deploy}, delay));
-        CosmeticListener.registerExtraAnimations(ANIM_ACTIVE,
+        PlayerModel.registerAnimationSet(ANIM_ACTIVE,
                 new ModelAsset.AnimationSet(new ModelAsset.Animation[]{active}, delay));
-        CosmeticListener.registerExtraAnimations(ANIM_RETRACT,
+        PlayerModel.registerAnimationSet(ANIM_RETRACT,
                 new ModelAsset.AnimationSet(new ModelAsset.Animation[]{retract}, delay));
     }
 
@@ -132,6 +140,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
             if (hadState) {
                 cleanupPlayerFlight(uuid, ref, store, movementStatesComponent, jumpState);
                 jumpStates.remove(uuid);
+                rebuiltModels.remove(uuid);
             }
             return;
         }
@@ -142,6 +151,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
             if (hadState) {
                 cleanupPlayerFlight(uuid, ref, store, movementStatesComponent, jumpState);
                 jumpStates.remove(uuid);
+                rebuiltModels.remove(uuid);
             }
             return;
         }
@@ -336,7 +346,7 @@ public class HelipackFlySystem extends EntityTickingSystem<EntityStore> implemen
             @Nonnull Ref<EntityStore> ref,
             @Nonnull HelipackConfig config) {
 
-        if (!CosmeticListener.wasRebuiltSinceLastTick(uuid.toString())) return;
+        if (!rebuiltModels.remove(uuid)) return;
         if (jumpState.animState == AnimState.IDLE) return;
 
         String animId = switch (jumpState.animState) {
