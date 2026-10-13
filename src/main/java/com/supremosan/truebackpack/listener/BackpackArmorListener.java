@@ -21,6 +21,7 @@ import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.BackpackEntry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.HelipackConfig;
 import com.supremosan.truebackpack.ui.BackpackUIUpdater;
+import com.supremosan.truebackpack.util.BackpackReturnUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import javax.annotation.Nonnull;
@@ -244,6 +245,10 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             return;
         }
 
+        // A backpack (possibly the equipped one itself) shift-clicked into the backpack grid would be
+        // destroyed by the resize below; take it out first and hand it back afterwards.
+        List<ItemStack> nestedBackpacks = extractNestedBackpacks(backpackComp, playerUuid);
+
         if (hadBackpack && backpackComp != null) {
             ItemStack itemToPersist = previousItem;
             if (itemToPersist == null) {
@@ -281,6 +286,30 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
             PROCESSING_EQUIP.remove(playerUuid);
             REFRESH_UI.put(playerUuid, Boolean.TRUE);
         }
+
+        for (ItemStack nested : nestedBackpacks) {
+            BackpackReturnUtil.giveBack(ref, BackpackItemFactory.setEquipped(nested, false), store);
+        }
+    }
+
+    @Nonnull
+    private static List<ItemStack> extractNestedBackpacks(@Nullable InventoryComponent.Backpack backpackComp,
+                                                          @Nonnull String playerUuid) {
+        if (backpackComp == null) return List.of();
+        ItemContainer bp = backpackComp.getInventory();
+        List<ItemStack> extracted = new ArrayList<>();
+        PROCESSING_CONTAINER.put(playerUuid, Boolean.TRUE);
+        try {
+            for (short slot = 0; slot < bp.getCapacity(); slot++) {
+                ItemStack item = bp.getItemStack(slot);
+                if (ItemStack.isEmpty(item) || !BackpackRegistry.isBackpack(item.getItemId())) continue;
+                bp.setItemStackForSlot(slot, ItemStack.EMPTY, false);
+                extracted.add(item);
+            }
+        } finally {
+            PROCESSING_CONTAINER.remove(playerUuid);
+        }
+        return extracted;
     }
 
     @Nullable
@@ -389,7 +418,7 @@ public class BackpackArmorListener extends EntityEventSystem<EntityStore, Invent
                                 item == null || item.isEmpty() || requiredFuel.equals(item.getItemId()));
                     } else {
                         bp.setSlotFilter(FilterActionType.ADD, slot, (_, _, _, item) ->
-                                item == null || item.isEmpty() || getBackpackSize(item.getItemId()) == 0);
+                                item == null || item.isEmpty() || !BackpackRegistry.isBackpack(item.getItemId()));
                     }
                     bp.setItemStackForSlot(slot, ItemStack.EMPTY);
                 }

@@ -30,6 +30,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.math.vector.Rotation3fc;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
+import com.supremosan.truebackpack.config.settings.TrueBackpackSettings;
 import com.supremosan.truebackpack.factory.BackpackItemFactory;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
@@ -77,6 +78,8 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         DeathConfig deathConfig = world.getDeathConfig();
         if (deathConfig.getItemsLossMode() == DeathConfig.ItemsLossMode.NONE) return;
 
+        boolean keepOnDeath = TrueBackpackSettings.get().keepBackpacksOnDeath;
+
         TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
         if (transform == null) return;
 
@@ -92,6 +95,15 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
                 armorComp, storageComp, hotbarComp, backpackComp, playerUuid);
 
         if (backpacks.isEmpty()) return;
+
+        if (keepOnDeath && playerUuid != null) {
+            List<BackpackDeathKeeper.Kept> kept = new ArrayList<>();
+            for (BackpackEntry entry : backpacks) {
+                kept.add(new BackpackDeathKeeper.Kept(entry.containerIndex(), entry.slot(), entry.keptItem()));
+            }
+            BackpackDeathKeeper.stash(playerUuid, kept);
+            return;
+        }
 
         if (!world.getGameplayConfig().getWorldConfig().isBlockPlacementAllowed()) {
             dropBackpackItems(backpacks, store, ref, commandBuffer);
@@ -235,7 +247,8 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
                 backpackComp != null ? backpackComp.getInventory() : null
         };
 
-        for (ItemContainer container : containers) {
+        for (int containerIndex = 0; containerIndex < containers.length; containerIndex++) {
+            ItemContainer container = containers[containerIndex];
             if (container == null) continue;
             for (short slot = 0; slot < container.getCapacity(); slot++) {
                 ItemStack item = container.getItemStack(slot);
@@ -263,12 +276,37 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
                     contents = List.of();
                 }
 
+                ItemStack keptItem = BackpackItemFactory.setEquipped(BackpackItemFactory.saveContents(item, contents), false);
+
                 container.removeItemStackFromSlot(slot);
-                found.add(new BackpackEntry(registry.blockId(), contents));
+                found.add(new BackpackEntry(registry.blockId(), contents, containerIndex, slot, keptItem));
             }
         }
 
         return found;
+    }
+
+    @Override
+    public void onComponentRemoved(
+            @Nonnull Ref<EntityStore> ref,
+            @Nonnull DeathComponent component,
+            @Nonnull Store<EntityStore> store,
+            @Nonnull CommandBuffer<EntityStore> commandBuffer) {
+        BackpackDeathKeeper.restore(ref, commandBuffer);
+    }
+
+    /** Containers in the same order as {@link #collectAndRemoveBackpacks}; used to put kept backpacks back. */
+    @Nonnull
+    static ItemContainer[] playerContainers(@Nonnull Ref<EntityStore> ref, @Nonnull com.hypixel.hytale.component.ComponentAccessor<EntityStore> accessor) {
+        var armor = accessor.getComponent(ref, InventoryComponent.Armor.getComponentType());
+        var storage = accessor.getComponent(ref, InventoryComponent.Storage.getComponentType());
+        var hotbar = accessor.getComponent(ref, InventoryComponent.Hotbar.getComponentType());
+        return new ItemContainer[]{
+                armor != null ? armor.getInventory() : null,
+                storage != null ? storage.getInventory() : null,
+                hotbar != null ? hotbar.getInventory() : null,
+                null // backpack grid: never restore a backpack into a backpack
+        };
     }
 
     @Override
@@ -277,10 +315,6 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         return PlayerRef.getComponentType();
     }
 
-    private record BackpackEntry(String blockId, List<ItemStack> contents) {
-        private BackpackEntry(@Nonnull String blockId, @Nonnull List<ItemStack> contents) {
-            this.blockId = blockId;
-            this.contents = contents;
-        }
-    }
+    private record BackpackEntry(String blockId, List<ItemStack> contents,
+                                 int containerIndex, short slot, ItemStack keptItem) {}
 }
