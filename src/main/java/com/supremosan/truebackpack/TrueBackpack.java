@@ -22,6 +22,11 @@ import com.supremosan.truebackpack.config.hat.HatConfigService;
 import com.supremosan.truebackpack.cosmetic.CosmeticPreference;
 import com.supremosan.truebackpack.data.BackpackContainerState;
 import com.supremosan.truebackpack.events.BackpackDeathEvent;
+import com.supremosan.truebackpack.events.BackpackDeathKeeper;
+import com.supremosan.truebackpack.config.settings.TrueBackpackSettings;
+import com.supremosan.truebackpack.commands.KeepBackpackOnDeathCommand;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
+import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.supremosan.truebackpack.interactions.BackpackInteraction;
 import com.supremosan.truebackpack.listener.BackpackArmorListener;
 import com.supremosan.truebackpack.listener.BackpackNestingListener;
@@ -52,6 +57,7 @@ public class TrueBackpack extends JavaPlugin {
         try {
             BackpackConfigService.reloadAndRegister(JUL);
             HatConfigService.reloadAndRegister(JUL);
+            TrueBackpackSettings.reload();
         } catch (Exception e) {
             JUL.log(Level.SEVERE, "[TrueBackpack] Failed to load configs", e);
         }
@@ -79,6 +85,21 @@ public class TrueBackpack extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new SetHelipackFuelCommand());
         this.getCommandRegistry().registerCommand(new SetBackpackModelCommand());
         this.getCommandRegistry().registerCommand(new BackpackWorkbenchCommand());
+        this.getCommandRegistry().registerCommand(new KeepBackpackOnDeathCommand());
+
+        // Backpacks kept on death are normally returned on respawn; this covers a player who
+        // logged out dead and came back alive.
+        this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, event -> {
+            var ref = event.getPlayerRef();
+            var world = event.getPlayer().getWorld();
+            if (world == null) return;
+            world.execute(() -> {
+                if (!ref.isValid()) return;
+                var store = ref.getStore();
+                if (store.getComponent(ref, DeathComponent.getComponentType()) != null) return;
+                BackpackDeathKeeper.restore(ref, store);
+            });
+        });
 
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, event -> {
             PlayerRef playerRef = event.getPlayerRef();

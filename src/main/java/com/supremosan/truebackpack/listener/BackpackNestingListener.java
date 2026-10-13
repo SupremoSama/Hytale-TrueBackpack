@@ -15,6 +15,7 @@ import com.supremosan.truebackpack.TrueBackpack;
 import com.supremosan.truebackpack.registries.BackpackRegistry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.BackpackEntry;
 import com.supremosan.truebackpack.registries.BackpackRegistry.HelipackConfig;
+import com.supremosan.truebackpack.util.BackpackReturnUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -69,14 +70,13 @@ public class BackpackNestingListener extends EntityEventSystem<EntityStore, Inve
 
             String itemId = item.getItemId();
 
-            if (BackpackRegistry.isBackpack(itemId)) {
-                backpackContainer.setItemStackForSlot(slot, ItemStack.EMPTY);
-                continue;
-            }
+            boolean rejected = BackpackRegistry.isBackpack(itemId)
+                    || (equippedFuelItemId != null && !equippedFuelItemId.equals(itemId));
+            if (!rejected) continue;
 
-            if (equippedFuelItemId != null && !equippedFuelItemId.equals(itemId)) {
-                backpackContainer.setItemStackForSlot(slot, ItemStack.EMPTY);
-            }
+            // Never destroy the item: move it back to the player's inventory (or drop it).
+            backpackContainer.setItemStackForSlot(slot, ItemStack.EMPTY, false);
+            BackpackReturnUtil.giveBack(ref, item, commandBuffer);
         }
     }
 
