@@ -75,8 +75,9 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         World world = player.getWorld();
         if (world == null) return;
 
-        DeathConfig deathConfig = world.getDeathConfig();
-        if (deathConfig.getItemsLossMode() == DeathConfig.ItemsLossMode.NONE) return;
+        // Use the resolved death settings (same source as DropPlayerDeathItems), so we only touch
+        // backpacks the game itself would drop.
+        if (component.getItemsLossMode() == DeathConfig.ItemsLossMode.NONE) return;
 
         boolean keepOnDeath = TrueBackpackSettings.get().keepBackpacksOnDeath;
 
@@ -91,7 +92,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         UUIDComponent uuidComp = store.getComponent(ref, UUIDComponent.getComponentType());
         String playerUuid = uuidComp != null ? uuidComp.getUuid().toString() : null;
 
-        List<BackpackEntry> backpacks = collectAndRemoveBackpacks(
+        List<BackpackEntry> backpacks = collectAndRemoveBackpacks(component,
                 armorComp, storageComp, hotbarComp, backpackComp, playerUuid);
 
         if (backpacks.isEmpty()) return;
@@ -232,6 +233,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
 
     @Nonnull
     private List<BackpackEntry> collectAndRemoveBackpacks(
+            @Nonnull DeathComponent death,
             @Nullable InventoryComponent.Armor armorComp,
             @Nullable InventoryComponent.Storage storageComp,
             @Nullable InventoryComponent.Hotbar hotbarComp,
@@ -254,6 +256,7 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
                 ItemStack item = container.getItemStack(slot);
                 if (item == null || item.isEmpty()) continue;
                 if (BackpackArmorListener.getBackpackSize(item.getItemId()) <= 0) continue;
+                if (!gameDropsOnDeath(death, item)) continue;
 
                 BackpackRegistry.BackpackEntry registry = BackpackRegistry.getByItem(item.getItemId());
                 if (registry == null || registry.blockId().isEmpty()) continue;
@@ -284,6 +287,15 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         }
 
         return found;
+    }
+
+    /** Mirrors DeathSystems.DropPlayerDeathItems / ExtraEquipmentDeathSystem: would the game drop this item? */
+    private static boolean gameDropsOnDeath(@Nonnull DeathComponent death, @Nonnull ItemStack item) {
+        return switch (death.getItemsLossMode()) {
+            case ALL -> true;
+            case CONFIGURED -> death.getItemsAmountLossPercentage() > 0.0 && item.getItem().dropsOnDeath();
+            case NONE -> false;
+        };
     }
 
     @Override
