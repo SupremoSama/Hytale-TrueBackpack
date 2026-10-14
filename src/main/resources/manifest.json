@@ -11,7 +11,7 @@
   "Website": "${plugin_website}",
   "ServerVersion": "${server_version}",
   "Dependencies": {
-    "SupremoSama:CustomInventory": ">=0.3.0 <0.4.0"
+    "SupremoSama:CustomInventory": ">=0.1.0"
   },
   "OptionalDependencies": {},
   "DisabledByDefault": false,
