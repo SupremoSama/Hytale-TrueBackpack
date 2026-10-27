@@ -31,6 +31,7 @@ import com.supremosan.truebackpack.listener.BackpackTooltipListener;
 import com.supremosan.truebackpack.listener.CosmeticListener;
 import com.supremosan.truebackpack.listener.HatArmorListener;
 import com.supremosan.truebackpack.listener.QuiverListener;
+import com.supremosan.truebackpack.listener.SortPinListener;
 import com.supremosan.truebackpack.system.BackpackContainerSystem;
 import com.supremosan.truebackpack.system.HatDurabilitySystem;
 import com.supremosan.truebackpack.system.HelipackFlySystem;
@@ -126,6 +127,7 @@ public class TrueBackpack extends JavaPlugin {
         QuiverListener.register(this);
         BackpackNestingListener.register(this);
         HatArmorListener.register(this);
+        SortPinListener.register(this);
 
         LOGGER.atInfo().log("[TrueBackpack] Ready");
     }

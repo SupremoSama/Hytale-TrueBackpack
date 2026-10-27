@@ -16,3 +16,6 @@ truebackpack.toggle.hat.visible=Your hat is now visible
 truebackpack.toggle.hat.hidden=Your hat is now hidden
 truebackpack.toggle.unknown=That is not a valid option, choose 'backpack','quiver' or 'hat'
 truebackpack.item.Utility_Helipack.description=Fuel this backpack with charcoal and soar through the skies. Double jump to activate flight mode and repeat the action to deactivate it.
+truebackpack.pin.pinned=Item pinned: it will stay in the first slot when sorting
+truebackpack.pin.unpinned=Item unpinned
+truebackpack.pin.noitem=Hold an item in your hotbar to pin it

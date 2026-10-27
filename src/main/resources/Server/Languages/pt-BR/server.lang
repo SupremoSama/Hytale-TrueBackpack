@@ -16,3 +16,6 @@ truebackpack.toggle.hat.visible=Seu chapéu agora está visível
 truebackpack.toggle.hat.hidden=Seu chapéu agora está oculto
 truebackpack.toggle.unknown=Essa não é uma opção válida, selecione 'backpack','quiver' ou 'hat'
 truebackpack.item.Utility_Helipack.description=Abasteça esta mochila com carvão vegetal e voe pelos céus. Dê um pulo duplo para ativar o modo de voo e repita o comando para desativá-lo.
+truebackpack.pin.pinned=Item fixado: ele ficará no primeiro slot ao ordenar
+truebackpack.pin.unpinned=Item desafixado
+truebackpack.pin.noitem=Segure um item na barra de atalhos para fixá-lo
