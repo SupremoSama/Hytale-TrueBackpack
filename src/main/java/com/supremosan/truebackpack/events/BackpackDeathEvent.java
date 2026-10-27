@@ -6,6 +6,8 @@ import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.dependency.Dependency;
+import com.hypixel.hytale.component.dependency.Order;
+import com.hypixel.hytale.component.dependency.SystemDependency;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockFace;
@@ -58,7 +60,9 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
 
     @Override
     public @Nonnull Set<Dependency<EntityStore>> getDependencies() {
-        return Set.of();
+        return Set.of(
+                new SystemDependency<>(Order.AFTER, DeathSystems.PlayerDropItemsConfig.class),
+                new SystemDependency<>(Order.BEFORE, DeathSystems.DropPlayerDeathItems.class));
     }
 
     @Override
@@ -75,8 +79,6 @@ public class BackpackDeathEvent extends DeathSystems.OnDeathSystem {
         World world = player.getWorld();
         if (world == null) return;
 
-        // Use the resolved death settings (same source as DropPlayerDeathItems), so we only touch
-        // backpacks the game itself would drop.
         if (component.getItemsLossMode() == DeathConfig.ItemsLossMode.NONE) return;
 
         boolean keepOnDeath = TrueBackpackSettings.get().keepBackpacksOnDeath;
